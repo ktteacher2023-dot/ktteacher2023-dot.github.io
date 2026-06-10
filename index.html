@@ -176,6 +176,7 @@
 
 <footer>
   青いブロックに オレンジの線が かさなるように うたってみよう<br>
+  💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)
 </footer>
 
@@ -575,11 +576,11 @@ function draw(t){
     ctx2d.fillStyle="#E7EEF3";
     ctx2d.fillRect(mx,my,mw,mh);
     const lvl=Math.min(1,lastRms*12);
-    ctx2d.fillStyle=lastRms>=0.006?"#2FB380":"#E2574C";
+    ctx2d.fillStyle=lastRms>=micGate?"#2FB380":"#E2574C";
     ctx2d.fillRect(mx,my,mw*lvl,mh);
     ctx2d.fillStyle="#5A6B75"; ctx2d.font="10px sans-serif";
     ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
-    ctx2d.fillText(lastRms>=0.006?"🎤 入力OK":"🎤 こえが小さい", mx+mw+6, my+mh/2);
+    ctx2d.fillText(lastRms>=micGate?"🎤 入力OK":"🎤 こえが小さい", mx+mw+6, my+mh/2);
   }else{
     // 停止中:現在位置バーとスワイプヒント
     const dur=songDur();
@@ -609,13 +610,16 @@ function roundRect(x,y,w,h,r){
 let sessFrom=0, sessTo=0;  // 今回のセッションの区間(絶対秒)
 function scheduleMelody(when){
   const ac=getAudio(), tr=transpose();
-  const master=ac.createGain(); master.gain.value=0.25; master.connect(ac.destination);
+  const singing=(mode==="sing");
+  const master=ac.createGain();
+  master.gain.value=singing?0.11:0.25; // 歌唱中は控えめに(マイク回り込み対策)
+  master.connect(ac.destination);
   scheduledNodes.push(master);
   for(const n of song.notes){
     const ns=noteStartSec(n);
     if(ns<sessFrom-1e-4||ns>=sessTo-1e-4) continue;
     const o=ac.createOscillator(), g=ac.createGain();
-    o.type="triangle";
+    o.type=singing?"sine":"triangle"; // サイン波は倍音が少なく誤検出されにくい
     o.frequency.value=midiToFreq(n.midi+tr);
     const t0=when+(ns-sessFrom), t1=when+(Math.min(noteEndSec(n),sessTo)-sessFrom);
     g.gain.setValueAtTime(0,t0);
@@ -659,8 +663,9 @@ $("singBtn").addEventListener("click",async()=>{
   if(!song) return;
   banner(null);
   stopAll(); // 必ずマイク取得「前」に止める(後に呼ぶとマイクごと止まる)
+  const aec=$("guideChk").checked; // お手本を流すときはエコー除去ON
   try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:aec,noiseSuppression:aec,autoGainControl:false}});
   }catch(err){
     banner("🎤 マイクを使えませんでした("+err.name+")。<br>チャット内プレビューではマイクが制限されることがあります。<b>GitHub Pagesなどに公開したページ</b>で開くと使えます。ブラウザのマイク許可もご確認ください。");
     return;
@@ -683,6 +688,7 @@ $("stopBtn").addEventListener("click",()=>{
 function startSession(withMic){
   lastResult=null; $("result").style.display="none";
   trace=[];
+  micGate=0.006; calibRms=0;
   mode=withMic?"sing":"play";
   $("playBtn").disabled=true; $("singBtn").disabled=true; $("stopBtn").disabled=false;
   [sessFrom,sessTo]=rangeSec();
@@ -702,7 +708,11 @@ function loop(){
   if(mode==="sing"&&analyser){
     analyser.getFloatTimeDomainData(micBuf);
     const f=autoCorrelate(micBuf,getAudio().sampleRate);
-    if(f>0&&t>=0){
+    if(t<0){
+      // カウントイン中:まだ歌っていない=聞こえるのはスピーカー漏れ。その音量を基準にしきい値を決める
+      calibRms=Math.max(calibRms,lastRms);
+      micGate=Math.min(0.06,Math.max(0.006,calibRms*1.6));
+    }else if(f>0){
       const m=69+12*Math.log2(f/440);
       if(m>30&&m<100) trace.push({t:tAbs,midi:foldForDisplay(m,tAbs)});
     }
@@ -748,14 +758,14 @@ function noteAt(t){
 }
 
 /* ====== ピッチ検出(自己相関) ====== */
-let lastRms=0;
+let lastRms=0, micGate=0.006, calibRms=0;
 function autoCorrelate(buf,sr){
   const SIZE=buf.length;
   let rms=0;
   for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
   rms=Math.sqrt(rms/SIZE);
   lastRms=rms;
-  if(rms<0.006) return -1;
+  if(rms<micGate) return -1;
   let r1=0,r2=SIZE-1;
   const th=0.2;
   for(let i=0;i<SIZE/2;i++) if(Math.abs(buf[i])<th){r1=i;break;}
