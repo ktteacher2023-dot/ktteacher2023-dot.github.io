@@ -608,12 +608,20 @@ function draw(t){
     }
     ctx2d.fillStyle=fill;
     roundRect(x,y-h/2,w,h,h/2.5);
-    if(showName&&w>22){
-      ctx2d.fillStyle="#fff"; ctx2d.font="700 11px sans-serif";
-      ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
+    if(showName){
       const tbl=(song.keyFifths||0)<0?NAMES_FLAT:NAMES;
       const label=(tr===0&&n.name)?n.name:tbl[((m%12)+12)%12];
-      ctx2d.fillText(label, x+6, y);
+      if(w>22){
+        // 中に収まる幅:ブロック内に白文字
+        ctx2d.fillStyle="#fff"; ctx2d.font="700 11px sans-serif";
+        ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
+        ctx2d.fillText(label, x+6, y);
+      }else{
+        // 短い音符:ブロックの上に小さく表示
+        ctx2d.fillStyle="#3D6FD6"; ctx2d.font="700 9px sans-serif";
+        ctx2d.textAlign="center"; ctx2d.textBaseline="bottom";
+        ctx2d.fillText(label, x+w/2, y-h/2-1);
+      }
     }
     if(showLyric&&n.lyric){
       ctx2d.fillStyle="#1E2B33"; ctx2d.font="700 13px sans-serif";
