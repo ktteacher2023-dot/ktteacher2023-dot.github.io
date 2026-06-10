@@ -632,10 +632,14 @@ function draw(t){
       for(const p of path) ctx2d.lineTo(p[0],p[1]);
       ctx2d.stroke(); path=[]; };
     let prevT=-1;
+    const minDt=1.5/pps(); // 画面上1.5px未満は間引き
+    let lastKeptT=-1;
     for(const p of trace){
       const x=off+p.t*pps();
       if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
       const col=p.ok===true?"#2FB380":"#FF7A59";
+      if(lastKeptT>=0&&p.t-lastKeptT<minDt&&col===curColor){ prevT=p.t; continue; }
+      lastKeptT=p.t;
       if(prevT>=0&&p.t-prevT>0.12) flush();
       if(curColor!==null&&col!==curColor&&path.length){ 
         const lastPt=path[path.length-1];
@@ -751,24 +755,27 @@ let pausedAt=null, prevMode=null;
 function guideVol(){ return Number($("volSlider").value)/100; }
 function scheduleNotes(notes, when, gainVal, type){
   const ac=getAudio(), tr=transpose();
-  const master=ac.createGain(); master.gain.value=gainVal; master.connect(ac.destination);
-  scheduledNodes.push(master);
+  // 1本の発振器の音程と音量を予約で切り替える方式(部品数を最小化して音切れを防ぐ)
+  const o=ac.createOscillator(); o.type=type;
+  const g=ac.createGain(); g.gain.value=0;
+  o.connect(g); g.connect(ac.destination);
+  let any=false, firstT=Infinity, lastT=0;
   for(const n of notes){
     const ns=noteStartSec(n);
     if(ns<sessFrom-1e-4||ns>=sessTo-1e-4) continue;
     if(ns<schedFloor-0.02) continue;
-    const o=ac.createOscillator(), g=ac.createGain();
-    o.type=type;
-    o.frequency.value=midiToFreq(n.midi+tr);
     const t0=when+(ns-sessFrom), t1=when+(Math.min(noteEndSec(n),sessTo)-sessFrom);
+    o.frequency.setValueAtTime(midiToFreq(n.midi+tr), Math.max(when, t0-0.003));
     g.gain.setValueAtTime(0,t0);
-    g.gain.linearRampToValueAtTime(1,t0+0.02);
-    g.gain.setValueAtTime(1,Math.max(t0+0.02,t1-0.06));
+    g.gain.linearRampToValueAtTime(gainVal,t0+0.02);
+    g.gain.setValueAtTime(gainVal,Math.max(t0+0.02,t1-0.06));
     g.gain.linearRampToValueAtTime(0,t1);
-    o.connect(g); g.connect(master);
-    o.start(t0); o.stop(t1+0.05);
-    scheduledNodes.push(o);
+    any=true; firstT=Math.min(firstT,t0); lastT=Math.max(lastT,t1);
   }
+  if(!any){ try{g.disconnect();}catch(e){} return; }
+  o.start(Math.max(ac.currentTime, firstT-0.01));
+  o.stop(lastT+0.1);
+  scheduledNodes.push(o,g);
 }
 function scheduleMelody(when){
   const v=guideVol();
@@ -788,6 +795,10 @@ function scheduleMetronome(when){
   // カウントイン音よりわずかに控えめ(漏れ測定の基準内に収める)
   const vol=Math.max(0.08, 0.32*guideVol());
   const ms=song.measStarts, total=song.totalBeats;
+  const o=ac.createOscillator(); o.type="square";
+  const g=ac.createGain(); g.gain.value=0;
+  o.connect(g); g.connect(ac.destination);
+  let any=false, firstT=Infinity, lastT=0;
   for(let i=0;i<ms.length;i++){
     const mStart=ms[i]*beatSec();
     const mEnd=(i+1<ms.length?ms[i+1]:total)*beatSec();
@@ -798,16 +809,17 @@ function scheduleMetronome(when){
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
       if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
-      const o=ac.createOscillator(), g=ac.createGain();
-      o.type="square";
-      o.frequency.value=k===0?1320:880;        // 小節の1拍目は高い音
+      o.frequency.setValueAtTime(k===0?1320:880, Math.max(when,t0-0.003)); // 小節の1拍目は高い音
       g.gain.setValueAtTime(k===0?vol:vol*0.65, t0);
       g.gain.exponentialRampToValueAtTime(0.001, t0+0.07);
-      o.connect(g); g.connect(ac.destination);
-      o.start(t0); o.stop(t0+0.09);
-      scheduledNodes.push(o);
+      g.gain.setValueAtTime(0, t0+0.075);
+      any=true; firstT=Math.min(firstT,t0); lastT=Math.max(lastT,t0+0.1);
     }
   }
+  if(!any){ try{g.disconnect();}catch(e){} return; }
+  o.start(Math.max(ac.currentTime, firstT-0.01));
+  o.stop(lastT+0.1);
+  scheduledNodes.push(o,g);
 }
 
 function scheduleCountIn(when,beats){
@@ -981,7 +993,7 @@ function loop(){
       if(f>0) micJudge(f,tAbs);
     }
   }
-  draw(Math.max(tAbs,sessFrom));
+  drawThrottled(Math.max(tAbs,sessFrom));
   if(t>sessTo-sessFrom+0.4){
     if(mode==="sing"){
       finishSing();
@@ -1015,6 +1027,13 @@ function noteIdxAt(t){
     if(t>=noteStartSec(n)&&t<noteEndSec(n)) return i;
   }
   return -1;
+}
+let lastDrawMs=0;      // 描画間引き用
+function drawThrottled(t){
+  const now=performance.now();
+  if(now-lastDrawMs<30) return; // 約30fps
+  lastDrawMs=now;
+  draw(t);
 }
 let liveStats=[];      // 歌唱中の音符ごとの命中状況 {good,total}
 let liveDiff=null;     // 直近の判定 {ok,diff,t}
@@ -1093,23 +1112,25 @@ function buildPhrases(){
 }
 function schedulePhrase(pf,pt,when){
   const ac=getAudio(), tr=transpose(), v=guideVol();
-  const master=ac.createGain(); master.gain.value=0.5*v; master.connect(ac.destination);
-  scheduledNodes.push(master);
+  const o=ac.createOscillator(); o.type="triangle";
+  const g=ac.createGain(); g.gain.value=0;
+  o.connect(g); g.connect(ac.destination);
+  let any=false, lastT=0;
   for(const n of song.notes){
     const ns=noteStartSec(n);
     if(ns<pf-1e-4||ns>=pt-1e-4) continue;
-    const o=ac.createOscillator(), g=ac.createGain();
-    o.type="triangle";
-    o.frequency.value=midiToFreq(n.midi+tr);
     const t0=when+(ns-pf), t1=when+(Math.min(noteEndSec(n),pt)-pf);
+    o.frequency.setValueAtTime(midiToFreq(n.midi+tr), Math.max(when,t0-0.003));
     g.gain.setValueAtTime(0,t0);
-    g.gain.linearRampToValueAtTime(1,t0+0.02);
-    g.gain.setValueAtTime(1,Math.max(t0+0.02,t1-0.06));
+    g.gain.linearRampToValueAtTime(0.5*v,t0+0.02);
+    g.gain.setValueAtTime(0.5*v,Math.max(t0+0.02,t1-0.06));
     g.gain.linearRampToValueAtTime(0,t1);
-    o.connect(g); g.connect(master);
-    o.start(t0); o.stop(t1+0.05);
-    scheduledNodes.push(o);
+    any=true; lastT=Math.max(lastT,t1);
   }
+  if(!any){ try{g.disconnect();}catch(e){} return; }
+  o.start(Math.max(ac.currentTime,when));
+  o.stop(lastT+0.1);
+  scheduledNodes.push(o,g);
 }
 $("echoBtn").addEventListener("click",async()=>{
   if(!song) return;
@@ -1148,7 +1169,7 @@ function echoLoop(){
       if(f>0&&now>=E.phaseStart) micJudge(f,echoT());
     }
   }
-  draw(echoT());
+  drawThrottled(echoT());
   // フェーズ遷移
   if(now-E.phaseStart>=E.phaseLen){
     const gap=0.3;
@@ -1221,7 +1242,7 @@ function breathLoop(){
     }
     if(now-B.last>0.7 || now-B.t0>40){ finishBreath(); return; }
   }
-  drawBreath(now);
+  if(performance.now()-lastDrawMs>=30){ lastDrawMs=performance.now(); drawBreath(now); }
   rafId=requestAnimationFrame(breathLoop);
 }
 
@@ -1305,7 +1326,8 @@ function autoCorrelate(buf,sr){
   const b=buf.subarray(off,off+N);
   const minLag=Math.max(8,Math.floor(sr/1200));
   const maxLag=Math.min(N-2,Math.ceil(sr/70));
-  const c=new Float32Array(maxLag+2);
+  if(!autoCorrelate._c||autoCorrelate._c.length<maxLag+2) autoCorrelate._c=new Float32Array(maxLag+2);
+  const c=autoCorrelate._c;
   let bestV=-1,bestL=-1;
   for(let lag=minLag;lag<=maxLag;lag++){
     let s=0;
