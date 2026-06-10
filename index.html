@@ -565,6 +565,21 @@ function draw(t){
     ctx2d.beginPath(); ctx2d.moveTo(px,0); ctx2d.lineTo(px,H); ctx2d.stroke();
     ctx2d.fillStyle="#1E2B33";
     ctx2d.beginPath(); ctx2d.moveTo(px-7,0); ctx2d.lineTo(px+7,0); ctx2d.lineTo(px,9); ctx2d.fill();
+  }
+
+  // マイク入力レベルメーター(歌唱中)
+  if(mode==="sing"){
+    const mw=120, mh=10, mx=10, my=10;
+    ctx2d.fillStyle="rgba(255,255,255,0.85)";
+    ctx2d.fillRect(mx-4,my-4,mw+58,mh+8);
+    ctx2d.fillStyle="#E7EEF3";
+    ctx2d.fillRect(mx,my,mw,mh);
+    const lvl=Math.min(1,lastRms*12);
+    ctx2d.fillStyle=lastRms>=0.006?"#2FB380":"#E2574C";
+    ctx2d.fillRect(mx,my,mw*lvl,mh);
+    ctx2d.fillStyle="#5A6B75"; ctx2d.font="10px sans-serif";
+    ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
+    ctx2d.fillText(lastRms>=0.006?"🎤 入力OK":"🎤 こえが小さい", mx+mw+6, my+mh/2);
   }else{
     // 停止中:現在位置バーとスワイプヒント
     const dur=songDur();
@@ -637,11 +652,13 @@ function stopAll(){
 
 $("playBtn").addEventListener("click",()=>{
   if(!song) return;
+  stopAll();
   startSession(false);
 });
 $("singBtn").addEventListener("click",async()=>{
   if(!song) return;
   banner(null);
+  stopAll(); // 必ずマイク取得「前」に止める(後に呼ぶとマイクごと止まる)
   try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   }catch(err){
@@ -653,6 +670,7 @@ $("singBtn").addEventListener("click",async()=>{
   analyser=ac.createAnalyser(); analyser.fftSize=2048;
   micBuf=new Float32Array(analyser.fftSize);
   src.connect(analyser);
+  if(ac.state==="suspended") await ac.resume(); // iOS Safari対策
   startSession(true);
 });
 $("stopBtn").addEventListener("click",()=>{
@@ -663,7 +681,6 @@ $("stopBtn").addEventListener("click",()=>{
 });
 
 function startSession(withMic){
-  stopAll();
   lastResult=null; $("result").style.display="none";
   trace=[];
   mode=withMic?"sing":"play";
@@ -682,10 +699,10 @@ function startSession(withMic){
 function loop(){
   const t=getAudio().currentTime-startAt;     // 区間内の経過秒
   const tAbs=sessFrom+t;                       // 曲全体での絶対秒
-  if(mode==="sing"&&analyser&&t>=0){
+  if(mode==="sing"&&analyser){
     analyser.getFloatTimeDomainData(micBuf);
     const f=autoCorrelate(micBuf,getAudio().sampleRate);
-    if(f>0){
+    if(f>0&&t>=0){
       const m=69+12*Math.log2(f/440);
       if(m>30&&m<100) trace.push({t:tAbs,midi:foldForDisplay(m,tAbs)});
     }
@@ -731,12 +748,14 @@ function noteAt(t){
 }
 
 /* ====== ピッチ検出(自己相関) ====== */
+let lastRms=0;
 function autoCorrelate(buf,sr){
   const SIZE=buf.length;
   let rms=0;
   for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
   rms=Math.sqrt(rms/SIZE);
-  if(rms<0.01) return -1;
+  lastRms=rms;
+  if(rms<0.006) return -1;
   let r1=0,r2=SIZE-1;
   const th=0.2;
   for(let i=0;i<SIZE/2;i++) if(Math.abs(buf[i])<th){r1=i;break;}
