@@ -217,6 +217,8 @@ const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo";
 const isSinging = ()=> mode==="sing"||mode==="echo";
 const cv = $("cv"), ctx2d = cv.getContext("2d");
 const NAMES = ["ド","ド♯","レ","レ♯","ミ","ファ","ファ♯","ソ","ソ♯","ラ","ラ♯","シ"];
+const NAMES_FLAT = ["ド","レ♭","レ","ミ♭","ミ","ファ","ソ♭","ソ","ラ♭","ラ","シ♭","シ"];
+const STEP_KANA = {C:"ド",D:"レ",E:"ミ",F:"ファ",G:"ソ",A:"ラ",B:"シ"};
 
 /* ====== ユーティリティ ====== */
 function getAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==="suspended") audioCtx.resume(); return audioCtx; }
@@ -295,7 +297,7 @@ function parseMusicXML(xmlText, fname){
   const parts=[];
   for(const part of doc.querySelectorAll("part")){
     if(!part.querySelector("measure")) continue;
-    let divisions=1;
+    let divisions=1, keyFifths=0, keySeen=false;
     const meas=[]; // 小節ごと:{notes,len,forward,backward,endingStart,endingStop}
     for(const measure of part.querySelectorAll(":scope > measure")){
       let cur=0, maxCur=0;
@@ -305,6 +307,8 @@ function parseMusicXML(xmlText, fname){
         const tag=el.tagName;
         if(tag==="attributes"){
           const d=el.querySelector("divisions"); if(d) divisions=Number(d.textContent)||divisions;
+          const kf=el.querySelector("key > fifths");
+          if(kf&&!keySeen){ keyFifths=Number(kf.textContent)||0; keySeen=true; }
         }else if(tag==="barline"){
           const rep=el.querySelector("repeat");
           if(rep){
@@ -333,6 +337,8 @@ function parseMusicXML(xmlText, fname){
             const alter=Number(pitch.querySelector("alter")?.textContent||0);
             const oct=Number(pitch.querySelector("octave").textContent);
             const semis={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[step];
+            const acc=alter===1?"♯":alter===-1?"♭":alter===2?"♯♯":alter===-2?"♭♭":"";
+            const name=STEP_KANA[step]+acc;
             const lyr={};
             for(const ly of el.querySelectorAll(":scope > lyric")){
               const txt=ly.querySelector("text")?.textContent;
@@ -343,6 +349,7 @@ function parseMusicXML(xmlText, fname){
               off:cur/divisions,
               beats:dur/divisions,
               midi:(oct+1)*12+semis+alter,
+              name,
               lyr,
               tieStop:[...el.querySelectorAll("tie, tied")].some(t=>t.getAttribute("type")==="stop")
             });
@@ -379,7 +386,7 @@ function parseMusicXML(xmlText, fname){
       for(const n of m.notes){
         // 周回に合わせて歌詞を選ぶ(2周目なら2番、なければ1番)
         const lyric=n.lyr[String(o.pass)]??n.lyr["1"]??Object.values(n.lyr)[0]??"";
-        raw.push({voice:n.voice, startBeat:gt+n.off, beats:n.beats, midi:n.midi, lyric, tieStop:n.tieStop});
+        raw.push({voice:n.voice, startBeat:gt+n.off, beats:n.beats, midi:n.midi, name:n.name, lyric, tieStop:n.tieStop});
       }
       gt+=m.len;
     }
@@ -398,12 +405,12 @@ function parseMusicXML(xmlText, fname){
         prev.beats+=n.beats;
         if(!prev.lyric&&n.lyric) prev.lyric=n.lyric;
       }else{
-        notes.push({startBeat:n.startBeat,beats:n.beats,midi:n.midi,lyric:n.lyric||""});
+        notes.push({startBeat:n.startBeat,beats:n.beats,midi:n.midi,name:n.name,lyric:n.lyric||""});
       }
     }
     if(notes.length){
       const pname=nameOf[part.getAttribute("id")]||"";
-      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, totalBeats:Math.max(0.001,totalBeats)});
+      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, totalBeats:Math.max(0.001,totalBeats), keyFifths});
     }
   }
   if(!parts.length) throw new Error("音符が見つかりませんでした");
@@ -430,7 +437,8 @@ function applyPart(i){
   const p=songMeta.parts[i];
   song={title:songMeta.title, bpm:songMeta.bpm, notes:p.notes,
         measStarts:p.measStarts||[0],
-        totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0)};
+        totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0),
+        keyFifths:p.keyFifths||0};
   song.otherParts=songMeta.parts.map((q,j)=>({name:q.name,notes:q.notes,idx:j})).filter(q=>q.idx!==i);
   const palette=["#CFDCEA","#E6D9F2","#F2E3CF","#D9F2DC","#F2D9DC"];
   const list=$("partPlayList"); list.innerHTML="";
@@ -603,7 +611,9 @@ function draw(t){
     if(showName&&w>22){
       ctx2d.fillStyle="#fff"; ctx2d.font="700 11px sans-serif";
       ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
-      ctx2d.fillText(NAMES[((m%12)+12)%12], x+6, y);
+      const tbl=(song.keyFifths||0)<0?NAMES_FLAT:NAMES;
+      const label=(tr===0&&n.name)?n.name:tbl[((m%12)+12)%12];
+      ctx2d.fillText(label, x+6, y);
     }
     if(showLyric&&n.lyric){
       ctx2d.fillStyle="#1E2B33"; ctx2d.font="700 13px sans-serif";
