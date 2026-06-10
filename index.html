@@ -143,6 +143,7 @@
     <button id="echoBtn" disabled>🦜 まねっこ</button>
     <button id="breathBtn">🌬 ロングトーン</button>
     <button id="rewindBtn" disabled>⏮ 最初へ</button>
+    <button id="pauseBtn" disabled>⏸ 一時停止</button>
     <button id="stopBtn" class="stop" disabled>■ 止める</button>
   </div>
   <div class="row">
@@ -483,6 +484,7 @@ window.addEventListener("resize",resize);
 function currentT(){
   if(mode==="play"||mode==="sing") return getAudio().currentTime-startAt;
   if(mode==="echo"&&echo) return echoT();
+  if(mode==="paused"&&pausedAt!==null) return pausedAt;
   return viewOffset;
 }
 
@@ -695,6 +697,18 @@ function draw(t){
       ctx2d.fillStyle=col; ctx2d.textAlign="center"; ctx2d.textBaseline="middle";
       ctx2d.fillText(txt, W/2, by+bh/2+1);
     }
+  }else if(mode==="paused"){
+    // 一時停止中:位置の線と案内
+    ctx2d.strokeStyle="#8FA3AE"; ctx2d.lineWidth=2; ctx2d.setLineDash([6,5]);
+    ctx2d.beginPath(); ctx2d.moveTo(px,0); ctx2d.lineTo(px,H); ctx2d.stroke();
+    ctx2d.setLineDash([]);
+    const txt="⏸ 一時停止中(スペースキー か ▶再開 ボタン)";
+    ctx2d.font="700 15px sans-serif";
+    const tw=ctx2d.measureText(txt).width;
+    ctx2d.fillStyle="rgba(255,255,255,0.92)";
+    ctx2d.fillRect((W-tw)/2-14,10,tw+28,32);
+    ctx2d.fillStyle="#5A6B75"; ctx2d.textAlign="center"; ctx2d.textBaseline="middle";
+    ctx2d.fillText(txt,W/2,26);
   }else{
     // 停止中:現在位置バーとスワイプヒント
     const dur=songDur();
@@ -722,6 +736,8 @@ function roundRect(x,y,w,h,r){
 
 /* ====== 再生 ====== */
 let sessFrom=0, sessTo=0;  // 今回のセッションの区間(絶対秒)
+let schedFloor=0;          // 再開時:この絶対秒より前の音は鳴らさない
+let pausedAt=null, prevMode=null;
 function guideVol(){ return Number($("volSlider").value)/100; }
 function scheduleNotes(notes, when, gainVal, type){
   const ac=getAudio(), tr=transpose();
@@ -730,6 +746,7 @@ function scheduleNotes(notes, when, gainVal, type){
   for(const n of notes){
     const ns=noteStartSec(n);
     if(ns<sessFrom-1e-4||ns>=sessTo-1e-4) continue;
+    if(ns<schedFloor-0.02) continue;
     const o=ac.createOscillator(), g=ac.createGain();
     o.type=type;
     o.frequency.value=midiToFreq(n.midi+tr);
@@ -769,6 +786,7 @@ function scheduleMetronome(when){
     for(let k=0;k<beats;k++){
       const tAbs=mStart+k*beatSec();
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
+      if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
       const o=ac.createOscillator(), g=ac.createGain();
       o.type="square";
@@ -797,10 +815,14 @@ function scheduleCountIn(when,beats){
     scheduledNodes.push(o);
   }
 }
-function stopAll(){
-  cancelAnimationFrame(rafId);
+function stopScheduled(){
   for(const n of scheduledNodes){ try{n.stop?n.stop():n.disconnect();}catch(e){} try{n.disconnect();}catch(e){} }
   scheduledNodes=[];
+}
+function stopAll(){
+  cancelAnimationFrame(rafId);
+  stopScheduled();
+  pausedAt=null; prevMode=null;
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; analyser=null; }
   if(recorder&&recStarted&&recorder.state==="recording"){ try{recorder.stop();}catch(e){} }
   recStarted=false;
@@ -808,6 +830,7 @@ function stopAll(){
   if(recAudio){ try{recAudio.pause();}catch(e){} }
   mode="idle";
   $("stopBtn").disabled=true;
+  $("pauseBtn").disabled=true; $("pauseBtn").textContent="⏸ 一時停止";
   $("breathBtn").disabled=false;
   if(song){ $("playBtn").disabled=false; $("singBtn").disabled=false; $("echoBtn").disabled=false; $("rewindBtn").disabled=false; }
 }
@@ -888,6 +911,7 @@ function startSession(withMic){
   liveStats=[]; liveDiff=null; recentM=[];
   mode=withMic?"sing":"play";
   $("playBtn").disabled=true; $("singBtn").disabled=true; $("stopBtn").disabled=false;
+  $("pauseBtn").disabled=false; $("pauseBtn").textContent="⏸ 一時停止";
   const [rf,rt]=rangeSec();
   // 「止めたところから」:今見ている位置を直前の小節頭にスナップして開始
   let from=rf;
@@ -897,7 +921,7 @@ function startSession(withMic){
       if(s<=viewOffset+1e-3&&s>=rf-1e-3) from=Math.max(from,s);
     }
   }
-  sessFrom=from; sessTo=rt;
+  sessFrom=from; sessTo=rt; schedFloor=sessFrom;
   const ac=getAudio();
   const countBeats=4;
   const begin=ac.currentTime+0.15;
@@ -959,6 +983,7 @@ function loop(){
       // くりかえし:1拍あけて同じ区間をもう一度
       const ac=getAudio();
       startAt=ac.currentTime+beatSec();
+      schedFloor=sessFrom;
       scheduleMelody(startAt);
       scheduleMetronome(startAt);
       rafId=requestAnimationFrame(loop);
@@ -998,6 +1023,38 @@ function noteAt(t){
   for(const n of song.notes) if(t>=noteStartSec(n)&&t<noteEndSec(n)) return n;
   return null;
 }
+
+/* ====== 一時停止(スペースキー) ====== */
+function togglePause(){
+  if(mode==="play"||mode==="sing"){
+    const t=getAudio().currentTime-startAt;
+    pausedAt=Math.max(sessFrom, sessFrom+t);
+    cancelAnimationFrame(rafId);
+    stopScheduled();
+    if(recorder&&recorder.state==="recording"){ try{recorder.pause();}catch(e){} }
+    prevMode=mode; mode="paused";
+    $("pauseBtn").textContent="▶ 再開";
+    draw(pausedAt);
+  }else if(mode==="paused"&&prevMode){
+    const ac=getAudio();
+    mode=prevMode; prevMode=null;
+    schedFloor=pausedAt;
+    startAt=ac.currentTime+0.12-(pausedAt-sessFrom);
+    if(mode==="play"||$("guideChk").checked) scheduleMelody(startAt);
+    scheduleMetronome(startAt);
+    if(recorder&&recorder.state==="paused"){ try{recorder.resume();}catch(e){} }
+    pausedAt=null;
+    $("pauseBtn").textContent="⏸ 一時停止";
+    loop();
+  }
+}
+$("pauseBtn").addEventListener("click",()=>{ togglePause(); });
+document.addEventListener("keydown",e=>{
+  if(e.code!=="Space") return;
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="select"||tag==="textarea"||tag==="button") return;
+  if(mode==="play"||mode==="sing"||mode==="paused"){ e.preventDefault(); togglePause(); }
+});
 
 /* ====== まねっこモード(コール&レスポンス) ====== */
 let echo=null;
@@ -1233,28 +1290,29 @@ function autoCorrelate(buf,sr){
   rms=Math.sqrt(rms/SIZE);
   lastRms=rms;
   if(rms<micGate) return -1;
-  let r1=0,r2=SIZE-1;
-  const th=0.2;
-  for(let i=0;i<SIZE/2;i++) if(Math.abs(buf[i])<th){r1=i;break;}
-  for(let i=1;i<SIZE/2;i++) if(Math.abs(buf[SIZE-i])<th){r2=SIZE-i;break;}
-  const b=buf.slice(r1,r2), N=b.length;
-  if(N<32) return -1;
-  const c=new Float32Array(N);
-  for(let lag=0;lag<N;lag++){
+  // 中央1024サンプルだけ使い、探索範囲を人の声(70〜1200Hz)に限定して計算量を削減
+  const N=1024, off=(SIZE-N)>>1;
+  const b=buf.subarray(off,off+N);
+  const minLag=Math.max(8,Math.floor(sr/1200));
+  const maxLag=Math.min(N-2,Math.ceil(sr/70));
+  const c=new Float32Array(maxLag+2);
+  let bestV=-1,bestL=-1;
+  for(let lag=minLag;lag<=maxLag;lag++){
     let s=0;
     for(let i=0;i<N-lag;i++) s+=b[i]*b[i+lag];
     c[lag]=s;
+    if(s>bestV){bestV=s;bestL=lag;}
   }
-  let d=0; while(d<N-1&&c[d]>c[d+1]) d++;
-  let maxv=-1,maxp=-1;
-  for(let i=d;i<N;i++) if(c[i]>maxv){maxv=c[i];maxp=i;}
-  if(maxp<=0) return -1;
-  let T0=maxp;
-  const x1=c[T0-1],x2=c[T0],x3=c[T0+1]||x2;
+  if(bestL<=0) return -1;
+  // オクターブ下に誤ロックした場合の補正(半分の周期に強いピークがあればそちら)
+  const half=Math.round(bestL/2);
+  if(half>=minLag&&c[half]>0.85*bestV) bestL=half;
+  let T0=bestL;
+  const x1=c[T0-1]||c[T0], x2=c[T0], x3=c[T0+1]||c[T0];
   const a=(x1+x3-2*x2)/2, bq=(x3-x1)/2;
   if(a) T0=T0-bq/(2*a);
   const f=sr/T0;
-  if(f<60||f>1500) return -1;
+  if(f<65||f>1300) return -1;
   return f;
 }
 
