@@ -148,6 +148,7 @@
     <span class="ctl"><input type="checkbox" id="guideChk" checked> お手本も鳴らす</span>
     <span class="ctl"><input type="checkbox" id="octChk" checked> オクターブちがいOK</span>
     <span class="ctl"><input type="checkbox" id="nameChk" checked> 音名を表示</span>
+    <span class="ctl"><input type="checkbox" id="lyricChk" checked> 歌詞を表示</span>
   </div>
   <div class="row" id="rangeRow" style="display:none">
     <span class="ctl">れんしゅう区間 小節
@@ -313,11 +314,17 @@ function parseMusicXML(xmlText, fname){
             const alter=Number(pitch.querySelector("alter")?.textContent||0);
             const oct=Number(pitch.querySelector("octave").textContent);
             const semis={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[step];
+            const lyr={};
+            for(const ly of el.querySelectorAll(":scope > lyric")){
+              const txt=ly.querySelector("text")?.textContent;
+              if(txt) lyr[ly.getAttribute("number")||"1"]=txt;
+            }
             mn.push({
               voice,
               off:cur/divisions,
               beats:dur/divisions,
               midi:(oct+1)*12+semis+alter,
+              lyr,
               tieStop:[...el.querySelectorAll("tie, tied")].some(t=>t.getAttribute("type")==="stop")
             });
           }
@@ -333,24 +340,28 @@ function parseMusicXML(xmlText, fname){
       m.ending=activeEnding;
       if(m.endStop) activeEnding=null;
     }
-    // リピート展開(1番・2番カッコ対応)
+    // リピート展開(1番・2番カッコ対応、何周目かも記録)
     const order=[];
     let i=0, start=0, pass=1, guard=0;
     while(i<meas.length && guard++<5000){
       const m=meas[i];
       if(m.fwd) start=i;
       if(m.ending && !m.ending.includes(pass)){ i++; continue; }
-      order.push(i);
+      order.push({idx:i, pass});
       if(m.bwd && pass<m.bwd){ pass++; i=start; continue; }
       if(m.bwd) pass=1;
       i++;
     }
     // 展開順に音符を並べる(小節の開始位置も記録)
     let gt=0; const raw=[]; const measStarts=[];
-    for(const idx of order){
-      const m=meas[idx];
+    for(const o of order){
+      const m=meas[o.idx];
       measStarts.push(gt);
-      for(const n of m.notes) raw.push({voice:n.voice, startBeat:gt+n.off, beats:n.beats, midi:n.midi, tieStop:n.tieStop});
+      for(const n of m.notes){
+        // 周回に合わせて歌詞を選ぶ(2周目なら2番、なければ1番)
+        const lyric=n.lyr[String(o.pass)]??n.lyr["1"]??Object.values(n.lyr)[0]??"";
+        raw.push({voice:n.voice, startBeat:gt+n.off, beats:n.beats, midi:n.midi, lyric, tieStop:n.tieStop});
+      }
       gt+=m.len;
     }
     const totalBeats=gt;
@@ -366,8 +377,9 @@ function parseMusicXML(xmlText, fname){
       const prev=notes[notes.length-1];
       if(n.tieStop&&prev&&prev.midi===n.midi&&Math.abs(prev.startBeat+prev.beats-n.startBeat)<1e-4){
         prev.beats+=n.beats;
+        if(!prev.lyric&&n.lyric) prev.lyric=n.lyric;
       }else{
-        notes.push({startBeat:n.startBeat,beats:n.beats,midi:n.midi});
+        notes.push({startBeat:n.startBeat,beats:n.beats,midi:n.midi,lyric:n.lyric||""});
       }
     }
     if(notes.length){
@@ -482,6 +494,7 @@ function draw(t){
   const off=px-t*pps();
   const tr=transpose();
   const showName=$("nameChk").checked;
+  const showLyric=$("lyricChk").checked;
 
   // 横ガイド線(C=ドの行を少し濃く)
   ctx2d.lineWidth=1;
@@ -523,6 +536,11 @@ function draw(t){
       ctx2d.fillStyle="#fff"; ctx2d.font="700 11px sans-serif";
       ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
       ctx2d.fillText(NAMES[((m%12)+12)%12], x+6, y);
+    }
+    if(showLyric&&n.lyric){
+      ctx2d.fillStyle="#1E2B33"; ctx2d.font="700 13px sans-serif";
+      ctx2d.textAlign="left"; ctx2d.textBaseline="top";
+      ctx2d.fillText(n.lyric, x+2, y+h/2+3);
     }
   }
 
@@ -841,6 +859,7 @@ function bump(d){
   if(song&&mode==="idle") draw(currentT());
 }
 $("nameChk").addEventListener("change",()=>{ if(song&&mode==="idle") draw(currentT()); });
+$("lyricChk").addEventListener("change",()=>{ if(song&&mode==="idle") draw(currentT()); });
 $("demoBtn").addEventListener("click",loadDemo);
 
 function onRangeChange(){
