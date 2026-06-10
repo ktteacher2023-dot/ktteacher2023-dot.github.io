@@ -142,10 +142,12 @@
   </div>
   <div class="row">
     <span class="ctl">テンポ <input type="range" id="tempoSlider" min="50" max="130" value="100"><b id="tempoVal">100%</b></span>
+    <span class="ctl">お手本音量 <input type="range" id="volSlider" min="10" max="100" value="60"><b id="volVal">60%</b></span>
     <span class="ctl stepper">移調 <button id="transDown">−</button><span class="val" id="transVal">0</span><button id="transUp">＋</button></span>
   </div>
   <div class="row">
     <span class="ctl"><input type="checkbox" id="guideChk" checked> お手本も鳴らす</span>
+    <span class="ctl" id="othersCtl" style="display:none"><input type="checkbox" id="othersChk"> ほかのパートも鳴らす</span>
     <span class="ctl"><input type="checkbox" id="octChk" checked> オクターブちがいOK</span>
     <span class="ctl"><input type="checkbox" id="nameChk" checked> 音名を表示</span>
     <span class="ctl"><input type="checkbox" id="lyricChk" checked> 歌詞を表示</span>
@@ -412,6 +414,9 @@ function applyPart(i){
   song={title:songMeta.title, bpm:songMeta.bpm, notes:p.notes,
         measStarts:p.measStarts||[0],
         totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0)};
+  song.otherParts=songMeta.parts.filter((_,j)=>j!==i).map(q=>q.notes);
+  $("othersCtl").style.display=song.otherParts.length?"flex":"none";
+  if(!song.otherParts.length) $("othersChk").checked=false;
   lastResult=null; trace=[]; viewOffset=0;
   const mc=song.measStarts.length;
   // 音のある最初と最後の小節を初期区間にする(前奏・後奏の空白をスキップ)
@@ -479,6 +484,10 @@ const PLAYHEAD_X=()=>cv.getBoundingClientRect().width*0.28;
 function midiRange(){
   let lo=128, hi=0;
   for(const n of song.notes){ lo=Math.min(lo,n.midi); hi=Math.max(hi,n.midi); }
+  if($("othersChk").checked&&song.otherParts){
+    for(const notes of song.otherParts)
+      for(const n of notes){ lo=Math.min(lo,n.midi); hi=Math.max(hi,n.midi); }
+  }
   const tr=transpose(); lo+=tr; hi+=tr;
   return [lo-3, hi+3];
 }
@@ -518,6 +527,23 @@ function draw(t){
   }
 
   // れんしゅう区間の網かけは音符の後に描く(下のブロック参照)
+
+  // ほかのパート(うすく表示・合唱のハモリが見える)
+  if($("othersChk").checked&&song.otherParts){
+    ctx2d.fillStyle="#CFDCEA";
+    for(const notes of song.otherParts){
+      for(const n of notes){
+        const x=off+noteStartSec(n)*pps();
+        const w=Math.max(5,(noteEndSec(n)-noteStartSec(n))*pps()-3);
+        if(x+w<0||x>W) continue;
+        const m=n.midi+tr;
+        if(m<lo||m>hi) continue;
+        const y=yOf(m), h=Math.min(rowH*0.6,18);
+        roundRect(x,y-h/2,w,h,h/2.5);
+        ctx2d.fillStyle="#CFDCEA";
+      }
+    }
+  }
 
   // お手本ノート
   for(let i=0;i<song.notes.length;i++){
@@ -626,18 +652,16 @@ function roundRect(x,y,w,h,r){
 
 /* ====== 再生 ====== */
 let sessFrom=0, sessTo=0;  // 今回のセッションの区間(絶対秒)
-function scheduleMelody(when){
+function guideVol(){ return Number($("volSlider").value)/100; }
+function scheduleNotes(notes, when, gainVal, type){
   const ac=getAudio(), tr=transpose();
-  const singing=(mode==="sing");
-  const master=ac.createGain();
-  master.gain.value=singing?0.11:0.25; // 歌唱中は控えめに(マイク回り込み対策)
-  master.connect(ac.destination);
+  const master=ac.createGain(); master.gain.value=gainVal; master.connect(ac.destination);
   scheduledNodes.push(master);
-  for(const n of song.notes){
+  for(const n of notes){
     const ns=noteStartSec(n);
     if(ns<sessFrom-1e-4||ns>=sessTo-1e-4) continue;
     const o=ac.createOscillator(), g=ac.createGain();
-    o.type=singing?"sine":"triangle"; // サイン波は倍音が少なく誤検出されにくい
+    o.type=type;
     o.frequency.value=midiToFreq(n.midi+tr);
     const t0=when+(ns-sessFrom), t1=when+(Math.min(noteEndSec(n),sessTo)-sessFrom);
     g.gain.setValueAtTime(0,t0);
@@ -649,13 +673,27 @@ function scheduleMelody(when){
     scheduledNodes.push(o);
   }
 }
+function scheduleMelody(when){
+  const v=guideVol();
+  const singing=(mode==="sing");
+  // 自分のパート
+  scheduleNotes(song.notes, when, singing?0.4*v:0.5*v, singing?"sine":"triangle");
+  // ほかのパート(合唱練習用、自分のパートよりやや控えめ)
+  if($("othersChk").checked&&song.otherParts){
+    for(const notes of song.otherParts){
+      scheduleNotes(notes, when, (singing?0.4*v:0.5*v)*0.65, "sine");
+    }
+  }
+}
 function scheduleCountIn(when,beats){
   const ac=getAudio();
+  // お手本音量と連動:カウント音の漏れを測ってしきい値の基準にするため
+  const cv2=Math.max(0.1, 0.4*guideVol());
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
     const t0=when+i*beatSec();
-    g.gain.setValueAtTime(0.12,t0);
+    g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     o.connect(g); g.connect(ac.destination);
     o.start(t0); o.stop(t0+0.12);
@@ -851,6 +889,8 @@ function showResult(){
 
 /* ====== コントロール ====== */
 $("tempoSlider").addEventListener("input",()=>{ $("tempoVal").textContent=$("tempoSlider").value+"%"; if(mode==="idle"&&song) draw(currentT()); });
+$("volSlider").addEventListener("input",()=>{ $("volVal").textContent=$("volSlider").value+"%"; });
+$("othersChk").addEventListener("change",()=>{ if(song&&mode==="idle") draw(currentT()); });
 $("transUp").addEventListener("click",()=>{ bump(1); });
 $("transDown").addEventListener("click",()=>{ bump(-1); });
 function bump(d){
