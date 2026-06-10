@@ -36,6 +36,7 @@
   }
   .chip{display:inline-block; width:22px; height:10px; border-radius:5px; vertical-align:middle; margin-right:4px;}
   .chip.t{background:var(--target);}
+  .chip.g{background:var(--good); height:4px;}
   .chip.v{background:var(--voice); height:4px;}
 
   .panel{
@@ -122,7 +123,8 @@
   <span class="tagline">歌声の高さが見えるアプリ</span>
   <div class="legend">
     <span><span class="chip t"></span>お手本</span>
-    <span><span class="chip v"></span>あなたの声</span>
+    <span><span class="chip g"></span>ぴったり</span>
+    <span><span class="chip v"></span>ずれてる</span>
   </div>
 </header>
 
@@ -151,6 +153,13 @@
     <span class="ctl"><input type="checkbox" id="octChk" checked> オクターブちがいOK</span>
     <span class="ctl"><input type="checkbox" id="nameChk" checked> 音名を表示</span>
     <span class="ctl"><input type="checkbox" id="lyricChk" checked> 歌詞を表示</span>
+    <span class="ctl">判定
+      <select id="strictSel">
+        <option value="easy">やさしい</option>
+        <option value="normal" selected>ふつう</option>
+        <option value="hard">きびしい</option>
+      </select>
+    </span>
   </div>
   <div class="row" id="rangeRow" style="display:none">
     <span class="ctl">れんしゅう区間 小節
@@ -555,7 +564,15 @@ function draw(t){
     const h=Math.min(rowH*0.78,26);
     let fill="#5B8DEF";
     if(lastResult&&lastResult.noteHit[i]!==null) fill=lastResult.noteHit[i]?"#2FB380":"#E2574C";
-    else if(mode==="sing"&&t>=noteStartSec(n)&&t<noteEndSec(n)) fill="#3D6FD6";
+    else if(mode==="sing"){
+      const st=liveStats[i];
+      if(t>=noteEndSec(n)&&noteStartSec(n)>=sessFrom){
+        // 歌い終わった音はその場で結果表示
+        if(st&&st.total>=3) fill=st.good/st.total>=0.5?"#2FB380":"#E2574C";
+      }else if(t>=noteStartSec(n)&&t<noteEndSec(n)){
+        fill="#3D6FD6";
+      }
+    }
     ctx2d.fillStyle=fill;
     roundRect(x,y-h/2,w,h,h/2.5);
     if(showName&&w>22){
@@ -570,20 +587,26 @@ function draw(t){
     }
   }
 
-  // 歌声の軌跡
+  // 歌声の軌跡(ぴったり=緑、ずれ=オレンジ)
   if(trace.length){
-    ctx2d.lineWidth=3; ctx2d.lineCap="round"; ctx2d.lineJoin="round";
-    let path=[];
+    ctx2d.lineWidth=4; ctx2d.lineCap="round"; ctx2d.lineJoin="round";
+    let path=[], curColor=null;
     const flush=()=>{ if(path.length<2){path=[];return;}
-      ctx2d.strokeStyle="#FF7A59";
+      ctx2d.strokeStyle=curColor||"#FF7A59";
       ctx2d.beginPath(); ctx2d.moveTo(path[0][0],path[0][1]);
       for(const p of path) ctx2d.lineTo(p[0],p[1]);
       ctx2d.stroke(); path=[]; };
     let prevT=-1;
     for(const p of trace){
       const x=off+p.t*pps();
-      if(x<-10||x>W+10){ flush(); continue; }
+      if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
+      const col=p.ok===true?"#2FB380":"#FF7A59";
       if(prevT>=0&&p.t-prevT>0.12) flush();
+      if(curColor!==null&&col!==curColor&&path.length){ 
+        const lastPt=path[path.length-1];
+        flush(); path=[lastPt];
+      }
+      curColor=col;
       path.push([x,yOf(p.midi)]); prevT=p.t;
     }
     flush();
@@ -625,6 +648,24 @@ function draw(t){
     ctx2d.fillStyle="#5A6B75"; ctx2d.font="10px sans-serif";
     ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
     ctx2d.fillText(lastRms>=micGate?"🎤 入力OK":"🎤 こえが小さい", mx+mw+6, my+mh/2);
+
+    // リアルタイム判定:ぴったり!/たかい/ひくい
+    if(liveDiff&&t-liveDiff.t<0.45){
+      let txt,col;
+      if(liveDiff.ok){ txt="◎ ぴったり!"; col="#2FB380"; }
+      else if(liveDiff.diff>0){ txt="たかいよ ↓ すこしひくく"; col="#E2574C"; }
+      else{ txt="ひくいよ ↑ すこしたかく"; col="#E2574C"; }
+      ctx2d.font="800 20px sans-serif";
+      const tw=ctx2d.measureText(txt).width;
+      const bx=(W-tw)/2-16, by=8, bw=tw+32, bh=36;
+      ctx2d.fillStyle="rgba(255,255,255,0.92)";
+      ctx2d.beginPath();
+      ctx2d.roundRect?ctx2d.roundRect(bx,by,bw,bh,18):ctx2d.rect(bx,by,bw,bh);
+      ctx2d.fill();
+      ctx2d.strokeStyle=col; ctx2d.lineWidth=2; ctx2d.stroke();
+      ctx2d.fillStyle=col; ctx2d.textAlign="center"; ctx2d.textBaseline="middle";
+      ctx2d.fillText(txt, W/2, by+bh/2+1);
+    }
   }else{
     // 停止中:現在位置バーとスワイプヒント
     const dur=songDur();
@@ -745,6 +786,7 @@ function startSession(withMic){
   lastResult=null; $("result").style.display="none";
   trace=[];
   micGate=0.006; calibRms=0;
+  liveStats=[]; liveDiff=null; recentM=[];
   mode=withMic?"sing":"play";
   $("playBtn").disabled=true; $("singBtn").disabled=true; $("stopBtn").disabled=false;
   [sessFrom,sessTo]=rangeSec();
@@ -769,8 +811,27 @@ function loop(){
       calibRms=Math.max(calibRms,lastRms);
       micGate=Math.min(0.06,Math.max(0.006,calibRms*1.6));
     }else if(f>0){
-      const m=69+12*Math.log2(f/440);
-      if(m>30&&m<100) trace.push({t:tAbs,midi:foldForDisplay(m,tAbs)});
+      const m0=69+12*Math.log2(f/440);
+      if(m0>30&&m0<100){
+        // 平滑化:直近3回の中央値でチラつきを抑える
+        recentM.push(m0); if(recentM.length>3) recentM.shift();
+        const sorted=[...recentM].sort((a,b)=>a-b);
+        const sm=sorted[Math.floor(sorted.length/2)];
+        const mm=foldForDisplay(sm,tAbs);
+        // 今の音符に対する判定をその場で記録
+        const ni=noteIdxAt(tAbs);
+        let ok=null, diff=0;
+        if(ni>=0){
+          const target=song.notes[ni].midi+transpose();
+          diff=mm-target;
+          if($("octChk").checked) diff=((diff%12)+18)%12-6;
+          ok=Math.abs(diff)<=tolerance();
+          const st=liveStats[ni]||(liveStats[ni]={good:0,total:0});
+          st.total++; if(ok) st.good++;
+          liveDiff={ok,diff,t:tAbs};
+        }
+        trace.push({t:tAbs,midi:mm,ok});
+      }
     }
   }
   draw(Math.max(tAbs,sessFrom));
@@ -798,6 +859,17 @@ function loop(){
 }
 
 /* オクターブちがいOKのとき、表示上はお手本に近いオクターブへ寄せる */
+function tolerance(){ return {easy:0.8, normal:0.5, hard:0.3}[$("strictSel").value]||0.5; }
+function noteIdxAt(t){
+  for(let i=0;i<song.notes.length;i++){
+    const n=song.notes[i];
+    if(t>=noteStartSec(n)&&t<noteEndSec(n)) return i;
+  }
+  return -1;
+}
+let liveStats=[];      // 歌唱中の音符ごとの命中状況 {good,total}
+let liveDiff=null;     // 直近の判定 {ok,diff,t}
+let recentM=[];        // ピッチ平滑化バッファ
 function foldForDisplay(m,t){
   if(!$("octChk").checked) return m;
   const n=noteAt(t); if(!n) return m;
@@ -849,7 +921,7 @@ function autoCorrelate(buf,sr){
 
 /* ====== 採点 ====== */
 function finishSing(){
-  const octOK=$("octChk").checked, tr=transpose();
+  const octOK=$("octChk").checked, tr=transpose(), tol=tolerance();
   const noteHit=[]; let hits=0, total=0;
   for(const n of song.notes){
     const t0=noteStartSec(n), t1=noteEndSec(n), target=n.midi+tr;
@@ -860,7 +932,7 @@ function finishSing(){
     for(const p of pts){
       let diff=p.midi-target;
       if(octOK){ diff=((diff%12)+18)%12-6; }
-      if(Math.abs(diff)<=0.5) good++;
+      if(Math.abs(diff)<=tol) good++;
     }
     const hit=pts.length>=3&&good/pts.length>=0.5;
     noteHit.push(hit); if(hit) hits++;
