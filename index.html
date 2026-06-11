@@ -134,6 +134,7 @@
   <div class="row">
     <label class="file">📄 楽譜を読み込む<input type="file" id="fileInput" accept=".xml,.musicxml,.mxl"></label>
     <button id="demoBtn">🎵 デモ曲(きらきら星)</button>
+    <button id="forgetBtn" style="display:none" title="この端末に記憶した楽譜と設定を消します">🗑 きろく消去</button>
     <select id="partSel" style="display:none"></select>
     <span id="songTitle"></span>
   </div>
@@ -158,6 +159,13 @@
     <span class="ctl"><input type="checkbox" id="octChk" checked> オクターブちがいOK</span>
     <span class="ctl"><input type="checkbox" id="nameChk" checked> 音名を表示</span>
     <span class="ctl"><input type="checkbox" id="lyricChk" checked> 歌詞を表示</span>
+    <span class="ctl">マイク
+      <select id="micSel">
+        <option value="auto" selected>自動</option>
+        <option value="clear">クリア(処理なし)</option>
+        <option value="strong">エコー除去強</option>
+      </select>
+    </span>
     <span class="ctl">判定
       <select id="strictSel">
         <option value="easy">やさしい</option>
@@ -195,6 +203,7 @@
 <footer>
   青いブロックに オレンジの線が かさなるように うたってみよう<br>
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
+  🎙 録音や入力が途切れるときは、マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)
 </footer>
 
@@ -213,6 +222,12 @@ let micStream = null, analyser = null, micBuf = null;
 let scheduledNodes = [];
 
 const $ = id => document.getElementById(id);
+/* 端末内記憶(ブラウザのローカル保存。使えない環境では静かに無効化) */
+const store={
+  get(k){ try{return localStorage.getItem(k);}catch(e){return null;} },
+  set(k,v){ try{localStorage.setItem(k,v); return true;}catch(e){return false;} },
+  del(k){ try{localStorage.removeItem(k);}catch(e){} }
+};
 const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo";
 const isSinging = ()=> mode==="sing"||mode==="echo";
 const cv = $("cv"), ctx2d = cv.getContext("2d");
@@ -251,7 +266,7 @@ function loadDemo(){
   const seq=[[60,1],[60,1],[67,1],[67,1],[69,1],[69,1],[67,2],
              [65,1],[65,1],[64,1],[64,1],[62,1],[62,1],[60,2]];
   let t=0; const notes=seq.map(([m,b])=>{const n={startBeat:t,beats:b,midi:m}; t+=b; return n;});
-  setSong({title:"きらきら星(デモ)", bpm:100, parts:[{name:"メロディ", notes, measStarts:[0,4,8,12], totalBeats:16}]});
+  setSong({title:"きらきら星(デモ)", bpm:100, parts:[{name:"メロディ", notes, measStarts:[0,4,8,12], totalBeats:16}]}, false);
 }
 
 /* ====== MusicXML 読み込み ====== */
@@ -418,7 +433,14 @@ function parseMusicXML(xmlText, fname){
 }
 
 let songMeta=null;
-function setSong(s){
+function saveSongToDevice(){
+  if(!songMeta) return;
+  try{
+    const j=JSON.stringify(songMeta);
+    if(j.length<3500000){ store.set("utamie_song", j); $("forgetBtn").style.display="inline-block"; }
+  }catch(e){}
+}
+function setSong(s, save=true){
   stopAll();
   songMeta=s;
   const sel=$("partSel");
@@ -429,11 +451,17 @@ function setSong(s){
     sel.appendChild(o);
   });
   sel.style.display=s.parts.length>1?"inline-block":"none";
-  applyPart(0);
+  if(save) saveSongToDevice();
+  // この端末で前回選んだパートを優先
+  let pi=Number(store.get("utamie_part"));
+  if(!(pi>=0&&pi<s.parts.length)) pi=0;
+  sel.value=String(pi);
+  applyPart(pi);
   banner(s.parts.length>1?"この楽譜には複数のパートがあります。歌うパートをプルダウンで選んでください(今は「"+escapeHtml(s.parts[0].name)+"」を表示中)。":null);
 }
 function applyPart(i){
   stopAll();
+  store.set("utamie_part", String(i));
   const p=songMeta.parts[i];
   song={title:songMeta.title, bpm:songMeta.bpm, notes:p.notes,
         measStarts:p.measStarts||[0],
@@ -875,8 +903,13 @@ $("playBtn").addEventListener("click",()=>{
 let recorder=null, recChunks=[], recUrl=null, recStarted=false, recAudio=null;
 async function setupMic(aec){
   stopAll(); // 必ずマイク取得「前」に止める(後に呼ぶとマイクごと止まる)
+  const m=$("micSel").value;
+  let cons;
+  if(m==="clear")       cons={echoCancellation:false, noiseSuppression:false, autoGainControl:false};
+  else if(m==="strong") cons={echoCancellation:true,  noiseSuppression:true,  autoGainControl:true };
+  else                  cons={echoCancellation:aec,   noiseSuppression:false, autoGainControl:true }; // 自動
   try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:aec,noiseSuppression:aec,autoGainControl:false}});
+    micStream=await navigator.mediaDevices.getUserMedia({audio:cons});
   }catch(err){
     banner("🎤 マイクを使えませんでした("+err.name+")。<br>チャット内プレビューではマイクが制限されることがあります。<b>GitHub Pagesなどに公開したページ</b>で開くと使えます。ブラウザのマイク許可もご確認ください。");
     return false;
@@ -1376,6 +1409,15 @@ function finishSing(){
   }
   const score=total?Math.round(hits/total*100):0;
   lastResult={noteHit,score,hits,total};
+  // 声の検出率を確認:歌唱時間に対して検出フレームが極端に少なければ入力トラブルと判断
+  const sungSec=Math.max(1,sessTo-sessFrom);
+  const detRate=trace.length/(sungSec*30); // 30fps想定での検出率のめやす
+  if(detRate<0.15&&total>0){
+    banner("⚠️ 声がほとんど検出できませんでした。次をお試しください:<br>"
+      +"① マイク設定を<b>「クリア(処理なし)」</b>に変える(エコー除去が歌声を削ることがあります)<br>"
+      +"② お手本はイヤホンで聴く、またはお手本音量を下げる<br>"
+      +"③ マイクに近づいて、はっきりした声で歌う");
+  }
   recFinish(true);
   stopAll();
   showResult();
@@ -1434,7 +1476,51 @@ $("rangeAllBtn").addEventListener("click",()=>{
   onRangeChange();
 });
 
+/* ====== 端末内記憶:設定の保存・起動時の復元 ====== */
+const SAVED_CONTROLS=[
+  ["tempoSlider","value"],["volSlider","value"],["strictSel","value"],["micSel","value"],
+  ["guideChk","checked"],["metroChk","checked"],["octChk","checked"],
+  ["nameChk","checked"],["lyricChk","checked"]
+];
+function saveSettings(){
+  const o={};
+  for(const [id,prop] of SAVED_CONTROLS) o[id]=$(id)[prop];
+  store.set("utamie_settings", JSON.stringify(o));
+}
+function restoreSettings(){
+  try{
+    const o=JSON.parse(store.get("utamie_settings")||"null");
+    if(!o) return;
+    for(const [id,prop] of SAVED_CONTROLS){
+      if(id in o) $(id)[prop]=o[id];
+    }
+    $("tempoVal").textContent=$("tempoSlider").value+"%";
+    $("volVal").textContent=$("volSlider").value+"%";
+  }catch(e){}
+}
+for(const [id] of SAVED_CONTROLS){
+  $(id).addEventListener("change",saveSettings);
+}
+$("forgetBtn").addEventListener("click",()=>{
+  store.del("utamie_song"); store.del("utamie_part"); store.del("utamie_settings");
+  $("forgetBtn").style.display="none";
+  banner("🗑 この端末の記憶(楽譜・パート・設定)を消しました。");
+});
+function restoreSong(){
+  try{
+    const j=store.get("utamie_song");
+    if(!j) return;
+    const meta=JSON.parse(j);
+    if(!meta||!meta.parts||!meta.parts.length) return;
+    setSong(meta,false);
+    $("forgetBtn").style.display="inline-block";
+    banner("📂 前回の楽譜「"+escapeHtml(meta.title||"")+"」をこの端末の記憶から開きました。別の曲にするには「楽譜を読み込む」を押してください。");
+  }catch(e){}
+}
+
 resize();
+restoreSettings();
+restoreSong();
 </script>
 </body>
 </html>
