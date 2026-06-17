@@ -178,6 +178,23 @@
         <option value="2">2 / 4</option>
       </select>
     </div>
+    <div class="field">
+      <label>キー（音階補正）</label>
+      <select id="keysel">
+        <option value="auto">自動で推測</option>
+        <option value="0maj">ハ長調（ドレミ…）</option>
+        <option value="7maj">ト長調</option>
+        <option value="5maj">ヘ長調</option>
+        <option value="2maj">ニ長調</option>
+        <option value="9maj">イ長調</option>
+        <option value="10maj">変ロ長調</option>
+        <option value="3maj">変ホ長調</option>
+        <option value="9min">イ短調</option>
+        <option value="2min">ニ短調</option>
+        <option value="4min">ホ短調</option>
+        <option value="off">補正なし（原音）</option>
+      </select>
+    </div>
     <div class="countin" id="countinBox">
       <span>カウントイン</span><b id="countin">·</b>
     </div>
@@ -217,11 +234,11 @@
 
   // ---- state ----
   let audioCtx=null, analyser=null, micStream=null, micSource=null, buf=null;
-  let bpm=90, timeNum=4;
+  let bpm=90, timeNum=4, keySetting='auto';
   let recording=false, frames=[], recStart=0;
   let metroOn=false, nextTick=0, beatInMeasure=0, beatsElapsed=0, lookahead=null;
   let liveMidi=-1, liveCents=0;
-  let clickTimes=[], lastFrameMidi=null, lastPicked=[], recentMidi=[];
+  let clickTimes=[], lastFrameMidi=null, lastPicked=[], recentMidi=[], lastKey='';
 
   const MIN_HZ=80, MAX_HZ=1100, MIN_MIDI=45, MAX_MIDI=84;
   const NOTE_JP=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
@@ -230,6 +247,7 @@
   // ---- controls ----
   $('bpm').addEventListener('input', e=>{ bpm=+e.target.value; $('bpmVal').textContent=bpm; });
   $('timesig').addEventListener('change', e=>{ timeNum=+e.target.value; });
+  $('keysel').addEventListener('change', e=>{ keySetting=e.target.value; });
   $('recBtn').addEventListener('click', ()=> recording ? stopRec() : startRec());
   $('resetBtn').addEventListener('click', resetAll);
 
@@ -323,6 +341,47 @@
     const s=[...arr].sort((a,b)=>a-b); const n=s.length;
     return n? (n%2? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2) : null;
   }
+
+  // ---- 音楽的な推測：調の推定と音階スナップ ----
+  const MAJ=[0,2,4,5,7,9,11], MIN=[0,2,3,5,7,8,10];
+  const KS_MAJ=[6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+  const KS_MIN=[6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+  const TONIC_JP={0:'ハ',1:'変ニ',2:'ニ',3:'変ホ',4:'ホ',5:'ヘ',6:'嬰ヘ',7:'ト',8:'変イ',9:'イ',10:'変ロ',11:'ロ'};
+
+  function pearson(a,b){
+    const n=a.length; let ma=0,mb=0;
+    for(let i=0;i<n;i++){ ma+=a[i]; mb+=b[i]; } ma/=n; mb/=n;
+    let num=0,da=0,db=0;
+    for(let i=0;i<n;i++){ const x=a[i]-ma,y=b[i]-mb; num+=x*y; da+=x*x; db+=y*y; }
+    return (da&&db)? num/Math.sqrt(da*db) : 0;
+  }
+  // 歌った音の分布から最尤の調（主音・長短）を推定
+  function estimateKey(cells){
+    const hist=new Array(12).fill(0);
+    for(const m of cells) if(m!=null) hist[((m%12)+12)%12]++;
+    if(hist.every(x=>x===0)) return {tonic:0, mode:'major'};
+    let best={score:-2, tonic:0, mode:'major'};
+    for(let t=0;t<12;t++){
+      const pM=[],pm=[];
+      for(let i=0;i<12;i++){ pM.push(KS_MAJ[(i-t+12)%12]); pm.push(KS_MIN[(i-t+12)%12]); }
+      const sM=pearson(hist,pM); if(sM>best.score) best={score:sM,tonic:t,mode:'major'};
+      const sm=pearson(hist,pm); if(sm>best.score) best={score:sm,tonic:t,mode:'minor'};
+    }
+    return best;
+  }
+  function scalePcs(tonic, mode){ return (mode==='minor'?MIN:MAJ).map(x=>(x+tonic)%12); }
+  // 一番近い音階音へ寄せる（半音以内のズレを吸収）
+  function snapToScale(midi, pcset){
+    const pc=((midi%12)+12)%12;
+    if(pcset.includes(pc)) return midi;
+    let bestShift=99;
+    for(const s of pcset) for(const cand of [s-12,s,s+12]){
+      const diff=cand-pc;
+      if(Math.abs(diff)<Math.abs(bestShift)) bestShift=diff;
+    }
+    return midi+bestShift;
+  }
+  function keyNameJP(tonic, mode){ return TONIC_JP[((tonic%12)+12)%12] + (mode==='minor'?'短調':'長調'); }
 
   // 直近の値に近いオクターブへ寄せる（自己相関のオクターブ飛びを補正）
   function octaveCorrect(m, ref){
@@ -477,6 +536,25 @@
       cells[i]=rounded[Math.floor(rounded.length/2)]; // median
     }
 
+    // 音楽的スナップ：検出音を音階に寄せて「正しい音」に推測補正する
+    let keyLabel='';
+    if(keySetting!=='off'){
+      let tonic, mode;
+      if(keySetting==='auto'){ const k=estimateKey(cells); tonic=k.tonic; mode=k.mode; }
+      else { tonic=parseInt(keySetting,10); mode=keySetting.indexOf('min')>=0?'minor':'major'; }
+      const pcset=scalePcs(tonic,mode);
+      for(let i=0;i<totalCells;i++) if(cells[i]!=null) cells[i]=snapToScale(cells[i],pcset);
+      keyLabel=keyNameJP(tonic,mode);
+    }
+    lastKey=keyLabel;
+
+    // 単発のブレ（前後が同じ音に挟まれた1セルだけ違う音）を吸収して安定化
+    for(let i=1;i<totalCells-1;i++){
+      if(cells[i]!=null && cells[i-1]!=null && cells[i-1]===cells[i+1] && cells[i]!==cells[i-1]){
+        cells[i]=cells[i-1];
+      }
+    }
+
     // merge runs of equal cells (null = rest)
     const runs=[];
     for(let i=0;i<totalCells;i++){
@@ -624,7 +702,7 @@
 
     // count real notes for meta
     const noteCount=measures.reduce((a,m)=>a+m.filter(p=>!p.isRest).length,0);
-    $('scoreMeta').textContent = measures.length+'小節 ／ '+noteCount+'音 ／ '+bpm+'BPM '+timeNum+'/4';
+    $('scoreMeta').textContent = (lastKey? lastKey+' ／ ':'') + measures.length+'小節 ／ '+noteCount+'音 ／ '+bpm+'BPM '+timeNum+'/4';
     // 拾った音名（確認用）
     const picked=$('picked');
     if(picked) picked.textContent = lastPicked.length ? '拾った音：'+lastPicked.join(' ') : '';
