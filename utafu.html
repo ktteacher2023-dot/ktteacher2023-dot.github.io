@@ -198,6 +198,7 @@
     <div class="empty" id="scoreEmpty">メトロノームのカウントインのあと、<br>歌った旋律がここに五線譜で表示されます。</div>
     <div id="score"></div>
   </div>
+  <div id="picked" style="margin-top:10px;color:#cdd9d9;font-size:15px;letter-spacing:.12em;font-family:'Zen Maru Gothic';min-height:1.4em"></div>
 
   <div class="notes">
     <div class="row"><span>♪</span><span>うまく拾うコツ：<b>テンポは少しゆっくり</b>、ひと音ずつ「ター・ター」と区切って、<b>マイクの近く</b>で。鼻歌より母音（ラ・ナ）の方が安定します。</div>
@@ -220,6 +221,7 @@
   let recording=false, frames=[], recStart=0;
   let metroOn=false, nextTick=0, beatInMeasure=0, beatsElapsed=0, lookahead=null;
   let liveMidi=-1, liveCents=0;
+  let clickTimes=[], lastFrameMidi=null, lastPicked=[];
 
   const MIN_HZ=80, MAX_HZ=1100, MIN_MIDI=45, MAX_MIDI=84;
   const NOTE_JP=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
@@ -281,28 +283,42 @@
 
   function hzToMidi(hz){ return 69 + 12*Math.log2(hz/440); }
 
+  // 直近の値に近いオクターブへ寄せる（自己相関のオクターブ飛びを補正）
+  function octaveCorrect(m, ref){
+    if(ref==null) return m;
+    let best=m, bd=Math.abs(m-ref);
+    for(const cand of [m-12, m+12]){
+      if(Math.abs(cand-ref) < bd){ best=cand; bd=Math.abs(cand-ref); }
+    }
+    return best;
+  }
+
   // ---- live loop (tuner + recording capture) ----
   function liveLoop(){
     if(analyser){
       analyser.getFloatTimeDomainData(buf);
       const {hz, rms} = detectPitch(buf, audioCtx.sampleRate);
+      const now = audioCtx.currentTime;
+      // メトロノームの瞬間（±55ms）は拾わない（保険）
+      const nearClick = clickTimes.some(ct => Math.abs(now-ct) < 0.055);
       // level meter
       $('level').style.width = Math.min(100, rms*420) + '%';
-      if(hz>0){
-        const m = hzToMidi(hz);
+      if(hz>0 && !nearClick){
+        let m = hzToMidi(hz);
+        m = octaveCorrect(m, lastFrameMidi);
         const mr = Math.round(m);
         liveCents = (m-mr)*100;
         if(mr>=MIN_MIDI && mr<=MAX_MIDI){
-          liveMidi=mr;
+          liveMidi=mr; lastFrameMidi=m;
           updateTuner(mr, liveCents);
           if(recording){
-            frames.push({t: audioCtx.currentTime - recStart, midi: m, voiced:true});
+            frames.push({t: now - recStart, midi: m, voiced:true});
           }
         }
       } else {
         liveMidi=-1;
         updateTuner(-1,0);
-        if(recording){ frames.push({t: audioCtx.currentTime - recStart, midi:-1, voiced:false}); }
+        if(recording){ frames.push({t: now - recStart, midi:-1, voiced:false}); }
       }
     }
     requestAnimationFrame(liveLoop);
@@ -329,12 +345,15 @@
   // ---- metronome ----
   function click(time, accent){
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.frequency.value = accent?1320:880;
+    // 声域外（>1100Hz）にして、ピッチ検出に絶対に乗らないようにする
+    o.frequency.value = accent?1900:1500;
     o.connect(g); g.connect(audioCtx.destination);
     g.gain.setValueAtTime(0.0001, time);
-    g.gain.exponentialRampToValueAtTime(accent?0.5:0.32, time+0.001);
-    g.gain.exponentialRampToValueAtTime(0.0001, time+0.06);
-    o.start(time); o.stop(time+0.07);
+    g.gain.exponentialRampToValueAtTime(accent?0.45:0.28, time+0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, time+0.05);
+    o.start(time); o.stop(time+0.06);
+    clickTimes.push(time);
+    if(clickTimes.length>32) clickTimes.shift();
   }
 
   function scheduler(){
@@ -358,7 +377,7 @@
   // ---- record control ----
   async function startRec(){
     if(!(await ensureMic())) return;
-    frames=[]; clearScore();
+    frames=[]; clickTimes=[]; lastFrameMidi=null; clearScore();
     recording=false; metroOn=true;
     beatInMeasure=0; beatsElapsed=0;
     nextTick = audioCtx.currentTime + 0.15;
@@ -393,17 +412,17 @@
 
   // ---- transcription: frames -> quantized events ----
   function transcribe(){
-    const sixteenth = 60/bpm/4;            // seconds per 16th
+    const unit = 60/bpm/2;                 // seconds per 8th note (粗めにして安定)
     const dur = frames.length? frames[frames.length-1].t : 0;
-    let totalCells = Math.round(dur / sixteenth);
+    let totalCells = Math.round(dur / unit);
     if(totalCells<1){ showEmpty('声が拾えませんでした。もう少し大きな声で、近くで歌ってみてください。'); return; }
-    totalCells = Math.min(totalCells, 16*64); // safety cap
+    totalCells = Math.min(totalCells, 8*64); // safety cap
 
     // assign frames to grid cells, take median midi per cell
     const cells=new Array(totalCells).fill(null);
     const bucket=Array.from({length:totalCells},()=>[]);
     for(const f of frames){
-      const idx=Math.floor(f.t/sixteenth);
+      const idx=Math.floor(f.t/unit);
       if(idx<0||idx>=totalCells) continue;
       bucket[idx].push(f.voiced? f.midi : null);
     }
@@ -429,16 +448,19 @@
     const cleaned=[];
     for(const r of runs){
       if(r.midi===null && r.len===1 && cleaned.length && cleaned[cleaned.length-1].midi!==null){
-        cleaned[cleaned.length-1].len++; // absorb a 16th rest into the held note
+        cleaned[cleaned.length-1].len++; // absorb a short rest into the held note
       } else cleaned.push({...r});
     }
     if(!cleaned.length){ showEmpty('うまく音を拾えませんでした。テンポを少し下げて、はっきり歌ってみてください。'); return; }
 
+    // 拾った音名の列（デバッグ／確認用）
+    lastPicked = cleaned.filter(r=>r.midi!==null).map(r=>NOTE_JP[((r.midi%12)+12)%12]);
+
     buildMeasures(cleaned);
   }
 
-  // ---- duration decomposition (in 16th units) ----
-  const DUR_TABLE=[ [16,'w',0],[12,'h',1],[8,'h',0],[6,'q',1],[4,'q',0],[3,'8',1],[2,'8',0],[1,'16',0] ];
+  // ---- duration decomposition (in 8th-note units) ----
+  const DUR_TABLE=[ [8,'w',0],[6,'h',1],[4,'h',0],[3,'q',1],[2,'q',0],[1,'8',0] ];
   function decompose(n){
     const out=[]; let rem=n; let guard=0;
     while(rem>0 && guard++<64){
@@ -459,7 +481,7 @@
 
   // ---- build measures and render ----
   function buildMeasures(events){
-    const cellsPerMeasure = timeNum*4;
+    const cellsPerMeasure = timeNum*2;  // 8分音符グリッド（x/4拍子）
     const measures=[]; let cur=[]; let pos=0; let tieGroup=0;
 
     function pushPiece(measureArr, piece){ measureArr.push(piece); }
@@ -496,7 +518,7 @@
     render(measures);
   }
   function valueOf(code,dots){
-    const base={w:16,h:8,q:4,'8':2,'16':1}[code]||0;
+    const base={w:8,h:4,q:2,'8':1}[code]||0;
     return dots? base*1.5 : base;
   }
 
@@ -561,6 +583,9 @@
     // count real notes for meta
     const noteCount=measures.reduce((a,m)=>a+m.filter(p=>!p.isRest).length,0);
     $('scoreMeta').textContent = measures.length+'小節 ／ '+noteCount+'音 ／ '+bpm+'BPM '+timeNum+'/4';
+    // 拾った音名（確認用）
+    const picked=$('picked');
+    if(picked) picked.textContent = lastPicked.length ? '拾った音：'+lastPicked.join(' ') : '';
   }
 
   function showEmpty(msg){
