@@ -413,13 +413,13 @@
         if(mr>=MIN_MIDI && mr<=MAX_MIDI){
           liveMidi=mr; lastFrameMidi=sm;
           updateTuner(mr, liveCents);
-          if(recording){ frames.push({t: now - recStart, midi: sm, voiced:true}); }
+          if(recording){ frames.push({t: now - recStart, midi: sm, voiced:true, rms}); }
         }
       } else {
         recentMidi.length=0; lastFrameMidi=null;
         liveMidi=-1;
         updateTuner(-1,0);
-        if(recording){ frames.push({t: now - recStart, midi:-1, voiced:false}); }
+        if(recording){ frames.push({t: now - recStart, midi:-1, voiced:false, rms}); }
       }
     }
     requestAnimationFrame(liveLoop);
@@ -522,10 +522,12 @@
     // assign frames to grid cells, take median midi per cell
     const cells=new Array(totalCells).fill(null);
     const bucket=Array.from({length:totalCells},()=>[]);
+    const rmsBucket=Array.from({length:totalCells},()=>[]);
     for(const f of frames){
       const idx=Math.floor(f.t/unit);
       if(idx<0||idx>=totalCells) continue;
       bucket[idx].push(f.voiced? f.midi : null);
+      if(f.voiced) rmsBucket[idx].push(f.rms||0);
     }
     for(let i=0;i<totalCells;i++){
       const arr=bucket[i];
@@ -555,10 +557,32 @@
       }
     }
 
-    // merge runs of equal cells (null = rest)
+    // セルごとの平均音量
+    const cellRms=new Array(totalCells).fill(0);
+    for(let i=0;i<totalCells;i++){
+      const a=rmsBucket[i];
+      cellRms[i]= a.length? a.reduce((s,x)=>s+x,0)/a.length : 0;
+    }
+    // 音の打ち直し（オンセット）検出：同じ高さでもここで区切る
+    const onset=new Array(totalCells).fill(false);
+    for(let i=1;i<totalCells;i++){
+      if(cells[i]==null) continue;
+      // アタック：音量が明確に増加
+      if(cellRms[i-1]>0.008 && cellRms[i] > cellRms[i-1]*1.5 && (cellRms[i]-cellRms[i-1])>0.015) onset[i]=true;
+    }
+    for(let i=2;i<totalCells;i++){
+      if(cells[i]==null || cells[i-1]==null) continue;
+      // 谷明け：直前セルが両側より落ち込んでいて、ここで戻る
+      if(cellRms[i-1] < cellRms[i]*0.72 && cellRms[i-1] < cellRms[i-2]*0.72) onset[i]=true;
+    }
+    for(let i=1;i<totalCells;i++) if(onset[i] && onset[i-1]) onset[i]=false; // 連続抑制
+
+    // merge runs of equal cells (null = rest)。同音でもオンセットがあれば新しい音符に区切る
     const runs=[];
     for(let i=0;i<totalCells;i++){
-      if(runs.length && runs[runs.length-1].midi===cells[i]) runs[runs.length-1].len++;
+      const same = runs.length && runs[runs.length-1].midi===cells[i];
+      const splitSame = same && cells[i]!=null && onset[i];
+      if(same && !splitSame) runs[runs.length-1].len++;
       else runs.push({midi:cells[i], len:1});
     }
     // drop a leading rest, and trim trailing rest
