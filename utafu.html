@@ -221,7 +221,7 @@
   let recording=false, frames=[], recStart=0;
   let metroOn=false, nextTick=0, beatInMeasure=0, beatsElapsed=0, lookahead=null;
   let liveMidi=-1, liveCents=0;
-  let clickTimes=[], lastFrameMidi=null, lastPicked=[];
+  let clickTimes=[], lastFrameMidi=null, lastPicked=[], recentMidi=[];
 
   const MIN_HZ=80, MAX_HZ=1100, MIN_MIDI=45, MAX_MIDI=84;
   const NOTE_JP=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
@@ -255,33 +255,74 @@
     }
   }
 
-  // ---- pitch detection (autocorrelation) ----
+  // ---- pitch detection (YIN: 声に強い基本周波数推定) ----
   function detectPitch(b, sr){
-    let SIZE=b.length, rms=0;
-    for(let i=0;i<SIZE;i++) rms+=b[i]*b[i];
-    rms=Math.sqrt(rms/SIZE);
-    if(rms<0.012) return {hz:-1, rms};
-    let r1=0, r2=SIZE-1, thr=0.2;
-    for(let i=0;i<SIZE/2;i++){ if(Math.abs(b[i])<thr){ r1=i; break; } }
-    for(let i=1;i<SIZE/2;i++){ if(Math.abs(b[SIZE-i])<thr){ r2=SIZE-i; break; } }
-    const buf2=b.slice(r1,r2); const N=buf2.length;
-    if(N<128) return {hz:-1, rms};
-    const c=new Float32Array(N);
-    for(let i=0;i<N;i++){ let s=0; for(let j=0;j<N-i;j++) s+=buf2[j]*buf2[j+i]; c[i]=s; }
-    let d=0; while(d<N-1 && c[d]>c[d+1]) d++;
-    let maxv=-1, maxp=-1;
-    for(let i=d;i<N;i++){ if(c[i]>maxv){ maxv=c[i]; maxp=i; } }
-    if(maxp<=0) return {hz:-1, rms};
-    let T0=maxp;
-    const x1=c[T0-1]||0, x2=c[T0], x3=c[T0+1]||0;
-    const a=(x1+x3-2*x2)/2, bb=(x3-x1)/2;
-    if(a) T0 = T0 - bb/(2*a);
-    const hz = sr/T0;
-    if(hz<MIN_HZ || hz>MAX_HZ) return {hz:-1, rms};
-    return {hz, rms};
+    const W = 1024;                                   // 解析窓
+    const tauMin = Math.max(2, Math.floor(sr/MAX_HZ));
+    const tauMax = Math.min(Math.floor(sr/MIN_HZ), b.length - W - 1);
+    let rms=0; for(let i=0;i<W;i++) rms+=b[i]*b[i];
+    rms=Math.sqrt(rms/W);
+    if(rms<0.007 || tauMax<=tauMin) return {hz:-1, rms, clarity:0};
+
+    // difference function
+    const d=new Float32Array(tauMax+1);
+    for(let tau=tauMin; tau<=tauMax; tau++){
+      let sum=0;
+      for(let j=0;j<W;j++){ const diff=b[j]-b[j+tau]; sum+=diff*diff; }
+      d[tau]=sum;
+    }
+    // cumulative mean normalized difference
+    const cmnd=new Float32Array(tauMax+1);
+    let running=0;
+    for(let tau=tauMin; tau<=tauMax; tau++){
+      running+=d[tau];
+      cmnd[tau] = running>0 ? d[tau]*(tau-tauMin+1)/running : 1;
+    }
+    // absolute threshold → first local valley below it
+    const TH=0.13;
+    let tauEst=-1;
+    for(let tau=tauMin; tau<=tauMax; tau++){
+      if(cmnd[tau]<TH){
+        while(tau+1<=tauMax && cmnd[tau+1]<cmnd[tau]) tau++;
+        tauEst=tau; break;
+      }
+    }
+    if(tauEst===-1){
+      let mn=Infinity, mp=-1;
+      for(let tau=tauMin; tau<=tauMax; tau++) if(cmnd[tau]<mn){ mn=cmnd[tau]; mp=tau; }
+      if(mp<0 || mn>0.6) return {hz:-1, rms, clarity:0};
+      tauEst=mp;
+    }
+    // オクターブ低（サブハーモニクス）対策：
+    // 半分/1/3の周期にも同程度はっきりした谷があれば、高い方（本来の基音）を採用
+    let improved=true, guard=0;
+    while(improved && guard++<8){
+      improved=false;
+      for(const div of [2,3]){
+        const tt=Math.round(tauEst/div);
+        if(tt<tauMin) continue;
+        let best=tt;
+        for(let k=Math.max(tauMin,tt-2); k<=Math.min(tauMax,tt+2); k++) if(cmnd[k]<cmnd[best]) best=k;
+        if(cmnd[best] < cmnd[tauEst]+0.10){ tauEst=best; improved=true; break; }
+      }
+    }
+    // parabolic interpolation
+    let t=tauEst;
+    if(t>tauMin && t<tauMax){
+      const a=cmnd[t-1], x=cmnd[t], c=cmnd[t+1], denom=(a+c-2*x);
+      if(denom!==0){ const adj=(a-c)/(2*denom); if(Math.abs(adj)<1) t+=adj; }
+    }
+    const hz=sr/t;
+    if(hz<MIN_HZ || hz>MAX_HZ) return {hz:-1, rms, clarity:0};
+    return {hz, rms, clarity:1-cmnd[tauEst]};
   }
 
   function hzToMidi(hz){ return 69 + 12*Math.log2(hz/440); }
+
+  function median(arr){
+    const s=[...arr].sort((a,b)=>a-b); const n=s.length;
+    return n? (n%2? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2) : null;
+  }
 
   // 直近の値に近いオクターブへ寄せる（自己相関のオクターブ飛びを補正）
   function octaveCorrect(m, ref){
@@ -297,25 +338,26 @@
   function liveLoop(){
     if(analyser){
       analyser.getFloatTimeDomainData(buf);
-      const {hz, rms} = detectPitch(buf, audioCtx.sampleRate);
+      const {hz, rms, clarity} = detectPitch(buf, audioCtx.sampleRate);
       const now = audioCtx.currentTime;
       // メトロノームの瞬間（±55ms）は拾わない（保険）
       const nearClick = clickTimes.some(ct => Math.abs(now-ct) < 0.055);
-      // level meter
       $('level').style.width = Math.min(100, rms*420) + '%';
-      if(hz>0 && !nearClick){
+      if(hz>0 && clarity>0.55 && !nearClick){
         let m = hzToMidi(hz);
         m = octaveCorrect(m, lastFrameMidi);
-        const mr = Math.round(m);
-        liveCents = (m-mr)*100;
+        // median smoothing over recent frames to reduce flicker
+        recentMidi.push(m); if(recentMidi.length>3) recentMidi.shift();
+        const sm = median(recentMidi);
+        const mr = Math.round(sm);
+        liveCents = (sm-mr)*100;
         if(mr>=MIN_MIDI && mr<=MAX_MIDI){
-          liveMidi=mr; lastFrameMidi=m;
+          liveMidi=mr; lastFrameMidi=sm;
           updateTuner(mr, liveCents);
-          if(recording){
-            frames.push({t: now - recStart, midi: m, voiced:true});
-          }
+          if(recording){ frames.push({t: now - recStart, midi: sm, voiced:true}); }
         }
       } else {
+        recentMidi.length=0; lastFrameMidi=null;
         liveMidi=-1;
         updateTuner(-1,0);
         if(recording){ frames.push({t: now - recStart, midi:-1, voiced:false}); }
@@ -377,7 +419,7 @@
   // ---- record control ----
   async function startRec(){
     if(!(await ensureMic())) return;
-    frames=[]; clickTimes=[]; lastFrameMidi=null; clearScore();
+    frames=[]; clickTimes=[]; lastFrameMidi=null; recentMidi=[]; clearScore();
     recording=false; metroOn=true;
     beatInMeasure=0; beatsElapsed=0;
     nextTick = audioCtx.currentTime + 0.15;
@@ -430,7 +472,7 @@
       const arr=bucket[i];
       if(!arr.length){ cells[i]=null; continue; }
       const voiced=arr.filter(x=>x!==null);
-      if(voiced.length < arr.length*0.45){ cells[i]=null; continue; }
+      if(voiced.length < arr.length*0.35){ cells[i]=null; continue; }
       const rounded=voiced.map(x=>Math.round(x)).sort((a,b)=>a-b);
       cells[i]=rounded[Math.floor(rounded.length/2)]; // median
     }
