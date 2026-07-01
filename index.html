@@ -143,6 +143,7 @@
     <button id="singBtn" class="primary" disabled>🎤 歌ってみる</button>
     <button id="echoBtn" disabled>🦜 まねっこ</button>
     <button id="breathBtn">🌬 ロングトーン</button>
+    <button id="freeBtn">🐤 こえあそび</button>
     <button id="rewindBtn" disabled>⏮ 最初へ</button>
     <button id="pauseBtn" disabled>⏸ 一時停止</button>
     <button id="stopBtn" class="stop" disabled>■ 止める</button>
@@ -168,9 +169,9 @@
     </span>
     <span class="ctl">判定
       <select id="strictSel">
-        <option value="easy">やさしい</option>
-        <option value="normal" selected>ふつう</option>
-        <option value="hard">きびしい</option>
+        <option value="easy">ふつう</option>
+        <option value="easier" selected>やさしい</option>
+        <option value="easiest">いちばんやさしい</option>
       </select>
     </span>
   </div>
@@ -203,7 +204,7 @@
 <footer>
   青いブロックに オレンジの線が かさなるように うたってみよう<br>
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
-  🎙 録音や入力が途切れるときは、マイク設定を「クリア(処理なし)」にしてみてください<br>
+  🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)
 </footer>
 
@@ -710,6 +711,46 @@ function draw(t){
     ctx2d.beginPath(); ctx2d.moveTo(px-7,0); ctx2d.lineTo(px+7,0); ctx2d.lineTo(px,9); ctx2d.fill();
   }
 
+  // ⭐ きらきらパーティクル&コンボ(歌唱中)
+  if(isSinging()){
+    const nowMs=performance.now();
+    const dt=Math.min(0.06,(nowMs-(draw._pMs||nowMs))/1000); draw._pMs=nowMs;
+    // ぴったり中は歌声の位置から星がわく
+    if(liveDiff&&liveDiff.ok&&t-liveDiff.t<0.12&&trace.length&&sparkles.length<80){
+      const vy=yOf(trace[trace.length-1].midi);
+      for(let k=0;k<2;k++) sparkles.push({x:px+(Math.random()*16-8), y:vy+(Math.random()*16-8),
+        vx:-(20+Math.random()*50), vy:-(20+Math.random()*60), life:1, size:2+Math.random()*3,
+        hue:45+Math.random()*15});
+    }
+    // 約3秒れんぞくヒットのおいわいバースト(虹色の花火)
+    if(comboBurst&&!comboBurst.done&&trace.length){
+      comboBurst.done=true;
+      const vy=yOf(trace[trace.length-1].midi);
+      for(let k=0;k<24;k++){
+        const a=Math.PI*2*k/24;
+        sparkles.push({x:px, y:vy, vx:Math.cos(a)*(60+Math.random()*80), vy:Math.sin(a)*(60+Math.random()*80),
+          life:1, size:2.5+Math.random()*3, hue:Math.random()*360});
+      }
+    }
+    for(let i=sparkles.length-1;i>=0;i--){
+      const p=sparkles[i];
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=60*dt; p.life-=dt*1.4;
+      if(p.life<=0){ sparkles.splice(i,1); continue; }
+      ctx2d.globalAlpha=Math.max(0,p.life);
+      ctx2d.fillStyle="hsl("+p.hue+",95%,60%)";
+      ctx2d.beginPath(); ctx2d.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx2d.fill();
+    }
+    ctx2d.globalAlpha=1;
+    // ⭐×コンボ表示(合っている間どんどんふえる)
+    if(combo>=20){
+      const burst=comboBurst&&t<comboBurst.until;
+      ctx2d.font=(burst?"900 26px":"800 18px")+" sans-serif";
+      ctx2d.textAlign="right"; ctx2d.textBaseline="top";
+      ctx2d.fillStyle=burst?"#F5A623":"#E8952F";
+      ctx2d.fillText("⭐×"+combo+(burst?" すごい!":""), W-10, 10);
+    }
+  }
+
   // マイク入力レベルメーター(歌唱中)
   if(isSinging()){
     const mw=120, mh=10, mx=10, my=10;
@@ -718,11 +759,12 @@ function draw(t){
     ctx2d.fillStyle="#E7EEF3";
     ctx2d.fillRect(mx,my,mw,mh);
     const lvl=Math.min(1,lastRms*12);
-    ctx2d.fillStyle=lastRms>=micGate?"#2FB380":"#E2574C";
+    const heard=lastRms>=micGate||performance.now()/1000<voicedUntil;
+    ctx2d.fillStyle=heard?"#2FB380":"#E2574C";
     ctx2d.fillRect(mx,my,mw*lvl,mh);
     ctx2d.fillStyle="#5A6B75"; ctx2d.font="10px sans-serif";
     ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
-    ctx2d.fillText(lastRms>=micGate?"🎤 入力OK":"🎤 こえが小さい", mx+mw+6, my+mh/2);
+    ctx2d.fillText(heard?"🎤 きこえてるよ":"🎤 こえをきかせて", mx+mw+6, my+mh/2);
 
     // リアルタイム判定:ぴったり!/たかい/ひくい(まねっこ中はフェーズ表示も)
     let txt=null,col=null;
@@ -890,6 +932,7 @@ function stopAll(){
   $("stopBtn").disabled=true;
   $("pauseBtn").disabled=true; $("pauseBtn").textContent="⏸ 一時停止";
   $("breathBtn").disabled=false;
+  $("freeBtn").disabled=false;
   if(song){ $("playBtn").disabled=false; $("singBtn").disabled=false; $("echoBtn").disabled=false; $("rewindBtn").disabled=false; }
 }
 
@@ -970,7 +1013,8 @@ $("stopBtn").addEventListener("click",()=>{
 function startSession(withMic){
   lastResult=null; $("result").style.display="none"; $("recWrap").style.display="none";
   trace=[];
-  micGate=0.006; calibRms=0;
+  micGate=0.006; calibRms=0; calibArr=[];
+  combo=0; comboBest=0; comboBurst=null; sparkles.length=0;
   liveStats=[]; liveDiff=null; recentM=[];
   mode=withMic?"sing":"play";
   $("playBtn").disabled=true; $("singBtn").disabled=true; $("stopBtn").disabled=false;
@@ -1015,6 +1059,14 @@ function micJudge(f,tAbs){
     const st=liveStats[ni]||(liveStats[ni]={good:0,total:0});
     st.total++; if(ok) st.good++;
     liveDiff={ok,diff,t:tAbs};
+    // ⭐ コンボ:合っている間ふえていく(ずれたらリセット。声が途切れただけでは減らない)
+    if(ok){
+      combo++;
+      if(combo>comboBest) comboBest=combo;
+      if(combo>0&&combo%90===0) comboBurst={n:combo, until:tAbs+0.9, done:false}; // 約3秒れんぞくごとにおいわい
+    }else{
+      combo=0;
+    }
   }
   trace.push({t:tAbs,midi:mm,ok});
 }
@@ -1026,9 +1078,12 @@ function loop(){
     analyser.getFloatTimeDomainData(micBuf);
     const f=autoCorrelate(micBuf,getAudio().sampleRate);
     if(t<0){
-      // カウントイン中:まだ歌っていない=聞こえるのはスピーカー漏れ。その音量を基準にしきい値を決める
-      calibRms=Math.max(calibRms,lastRms);
-      micGate=Math.min(0.06,Math.max(0.006,calibRms*1.6));
+      // カウントイン中:スピーカー漏れの「中央値」を基準にしきい値を決める
+      // (最大値だとメトロノームのクリック音1発でゲートが跳ね上がり、歌声が全部弾かれてしまう)
+      calibArr.push(lastRms);
+      const s=calibArr.slice().sort((a,b)=>a-b);
+      const med=s[s.length>>1]||0;
+      micGate=Math.min(0.02,Math.max(0.004,med*2.2));
     }else{
       recStartIfNeeded();
       if(f>0) micJudge(f,tAbs);
@@ -1061,7 +1116,7 @@ function loop(){
 }
 
 /* オクターブちがいOKのとき、表示上はお手本に近いオクターブへ寄せる */
-function tolerance(){ return {easy:0.8, normal:0.5, hard:0.3}[$("strictSel").value]||0.5; }
+function tolerance(){ return {easy:0.8, easier:1.3, easiest:2.0, normal:0.8, hard:0.8}[$("strictSel").value]||1.3; }
 function noteIdxAt(t){
   for(let i=0;i<song.notes.length;i++){
     const n=song.notes[i];
@@ -1078,6 +1133,8 @@ function drawThrottled(t){
 }
 let liveStats=[];      // 歌唱中の音符ごとの命中状況 {good,total}
 let liveDiff=null;     // 直近の判定 {ok,diff,t}
+let combo=0, comboBest=0, comboBurst=null; // ⭐れんぞくヒット
+let sparkles=[];       // きらきらパーティクル
 let recentM=[];        // ピッチ平滑化バッファ
 function foldForDisplay(m,t){
   if(!$("octChk").checked) return m;
@@ -1179,7 +1236,8 @@ $("echoBtn").addEventListener("click",async()=>{
   if(!await setupMic(true)) return; // お手本が必ず鳴るのでエコー除去ON
   lastResult=null; $("result").style.display="none"; $("recWrap").style.display="none";
   trace=[]; liveStats=[]; liveDiff=null; recentM=[];
-  micGate=0.006; calibRms=0;
+  micGate=0.006; calibRms=0; calibArr=[];
+  combo=0; comboBest=0; comboBurst=null; sparkles.length=0;
   mode="echo";
   $("playBtn").disabled=true; $("singBtn").disabled=true;
   $("echoBtn").disabled=true; $("breathBtn").disabled=true;
@@ -1203,8 +1261,10 @@ function echoLoop(){
     analyser.getFloatTimeDomainData(micBuf);
     const f=autoCorrelate(micBuf,ac.sampleRate);
     if(E.phase==="count"){
-      calibRms=Math.max(calibRms,lastRms);
-      micGate=Math.min(0.06,Math.max(0.006,calibRms*1.6));
+      calibArr.push(lastRms);
+      const s=calibArr.slice().sort((a,b)=>a-b);
+      const med=s[s.length>>1]||0;
+      micGate=Math.min(0.02,Math.max(0.004,med*2.2));
     }else if(E.phase==="sing"){
       recStartIfNeeded();
       if(f>0&&now>=E.phaseStart) micJudge(f,echoT());
@@ -1260,7 +1320,7 @@ $("breathBtn").addEventListener("click",async()=>{
   micGate=0.006;
   $("result").style.display="none";
   $("emptyMsg").style.display="none";
-  $("playBtn").disabled=!song; $("singBtn").disabled=!song; $("breathBtn").disabled=true;
+  $("playBtn").disabled=!song; $("singBtn").disabled=!song; $("breathBtn").disabled=true; $("freeBtn").disabled=true;
   $("stopBtn").disabled=false;
   breathData={phase:"wait", t0:0, last:0, cnt:0, pitches:[], rmss:[]};
   breathLoop();
@@ -1353,15 +1413,133 @@ function finishBreath(){
   $("result").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
+/* ====== こえあそび(声でおえかき・マイクチェックも兼ねる) ====== */
+let freeData=null;
+$("freeBtn").addEventListener("click",async()=>{
+  banner(null);
+  stopAll();
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(err){
+    banner("🎤 マイクを使えませんでした("+err.name+")。GitHub Pagesなど公開ページで開き、マイク許可をご確認ください。");
+    return;
+  }
+  const ac=getAudio();
+  const src=ac.createMediaStreamSource(micStream);
+  analyser=ac.createAnalyser(); analyser.fftSize=2048;
+  micBuf=new Float32Array(analyser.fftSize);
+  src.connect(analyser);
+  if(ac.state==="suspended") await ac.resume();
+  mode="free";
+  micGate=0.005; voicedUntil=0;
+  $("result").style.display="none";
+  $("emptyMsg").style.display="none";
+  $("freeBtn").disabled=true; $("breathBtn").disabled=true;
+  $("stopBtn").disabled=false;
+  freeData={t0:ac.currentTime, trail:[], parts:[], smooth:0, lastVoice:-9};
+  freeLoop();
+});
+function freeLoop(){
+  if(mode!=="free") return;
+  analyser.getFloatTimeDomainData(micBuf);
+  const f=autoCorrelate(micBuf,getAudio().sampleRate);
+  const now=getAudio().currentTime, F=freeData;
+  if(f>0){
+    let m=69+12*Math.log2(f/440);
+    if(m>=40&&m<=94){
+      F.smooth=F.smooth?F.smooth*0.55+m*0.45:m; // なめらかに追従
+      F.trail.push({t:now, m:F.smooth});
+      F.lastVoice=now;
+    }
+  }
+  while(F.trail.length&&now-F.trail[0].t>7) F.trail.shift(); // 7秒ぶんだけ残す
+  if(performance.now()-lastDrawMs>=30){ lastDrawMs=performance.now(); drawFree(now); }
+  rafId=requestAnimationFrame(freeLoop);
+}
+function drawFree(now){
+  const W=cv.getBoundingClientRect().width, H=340;
+  ctx2d.clearRect(0,0,W,H);
+  const F=freeData;
+  const LO=43, HI=91; // だいたいG2〜G6
+  const yOf=m=>H-14-(m-LO)/(HI-LO)*(H-56);
+  const voiced=now-F.lastVoice<0.3;
+  // うすいガイド(ドの線)と たかい/ひくい ラベル
+  ctx2d.lineWidth=1; ctx2d.strokeStyle="#E3EBF0";
+  ctx2d.fillStyle="#9DB0BA"; ctx2d.font="11px sans-serif"; ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
+  for(let m=48;m<=84;m+=12){
+    const y=yOf(m);
+    ctx2d.beginPath(); ctx2d.moveTo(0,y); ctx2d.lineTo(W,y); ctx2d.stroke();
+    ctx2d.fillText("ド",4,y-8);
+  }
+  ctx2d.fillStyle="#B7C6CE"; ctx2d.font="700 12px sans-serif";
+  ctx2d.fillText("↑ たかい",8,18);
+  ctx2d.fillText("↓ ひくい",8,H-14);
+  // 虹色のこえのしっぽ
+  const bx=W*0.72, pxs=(bx-16)/7;
+  if(F.trail.length>1){
+    ctx2d.lineWidth=5; ctx2d.lineCap="round";
+    let prev=null;
+    for(const p of F.trail){
+      const x=bx-(now-p.t)*pxs, y=yOf(p.m);
+      if(prev&&p.t-prev.t<0.15){
+        const hue=280-(p.m-LO)/(HI-LO)*280; // ひくい=むらさき→たかい=あか
+        const age=Math.max(0,1-(now-p.t)/7);
+        ctx2d.globalAlpha=0.25+0.75*age;
+        ctx2d.strokeStyle="hsl("+hue+",85%,58%)";
+        ctx2d.beginPath(); ctx2d.moveTo(prev.x,prev.y); ctx2d.lineTo(x,y); ctx2d.stroke();
+      }
+      prev={x,y,t:p.t};
+    }
+    ctx2d.globalAlpha=1;
+  }
+  // ひよこ:声の高さについてくる。声がないときはまんなかでふわふわ待つ
+  let by;
+  if(voiced&&F.smooth){ by=yOf(F.smooth); }
+  else{ by=H/2+Math.sin(now*2.2)*10; ctx2d.globalAlpha=0.55; }
+  ctx2d.font="34px serif"; ctx2d.textAlign="center"; ctx2d.textBaseline="middle";
+  ctx2d.fillText("🐤", bx, by+Math.sin(now*9)*(voiced?2:0));
+  ctx2d.globalAlpha=1;
+  // 声が出ている間、ひよこのまわりにキラキラ
+  if(voiced&&F.parts.length<40){
+    F.parts.push({x:bx+(Math.random()*26-13), y:by+(Math.random()*26-13),
+      vx:-(30+Math.random()*40), vy:(Math.random()-0.5)*50, life:1,
+      hue:280-((F.smooth||60)-LO)/(HI-LO)*280, size:2+Math.random()*2.5});
+  }
+  const dt=1/30;
+  for(let i=F.parts.length-1;i>=0;i--){
+    const p=F.parts[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*1.6;
+    if(p.life<=0){ F.parts.splice(i,1); continue; }
+    ctx2d.globalAlpha=Math.max(0,p.life);
+    ctx2d.fillStyle="hsl("+p.hue+",90%,62%)";
+    ctx2d.beginPath(); ctx2d.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx2d.fill();
+  }
+  ctx2d.globalAlpha=1;
+  // メッセージとレベルメーター
+  ctx2d.textAlign="center"; ctx2d.textBaseline="top"; ctx2d.font="800 17px sans-serif";
+  if(voiced){
+    ctx2d.fillStyle="#2FB380";
+    ctx2d.fillText("きこえてるよ! こえで おえかきしよう 🎨", W/2, 8);
+  }else{
+    ctx2d.fillStyle="#5A6B75";
+    ctx2d.fillText("こえを きかせてみよう!(「あ〜」でも ハミングでも OK)", W/2, 8);
+  }
+  const mw=120, mh=10, mx=W/2-mw/2, my=34;
+  ctx2d.fillStyle="#E7EEF3"; ctx2d.fillRect(mx,my,mw,mh);
+  ctx2d.fillStyle=voiced?"#2FB380":"#E2574C";
+  ctx2d.fillRect(mx,my,mw*Math.min(1,lastRms*12),mh);
+}
+
 /* ====== ピッチ検出(自己相関) ====== */
-let lastRms=0, micGate=0.006, calibRms=0;
+let lastRms=0, micGate=0.006, calibRms=0, calibArr=[];
+let lastClarity=0, voicedUntil=0;
 function autoCorrelate(buf,sr){
   const SIZE=buf.length;
   let rms=0;
   for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
   rms=Math.sqrt(rms/SIZE);
-  lastRms=rms;
-  if(rms<micGate) return -1;
+  lastRms=rms; lastClarity=0;
+  if(rms<0.0025) return -1; // 絶対床:これ未満はさすがに無音
   // 中央1024サンプルだけ使い、探索範囲を人の声(70〜1200Hz)に限定して計算量を削減
   const N=1024, off=(SIZE-N)>>1;
   const b=buf.subarray(off,off+N);
@@ -1369,6 +1547,8 @@ function autoCorrelate(buf,sr){
   const maxLag=Math.min(N-2,Math.ceil(sr/70));
   if(!autoCorrelate._c||autoCorrelate._c.length<maxLag+2) autoCorrelate._c=new Float32Array(maxLag+2);
   const c=autoCorrelate._c;
+  let e0=0; for(let i=0;i<N;i++) e0+=b[i]*b[i]; // 窓のエネルギー(正規化用)
+  if(e0<=0) return -1;
   let bestV=-1,bestL=-1;
   for(let lag=minLag;lag<=maxLag;lag++){
     let s=0;
@@ -1377,6 +1557,19 @@ function autoCorrelate(buf,sr){
     if(s>bestV){bestV=s;bestL=lag;}
   }
   if(bestL<=0) return -1;
+  // 周期性の強さ(0〜1)。声なら高く、ざわつき・ノイズなら低い
+  const clarity=Math.max(0,Math.min(1,bestV/(e0*(1-bestL/N)+1e-9)));
+  lastClarity=clarity;
+  const nowS=performance.now()/1000;
+  const holding=nowS<voicedUntil; // 直前まで声を検出できていたか
+  // 受け入れ条件:
+  // ①音量がゲート超え ②声が続いている間はゲートの45%でもOK(ヒステリシス:声が途切れる現象を防ぐ)
+  // ③音量が小さくても周期性がはっきり高ければ声とみなす(息まじりの小さい声を救う)
+  const pass = rms>=micGate
+            || (holding&&rms>=micGate*0.45)
+            || (clarity>=0.62&&rms>=0.003);
+  if(!pass) return -1;
+  if(clarity<0.30) return -1; // 周期性が低すぎる=声ではなく雑音
   // オクターブ下に誤ロックした場合の補正(半分の周期に強いピークがあればそちら)
   const half=Math.round(bestL/2);
   if(half>=minLag&&c[half]>0.85*bestV) bestL=half;
@@ -1386,6 +1579,7 @@ function autoCorrelate(buf,sr){
   if(a) T0=T0-bq/(2*a);
   const f=sr/T0;
   if(f<65||f>1300) return -1;
+  voicedUntil=nowS+0.35; // 声の継続を0.35秒キープ(ヒステリシス用)
   return f;
 }
 
@@ -1427,7 +1621,7 @@ function showResult(){
   const [a,b]=rangeMeas();
   const rangeLabel=isFullRange()?"":"(小節"+a+"〜"+b+")";
   $("scoreBig").innerHTML=score+"<small> %</small>";
-  $("scoreDetail").textContent=rangeLabel+" "+total+"音中 "+hits+"音が お手本とかさなりました";
+  $("scoreDetail").textContent=rangeLabel+" "+total+"音中 "+hits+"音が お手本とかさなりました"+(comboBest>=60?" ／ さいこう ⭐×"+comboBest+" れんぞくヒット!":"");
   let msg,ask;
   if(score>=90){ msg="すばらしい!お手本にぴったりかさなったね 🎉"; ask="🗣 うまくいったコツを、ことばにすると どうなるかな?"; }
   else if(score>=70){ msg="いいかんじ!あと少しでぴったりだよ ✨"; ask="🗣 赤くなった音は、お手本より高かった?ひくかった?"; }
@@ -1494,6 +1688,8 @@ function restoreSettings(){
     for(const [id,prop] of SAVED_CONTROLS){
       if(id in o) $(id)[prop]=o[id];
     }
+    // 旧バージョンの保存値(ふつう/きびしい)は選択肢がなくなったので「もっとやさしい」に置き換え
+    if(!$("strictSel").value) $("strictSel").value="easier";
     $("tempoVal").textContent=$("tempoSlider").value+"%";
     $("volVal").textContent=$("volSlider").value+"%";
   }catch(e){}
