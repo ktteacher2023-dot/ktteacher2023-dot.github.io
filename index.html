@@ -1436,7 +1436,7 @@ $("freeBtn").addEventListener("click",async()=>{
   $("emptyMsg").style.display="none";
   $("freeBtn").disabled=true; $("breathBtn").disabled=true;
   $("stopBtn").disabled=false;
-  freeData={t0:ac.currentTime, trail:[], parts:[], smooth:0, lastVoice:-9};
+  freeData={t0:ac.currentTime, trail:[], parts:[], smooth:0, lastVoice:-9, calib:[], ready:false, cand:[]};
   freeLoop();
 });
 function freeLoop(){
@@ -1444,13 +1444,31 @@ function freeLoop(){
   analyser.getFloatTimeDomainData(micBuf);
   const f=autoCorrelate(micBuf,getAudio().sampleRate);
   const now=getAudio().currentTime, F=freeData;
-  if(f>0){
+  if(!F.ready){
+    // 最初の0.8秒は「部屋の音」を測ってしきい値を決める(ざわつき・ファン音を声と間違えないため)
+    F.calib.push(lastRms);
+    if(now-F.t0>=0.8){
+      const s=F.calib.slice().sort((a,b)=>a-b);
+      const med=s[s.length>>1]||0;
+      micGate=Math.min(0.03,Math.max(0.008,med*3));
+      F.ready=true;
+    }
+  }else if(f>0){
     let m=69+12*Math.log2(f/440);
     if(m>=40&&m<=94){
-      F.smooth=F.smooth?F.smooth*0.55+m*0.45:m; // なめらかに追従
-      F.trail.push({t:now, m:F.smooth});
-      F.lastVoice=now;
+      // 3フレーム連続で近い高さが出たときだけ「声」と認める(ノイズの一瞬のブレを弾く)
+      F.cand.push(m);
+      if(F.cand.length>3) F.cand.shift();
+      const stable=F.cand.length>=3&&(Math.max(...F.cand)-Math.min(...F.cand))<=2.5;
+      if(stable){
+        F.smooth=F.smooth?F.smooth*0.55+m*0.45:m; // なめらかに追従
+        F.trail.push({t:now, m:F.smooth});
+        F.lastVoice=now;
+      }
     }
+  }else{
+    F.cand.length=0;
+    if(now-F.lastVoice>0.5) F.smooth=0; // 声が途切れたらリセット(次の声に飛びつけるように)
   }
   while(F.trail.length&&now-F.trail[0].t>7) F.trail.shift(); // 7秒ぶんだけ残す
   if(performance.now()-lastDrawMs>=30){ lastDrawMs=performance.now(); drawFree(now); }
@@ -1463,15 +1481,14 @@ function drawFree(now){
   const LO=43, HI=91; // だいたいG2〜G6
   const yOf=m=>H-14-(m-LO)/(HI-LO)*(H-56);
   const voiced=now-F.lastVoice<0.3;
-  // うすいガイド(ドの線)と たかい/ひくい ラベル
+  // うすいガイド線(高さの目安)と たかい/ひくい ラベル
   ctx2d.lineWidth=1; ctx2d.strokeStyle="#E3EBF0";
-  ctx2d.fillStyle="#9DB0BA"; ctx2d.font="11px sans-serif"; ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
   for(let m=48;m<=84;m+=12){
     const y=yOf(m);
     ctx2d.beginPath(); ctx2d.moveTo(0,y); ctx2d.lineTo(W,y); ctx2d.stroke();
-    ctx2d.fillText("ド",4,y-8);
   }
   ctx2d.fillStyle="#B7C6CE"; ctx2d.font="700 12px sans-serif";
+  ctx2d.textAlign="left"; ctx2d.textBaseline="middle";
   ctx2d.fillText("↑ たかい",8,18);
   ctx2d.fillText("↓ ひくい",8,H-14);
   // 虹色のこえのしっぽ
@@ -1517,7 +1534,10 @@ function drawFree(now){
   ctx2d.globalAlpha=1;
   // メッセージとレベルメーター
   ctx2d.textAlign="center"; ctx2d.textBaseline="top"; ctx2d.font="800 17px sans-serif";
-  if(voiced){
+  if(!F.ready){
+    ctx2d.fillStyle="#5B8DEF";
+    ctx2d.fillText("🤫 マイクのじゅんびちゅう…ちょっとだけ しずかにしてね", W/2, 8);
+  }else if(voiced){
     ctx2d.fillStyle="#2FB380";
     ctx2d.fillText("きこえてるよ! こえで おえかきしよう 🎨", W/2, 8);
   }else{
@@ -1567,7 +1587,7 @@ function autoCorrelate(buf,sr){
   // ③音量が小さくても周期性がはっきり高ければ声とみなす(息まじりの小さい声を救う)
   const pass = rms>=micGate
             || (holding&&rms>=micGate*0.45)
-            || (clarity>=0.62&&rms>=0.003);
+            || (clarity>=0.62&&rms>=Math.max(0.003,micGate*0.35));
   if(!pass) return -1;
   if(clarity<0.30) return -1; // 周期性が低すぎる=声ではなく雑音
   // オクターブ下に誤ロックした場合の補正(半分の周期に強いピークがあればそちら)
