@@ -79,7 +79,7 @@ main{
 @media(max-width:760px){#recorderSvg{max-width:220px}}
 .hole-open{fill:#fff;stroke:var(--ink);stroke-width:3}
 .hole-closed{fill:var(--accent);stroke:var(--accent);stroke-width:3}
-.hole-closed-anim{animation:pop .25s ease}
+.hole-closed-anim{animation:pop .25s ease;transform-box:fill-box;transform-origin:center}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
 
 /* ---------- note panel ---------- */
@@ -422,61 +422,62 @@ function buildRecorderSVG(svg, {mini=false}={}){
     s.push(`<text x="${BODY_X+52}" y="483" font-size="17" fill="#7A948D" font-weight="700">みぎ手</text>`);
   }
   // うら穴（サムホール）: 左側に別枠で表示
-  s.push(`<g id="thumbG">
+  s.push(`<g>
     <rect x="8" y="168" width="76" height="96" rx="14" fill="#F2F7F5" stroke="#D8E5E0" stroke-width="3"/>
     <text x="46" y="192" font-size="16" fill="#7A948D" text-anchor="middle" font-weight="700">うら</text>
-    <path id="thumbHalf" d="" fill="#FF6B5E"/>
-    <circle id="thumbHole" cx="46" cy="226" r="17" class="hole-open"/>
+    <path data-part="thumbHalf" d="" fill="#FF6B5E"/>
+    <circle data-part="thumbHole" cx="46" cy="226" r="17" class="hole-open"/>
     <line x1="84" y1="216" x2="${BODY_X-30}" y2="212" stroke="#D8E5E0" stroke-width="3" stroke-dasharray="6 5"/>
   </g>`);
   // おもての穴 1〜7（6,7 はダブルホール）
   for(let i=0;i<7;i++){
     const y = HOLE_Y[i];
     if(i>=5){
-      s.push(`<g id="hole${i}">
-        <circle id="hole${i}a" cx="${BODY_X-9}" cy="${y}" r="9" class="hole-open"/>
-        <circle id="hole${i}b" cx="${BODY_X+9}" cy="${y}" r="9" class="hole-open"/>
+      s.push(`<g>
+        <circle data-part="hole${i}a" cx="${BODY_X-9}" cy="${y}" r="9" class="hole-open"/>
+        <circle data-part="hole${i}b" cx="${BODY_X+9}" cy="${y}" r="9" class="hole-open"/>
       </g>`);
     }else{
-      s.push(`<circle id="hole${i}" cx="${BODY_X}" cy="${y}" r="17" class="hole-open"/>`);
+      s.push(`<circle data-part="hole${i}" cx="${BODY_X}" cy="${y}" r="17" class="hole-open"/>`);
     }
     if(!mini) s.push(`<text x="${BODY_X-46}" y="${y+6}" font-size="16" fill="#7A948D" text-anchor="middle">${i+1}</text>`);
   }
   svg.innerHTML = s.join('');
 }
 function renderFingering(svg, fing){
-  const q = sel => svg.querySelector(sel);
+  const q = name => svg.querySelector(`[data-part="${name}"]`);
   const setHole = (el, v, animate) => {
     if(!el) return;
     el.setAttribute('class', v===2 ? 'hole-closed'+(animate?' hole-closed-anim':'') : 'hole-open');
   };
+  const thHalf = q('thumbHalf'), th = q('thumbHole');
   if(!fing){
     // 全部あける表示
-    setHole(q('#thumbHole'),0); q('#thumbHalf').setAttribute('d','');
+    setHole(th,0);
+    if(thHalf) thHalf.setAttribute('d','');
     for(let i=0;i<7;i++){
-      if(i>=5){ setHole(q(`#hole${i}a`),0); setHole(q(`#hole${i}b`),0); }
-      else setHole(q(`#hole${i}`),0);
+      if(i>=5){ setHole(q(`hole${i}a`),0); setHole(q(`hole${i}b`),0); }
+      else setHole(q(`hole${i}`),0);
     }
     return;
   }
   const animate = svg === els.svg;
   // サムホール
-  const th = q('#thumbHole'), thHalf = q('#thumbHalf');
   if(fing.t===1){
     setHole(th,0,false);
-    thHalf.setAttribute('d','M 46 209 A 17 17 0 0 0 46 243 Z'); // 左半分ぬり
+    if(thHalf) thHalf.setAttribute('d','M 46 209 A 17 17 0 0 0 46 243 Z'); // 左半分ぬり
   }else{
-    thHalf.setAttribute('d','');
+    if(thHalf) thHalf.setAttribute('d','');
     setHole(th, fing.t, animate);
   }
   // おもて穴
   for(let i=0;i<7;i++){
     const v = fing.h[i];
     if(i>=5){
-      setHole(q(`#hole${i}a`), v>=1?2:0, animate);
-      setHole(q(`#hole${i}b`), v===2?2:0, animate);
+      setHole(q(`hole${i}a`), v>=1?2:0, animate);
+      setHole(q(`hole${i}b`), v===2?2:0, animate);
     }else{
-      setHole(q(`#hole${i}`), v, animate);
+      setHole(q(`hole${i}`), v, animate);
     }
   }
 }
