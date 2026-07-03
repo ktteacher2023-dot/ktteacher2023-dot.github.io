@@ -96,6 +96,12 @@ main{
 }
 .hearing .ok{color:var(--green)}
 .hearing .ng{color:var(--accent)}
+.hearing .near{color:#D89A00}
+.level-wrap{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px}
+.level-track{flex:1;height:10px;background:var(--line);border-radius:6px;position:relative}
+#levelFill{height:100%;width:0%;background:#B9CCC5;border-radius:6px;transition:width .06s linear}
+#levelFill.hot{background:var(--green)}
+#levelMark{position:absolute;top:-3px;bottom:-3px;width:3px;background:var(--muted);border-radius:2px;z-index:1}
 .combo{
   position:absolute;top:10px;right:14px;font-size:15px;color:var(--gold);
   font-weight:900;text-shadow:0 1px 0 #fff;
@@ -220,6 +226,10 @@ input[type=range]{accent-color:var(--accent);width:130px}
       <div class="note-letter" id="noteLetter"></div>
       <div class="hold-bar"><div id="holdFill"></div></div>
       <div class="hearing" id="hearing"></div>
+      <div class="level-wrap" id="levelWrap" style="display:none">
+        <span>🎤</span>
+        <div class="level-track"><div id="levelMark"></div><div id="levelFill"></div></div>
+      </div>
     </div>
 
     <div class="card next-card">
@@ -275,7 +285,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
   <div class="setting-row">
     <span>マイクのかんど</span>
-    <input type="range" id="sensRange" min="1" max="10" value="6">
+    <input type="range" id="sensRange" min="1" max="10" value="7">
   </div>
   <p class="hint-small">
     「やさしい」はオクターブちがいでもOKにします。<br>
@@ -372,7 +382,7 @@ const state = {
   system: 'german',
   mode: 'mic',          // 'mic' | 'tap'
   strict: 'strict',     // 'strict' | 'easy'
-  sensitivity: 6,
+  sensitivity: 7,
   listening: false,
   phase: 'armed',       // 'armed' | 'release'
   holdStart: 0,
@@ -645,6 +655,7 @@ async function startMic(){
   state.phase = 'armed'; state.holdStart=0;
   els.micBtn.textContent = '⏸ マイクストップ';
   els.micBtn.classList.add('listening');
+  $('levelWrap').style.display = 'flex';
   if(!state.startTime) state.startTime = performance.now();
   loop();
 }
@@ -654,6 +665,7 @@ function stopMic(){
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
   els.micBtn.textContent = '🎤 マイクスタート';
   els.micBtn.classList.remove('listening');
+  $('levelWrap').style.display = 'none';
   els.hearing.textContent = '';
   els.holdFill.style.width='0%';
 }
@@ -664,14 +676,14 @@ function detectPitch(buf, sampleRate){
   let rms=0;
   for(let i=0;i<N;i++) rms += buf[i]*buf[i];
   rms = Math.sqrt(rms/N);
-  const threshold = 0.032 - state.sensitivity*0.0028;  // かんど1〜10
-  if(rms < threshold) return {freq:-1, rms};
+  const threshold = 0.03 * Math.pow(0.686, state.sensitivity - 1);  // かんど1〜10（対数スケール 0.03〜0.001）
+  if(rms < threshold) return {freq:-1, rms, threshold};
   // 端のしずかな部分をカット
   let r1=0, r2=N-1; const th=0.2*rms;
   for(let i=0;i<N/2;i++){ if(Math.abs(buf[i])>th){r1=i;break;} }
   for(let i=1;i<N/2;i++){ if(Math.abs(buf[N-i])>th){r2=N-i;break;} }
   const b = buf.slice(r1,r2), M=b.length;
-  if(M<200) return {freq:-1, rms};
+  if(M<200) return {freq:-1, rms, threshold};
   const c = new Float32Array(M);
   for(let lag=0;lag<M;lag++){
     let sum=0;
@@ -685,13 +697,13 @@ function detectPitch(buf, sampleRate){
   for(let i=Math.max(d,minLag); i<Math.min(M,maxLag); i++){
     if(c[i]>maxval){ maxval=c[i]; maxpos=i; }
   }
-  if(maxpos<=0) return {freq:-1, rms};
+  if(maxpos<=0) return {freq:-1, rms, threshold};
   // 放物線補間
   let T0=maxpos;
   const x1=c[T0-1]||0, x2=c[T0], x3=c[T0+1]||0;
   const a=(x1+x3-2*x2)/2, bb=(x3-x1)/2;
   if(a) T0 = T0 - bb/(2*a);
-  return {freq: sampleRate/T0, rms};
+  return {freq: sampleRate/T0, rms, threshold};
 }
 function midiFromFreq(f){ return 69 + 12*Math.log2(f/440); }
 
@@ -700,26 +712,35 @@ function loop(){
   rafId = requestAnimationFrame(loop);
   if(!analyser || state.notes.length===0 || state.index>=state.notes.length) return;
   analyser.getFloatTimeDomainData(micBuf);
-  const {freq} = detectPitch(micBuf, ctx().sampleRate);
+  const {freq, rms, threshold} = detectPitch(micBuf, ctx().sampleRate);
   const now = performance.now();
   const targetSounding = state.notes[state.index] + 12;   // 実音
+
+  // レベルメーター（音がとどいているかの見える化）
+  const lf = $('levelFill');
+  lf.style.width = Math.min(100, rms/0.04*100) + '%';
+  lf.classList.toggle('hot', rms >= threshold);
+  $('levelMark').style.left = Math.min(96, threshold/0.04*100) + '%';
 
   let ok=false, heardHTML='';
   if(freq>0){
     const m = midiFromFreq(freq);
-    let diff;
-    if(state.strict==='easy'){
-      diff = ((m - targetSounding)%12 + 18)%12 - 6;   // オクターブ無視
+    const diffExact = m - targetSounding;
+    const diffPc = ((m - targetSounding)%12 + 18)%12 - 6;   // オクターブ無視のずれ
+    ok = state.strict==='easy' ? Math.abs(diffPc) <= 0.65 : Math.abs(diffExact) <= 0.65;
+    const heard = noteName(Math.round(m)-12);               // 記譜換算で表示
+    const heardName = (heard.high?'高い':'') + heard.kana;
+    if(ok){
+      heardHTML = `いまのおと：<span class="ok">${heardName} ⭕</span>`;
+    }else if(Math.abs(diffPc) <= 0.65){
+      heardHTML = `<span class="near">おしい！「${heard.kana}」のたかさ（オクターブ）がちがうよ</span>`;
     }else{
-      diff = m - targetSounding;
+      heardHTML = `いまのおと：<span class="ng">${heardName}</span>`;
     }
-    ok = Math.abs(diff) <= 0.65;
-    const heard = noteName(Math.round(m)-12);           // 記譜換算で表示
-    heardHTML = ok
-      ? `いまのおと：<span class="ok">${(heard.high?'高い':'')+heard.kana} ⭕</span>`
-      : `いまのおと：<span class="ng">${(heard.high?'高い':'')+heard.kana}</span>`;
   }else{
-    heardHTML = '<span style="opacity:.5">🎧 きいています…</span>';
+    heardHTML = rms >= threshold*0.5
+      ? '<span style="opacity:.5">🎧 きいています…</span>'
+      : '<span style="opacity:.5">🎧 きいています…（音がちいさいかも）</span>';
   }
   els.hearing.innerHTML = heardHTML;
 
