@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ことばで たん・たた｜けいてぃの音楽ツールズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--main:#FF9F1C;--ink:#2B2B33;--paper:#FFF8EE}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--paper);color:var(--ink);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  user-select:none;touch-action:manipulation}
+header{padding:18px 20px 4px;text-align:center}
+h1{font-size:clamp(24px,5vw,34px);font-weight:900;color:var(--main);letter-spacing:.06em}
+.sub{font-size:13px;font-weight:700;color:#9a8a74;margin-top:2px}
+
+#wordCard{margin-top:14px;background:#fff;border-radius:24px;padding:22px 28px;
+  box-shadow:0 4px 0 rgba(0,0,0,.06);text-align:center;width:min(92vw,520px)}
+#emoji{font-size:clamp(48px,10vw,72px);line-height:1.2}
+#word{font-size:clamp(26px,6vw,38px);font-weight:900;letter-spacing:.15em;margin-top:4px}
+
+#rhythmRow{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.block{border-radius:14px;background:#FFE9CB;padding:10px 0;text-align:center;
+  font-weight:900;font-size:18px;color:#B87716;transition:transform .1s, background .1s}
+.block.tan{width:76px}
+.block.tata{width:76px;background:#FFD9A0}
+.block.lit{background:var(--main);color:#fff;transform:scale(1.12)}
+.block.good{background:#7BE0AD;color:#fff}
+
+#feedback{min-height:1.8em;margin-top:12px;font-weight:900;font-size:clamp(16px,3.6vw,20px);color:var(--main)}
+
+#drum{margin-top:10px;width:min(60vw,240px);height:min(60vw,240px);max-height:24vh;border-radius:50%;
+  border:none;background:radial-gradient(circle at 38% 32%, #FFD9A0, var(--main) 70%);
+  box-shadow:0 10px 0 #d17f0e;cursor:pointer;font-family:inherit;font-size:clamp(20px,5vw,30px);
+  font-weight:900;color:#fff;letter-spacing:.1em;transition:transform .05s, box-shadow .05s}
+#drum:active{transform:translateY(7px) scale(.98);box-shadow:0 3px 0 #d17f0e}
+
+#controls{display:flex;gap:10px;margin:16px 0 10px;flex-wrap:wrap;justify-content:center}
+.ctl{font-family:inherit;font-weight:900;font-size:15px;padding:12px 20px;border-radius:999px;
+  border:3px solid var(--ink);background:#fff;cursor:pointer;color:var(--ink)}
+.ctl.accent{background:var(--main);border-color:var(--main);color:#fff}
+#customRow{display:flex;gap:8px;margin:2px 0 24px;align-items:center}
+#customInput{font-family:inherit;font-weight:700;font-size:16px;padding:10px 16px;
+  border-radius:999px;border:3px solid #e3cfae;width:min(52vw,220px);text-align:center}
+#customInput:focus{outline:none;border-color:var(--main)}
+</style>
+</head>
+<body>
+<header>
+  <h1>ことばで たん・たた</h1>
+  <div class="sub">ことばの リズムを たいこで たたこう!</div>
+</header>
+
+<div id="wordCard">
+  <div id="emoji">🍅</div>
+  <div id="word">トマト</div>
+  <div id="rhythmRow"></div>
+  <div id="feedback">まず「🔊きく」を おしてね</div>
+</div>
+
+<button id="drum">たたく!</button>
+
+<div id="controls">
+  <button class="ctl accent" id="listenBtn">🔊 きく</button>
+  <button class="ctl" id="challengeBtn">🥁 まねっこ する</button>
+  <button class="ctl" id="nextBtn">つぎの ことば ▶</button>
+</div>
+<div id="customRow">
+  <input id="customInput" placeholder="すきな ことばを いれてね" maxlength="8">
+  <button class="ctl" id="customBtn">つくる</button>
+</div>
+
+<script>
+(() => {
+  // pattern unit: 'tan' = 1 beat, 'tata' = two half beats
+  const words = [
+    {w:'トマト',       e:'🍅', p:['tan','tan','tan']},
+    {w:'みかん',       e:'🍊', p:['tata','tan']},
+    {w:'さくらんぼ',   e:'🍒', p:['tata','tata','tan']},
+    {w:'パイナップル', e:'🍍', p:['tata','tata','tata']},
+    {w:'ぶどう',       e:'🍇', p:['tan','tata']},
+    {w:'かたつむり',   e:'🐌', p:['tata','tata','tan']},
+    {w:'らっこ',       e:'🦦', p:['tata','tan']},
+    {w:'ヘリコプター', e:'🚁', p:['tata','tata','tata']},
+  ];
+  let idx = 0, current = words[0];
+  let audio = null;
+
+  const $ = id => document.getElementById(id);
+
+  function ensureAudio(){
+    if(!audio) audio = new (window.AudioContext||window.webkitAudioContext)();
+    if(audio.state === 'suspended') audio.resume();
+  }
+  function tick(t, hi){
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'triangle'; o.frequency.value = hi ? 1200 : 800;
+    g.gain.setValueAtTime(.3, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .12);
+    const f = audio.createBiquadFilter(); f.type='bandpass'; f.frequency.value = hi?1600:1000;
+    o.connect(f).connect(g).connect(audio.destination);
+    o.start(t); o.stop(t + .15);
+  }
+  function cheer(){
+    const t = audio.currentTime;
+    [523.25,659.25,783.99,1046.5].forEach((f,i) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(.12, t+i*.07);
+      g.gain.exponentialRampToValueAtTime(.001, t+i*.07+.3);
+      o.connect(g).connect(audio.destination);
+      o.start(t+i*.07); o.stop(t+i*.07+.35);
+    });
+  }
+
+  // ---- render ----
+  function render(){
+    $('emoji').textContent = current.e;
+    $('word').textContent = current.w;
+    const row = $('rhythmRow');
+    row.innerHTML = '';
+    current.p.forEach(u => {
+      const d = document.createElement('div');
+      d.className = 'block ' + u;
+      d.textContent = u === 'tan' ? 'たん' : 'たた';
+      row.appendChild(d);
+    });
+    $('feedback').textContent = '「🔊きく」で リズムを きいてみよう';
+  }
+  render();
+
+  // ---- playback ----
+  const BEAT = .55; // seconds per beat
+  // expand pattern to hit times (in beats) for playback & judging
+  function hitTimes(p){
+    const hits = []; let pos = 0;
+    p.forEach(u => {
+      if(u === 'tan'){ hits.push({t:pos, hi:false, block:u}); pos += 1; }
+      else { hits.push({t:pos, hi:true, block:u}); hits.push({t:pos+.5, hi:true, block:u}); pos += 1; }
+    });
+    return {hits, total:pos};
+  }
+  let playingBack = false;
+  $('listenBtn').addEventListener('click', () => {
+    if(playingBack) return;
+    ensureAudio();
+    playingBack = true;
+    const {hits} = hitTimes(current.p);
+    const t0 = audio.currentTime + .3;
+    const blocks = document.querySelectorAll('.block');
+    // map hit index → block index
+    let bi = 0, unitStart = 0;
+    const blockOfHit = [];
+    current.p.forEach((u, i) => {
+      blockOfHit.push(i);
+      if(u === 'tata') blockOfHit.push(i);
+    });
+    hits.forEach((h, i) => {
+      tick(t0 + h.t * BEAT, h.hi);
+      setTimeout(() => {
+        blocks.forEach(b => b.classList.remove('lit'));
+        blocks[blockOfHit[i]].classList.add('lit');
+      }, ((t0 + h.t * BEAT) - audio.currentTime) * 1000);
+    });
+    const endMs = (hits[hits.length-1].t * BEAT + .6) * 1000;
+    setTimeout(() => {
+      blocks.forEach(b => b.classList.remove('lit'));
+      playingBack = false;
+      $('feedback').textContent = 'つぎは「🥁まねっこ」で たたいてみよう!';
+    }, endMs + 300);
+  });
+
+  // ---- challenge (imitate) ----
+  let challenging = false, taps = [], expectHits = 0;
+  $('challengeBtn').addEventListener('click', () => {
+    ensureAudio();
+    challenging = true; taps = [];
+    expectHits = hitTimes(current.p).hits.length;
+    document.querySelectorAll('.block').forEach(b => b.classList.remove('good'));
+    $('feedback').textContent = 'たいこを たたいて まねしてね! (' + expectHits + 'かい)';
+  });
+
+  $('drum').addEventListener('pointerdown', () => {
+    ensureAudio();
+    tick(audio.currentTime, false);
+    if(!challenging) return;
+    taps.push(performance.now());
+    if(taps.length >= expectHits){
+      challenging = false;
+      judge();
+    }
+  });
+
+  function judge(){
+    // compare tap interval pattern with expected (ratio-based, tempo-free)
+    const {hits} = hitTimes(current.p);
+    if(hits.length < 2){ success(); return; }
+    const expected = [];
+    for(let i = 1; i < hits.length; i++) expected.push(hits[i].t - hits[i-1].t); // 1 or .5
+    const got = [];
+    for(let i = 1; i < taps.length; i++) got.push(taps[i] - taps[i-1]);
+    // normalize by average of the "long" intervals
+    const sorted = [...got].sort((a,b)=>a-b);
+    const unit = sorted[sorted.length-1];           // longest ≒ 1 beat
+    let ok = 0;
+    for(let i = 0; i < expected.length; i++){
+      const ratio = got[i] / unit;                  // ~1 or ~0.5
+      const target = expected[i];
+      if(Math.abs(ratio - target) < .3) ok++;
+    }
+    if(ok >= expected.length - 0){ success(); }
+    else if(ok >= Math.ceil(expected.length * .6)){
+      $('feedback').textContent = 'おしい! もういっかい 「🔊きく」→「🥁まねっこ」';
+    } else {
+      $('feedback').textContent = 'もういちど きいてから ためしてみよう 🔊';
+    }
+  }
+  function success(){
+    cheer();
+    $('feedback').textContent = 'ぴったり! ことばの リズム はかせ 🎉';
+    document.querySelectorAll('.block').forEach(b => b.classList.add('good'));
+  }
+
+  // ---- next word ----
+  $('nextBtn').addEventListener('click', () => {
+    idx = (idx + 1) % words.length;
+    current = words[idx];
+    challenging = false;
+    render();
+  });
+
+  // ---- custom word ----
+  const SMALL = 'ゃゅょャュョぁぃぅぇぉァィゥェォ';
+  function moraSplit(str){
+    const out = [];
+    for(const ch of str){
+      if(SMALL.includes(ch) && out.length) out[out.length-1] += ch;
+      else if(ch === 'ー' && out.length) out[out.length-1] += ch;
+      else out.push(ch);
+    }
+    return out;
+  }
+  $('customBtn').addEventListener('click', () => {
+    const v = $('customInput').value.trim();
+    if(!v) return;
+    const morae = moraSplit(v);
+    if(morae.length < 2 || morae.length > 8){
+      $('feedback').textContent = '2〜8もじの ことばに してね';
+      return;
+    }
+    // simple pattern: pair morae into tata, leftover = tan (feels musical for names)
+    const p = [];
+    let i = 0;
+    while(i < morae.length){
+      if(i + 1 < morae.length && morae.length % 2 === 0){ p.push('tata'); i += 2; }
+      else if(i + 1 < morae.length && i < morae.length - 1 && morae.length % 2 === 1 && i < morae.length - 1){
+        if(i < morae.length - 1 && (morae.length - i) > 1 && i !== morae.length -1 && (morae.length - i) % 2 === 0){ p.push('tata'); i += 2; }
+        else { p.push('tan'); i += 1; }
+      }
+      else { p.push('tan'); i += 1; }
+    }
+    current = {w:v, e:'💬', p};
+    challenging = false;
+    render();
+    $('feedback').textContent = '「' + v + '」の リズム! 🔊きいてみよう';
+  });
+})();
+</script>
+</body>
+</html>
