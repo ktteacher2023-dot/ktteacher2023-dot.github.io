@@ -186,6 +186,30 @@ input[type=range]{accent-color:var(--accent);width:130px}
   opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center;
 }
 .toast.show{opacity:1}
+
+/* ---------- いちらんひょう ---------- */
+#listView{max-width:1100px;margin:0 auto;padding:0 16px 40px}
+.list-head{margin-bottom:12px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+#listTitle{font-size:18px;font-weight:900}
+.list-hint{font-size:13px;color:var(--muted)}
+.measure{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:8px 10px;display:flex;gap:8px;margin-bottom:10px;align-items:flex-start}
+.mnum{flex:none;min-width:26px;color:var(--muted);font-size:14px;font-weight:900;padding-top:26px;text-align:center}
+.mnotes{display:flex;flex-wrap:wrap;gap:4px}
+.ncard{width:80px;display:flex;flex-direction:column;align-items:center;border-radius:12px;padding:6px 2px;cursor:pointer;border:2px solid transparent}
+.ncard:hover{background:var(--bg)}
+.ncard.play{border-color:var(--gold);background:#FFF7E0}
+.nstaff{width:72px;height:auto;display:block}
+.nname{font-size:17px;font-weight:900;margin:2px 0;line-height:1.1;text-align:center}
+.nname .hi{font-size:11px;color:var(--muted);display:block}
+.nfing{width:46px;height:auto;display:block}
+
+@media print{
+  header,.songbar,.controls,main,.toast,#clearOverlay{display:none!important}
+  #listView{display:block!important;padding:0}
+  body{background:#fff}
+  .list-hint{display:none}
+  .measure{box-shadow:none;border:1.5px solid #bbb;break-inside:avoid;page-break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -208,6 +232,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </select>
   <button class="file-btn" id="fileBtn">📂 楽譜ファイルをひらく（MusicXML / .mxl）</button>
   <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl" hidden>
+  <button class="icon-btn" id="viewToggle">👥 いちらんひょう</button>
   <span class="song-title" id="songTitle"></span>
 </div>
 
@@ -246,6 +271,15 @@ input[type=range]{accent-color:var(--accent);width:130px}
     </div>
   </div>
 </main>
+
+<!-- いちらんひょう（みんなでれんしゅう・印刷用） -->
+<section id="listView" style="display:none">
+  <div class="card list-head">
+    <span id="listTitle">♪</span>
+    <span class="list-hint">🔊 カードをタップすると音がきけるよ　🖨 このままブラウザの印刷でプリントにできます</span>
+  </div>
+  <div id="listGrid"></div>
+</section>
 
 <!-- 下部コントロール -->
 <div class="controls">
@@ -368,16 +402,17 @@ function nameHTML(midi){
   return (n.high ? '<span class="oct">高い</span>' : '') + n.kana;
 }
 
-/* ---------- デモ曲 ---------- */
+/* ---------- デモ曲（小節ごと） ---------- */
 const DEMO_SONGS = {
-  demo0:{ title:'メリーさんのひつじ', notes:[64,62,60,62,64,64,64,62,62,62,64,67,67,64,62,60,62,64,64,64,64,62,62,64,62,60] },
-  demo1:{ title:'きらきらぼし', notes:[60,60,67,67,69,69,67,65,65,64,64,62,62,60,67,67,65,65,64,64,62,67,67,65,65,64,64,62,60,60,67,67,69,69,67,65,65,64,64,62,62,60] },
-  demo2:{ title:'聖者の行進', notes:[60,64,65,67,60,64,65,67,60,64,65,67,64,60,64,62,64,64,62,60,60,64,67,67,67,65,64,65,67,64,60,62,60] }
+  demo0:{ title:'メリーさんのひつじ', measures:[[64,62,60,62],[64,64,64],[62,62,62],[64,67,67],[64,62,60,62],[64,64,64,64],[62,62,64,62],[60]] },
+  demo1:{ title:'きらきらぼし', measures:[[60,60,67,67],[69,69,67],[65,65,64,64],[62,62,60],[67,67,65,65],[64,64,62],[67,67,65,65],[64,64,62],[60,60,67,67],[69,69,67],[65,65,64,64],[62,62,60]] },
+  demo2:{ title:'聖者の行進', measures:[[60,64,65,67],[60,64,65,67],[60,64,65,67],[64,60,64,62],[64,64,62,60],[60,64,67],[67,67,65],[64,65,67],[64,60,62,60]] }
 };
 
 /* ---------- 状態 ---------- */
 const state = {
-  notes: [],            // 記譜MIDIの配列
+  notes: [],            // 記譜MIDIの配列（全小節をつなげたもの）
+  measures: [],         // 小節ごとの配列（いちらんひょう用）
   index: 0,
   system: 'german',
   mode: 'mic',          // 'mic' | 'tap'
@@ -435,8 +470,9 @@ function buildRecorderSVG(svg, {mini=false}={}){
   s.push(`<g>
     <rect x="8" y="168" width="76" height="96" rx="14" fill="#F2F7F5" stroke="#D8E5E0" stroke-width="3"/>
     <text x="46" y="192" font-size="16" fill="#7A948D" text-anchor="middle" font-weight="700">うら</text>
-    <path data-part="thumbHalf" d="" fill="#FF6B5E"/>
     <circle data-part="thumbHole" cx="46" cy="226" r="17" class="hole-open"/>
+    <line data-part="thumbSlash" x1="35" y1="239" x2="57" y2="213" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" visibility="hidden"/>
+    ${mini ? '' : '<text data-part="thumbHint" x="46" y="259" font-size="11" fill="#FF6B5E" text-anchor="middle" font-weight="700" visibility="hidden">すこしあける</text>'}
     <line x1="84" y1="216" x2="${BODY_X-30}" y2="212" stroke="#D8E5E0" stroke-width="3" stroke-dasharray="6 5"/>
   </g>`);
   // おもての穴 1〜7（6,7 はダブルホール）
@@ -460,11 +496,15 @@ function renderFingering(svg, fing){
     if(!el) return;
     el.setAttribute('class', v===2 ? 'hole-closed'+(animate?' hole-closed-anim':'') : 'hole-open');
   };
-  const thHalf = q('thumbHalf'), th = q('thumbHole');
+  const th = q('thumbHole'), slash = q('thumbSlash'), hint = q('thumbHint');
+  const setSlash = show => {
+    if(slash) slash.setAttribute('visibility', show?'visible':'hidden');
+    if(hint)  hint.setAttribute('visibility', show?'visible':'hidden');
+  };
   if(!fing){
     // 全部あける表示
+    setSlash(false);
     setHole(th,0);
-    if(thHalf) thHalf.setAttribute('d','');
     for(let i=0;i<7;i++){
       if(i>=5){ setHole(q(`hole${i}a`),0); setHole(q(`hole${i}b`),0); }
       else setHole(q(`hole${i}`),0);
@@ -472,12 +512,12 @@ function renderFingering(svg, fing){
     return;
   }
   const animate = svg === els.svg;
-  // サムホール
+  // サムホール（サミング＝ぬりつぶし＋ななめの白いすきま）
   if(fing.t===1){
-    setHole(th,0,false);
-    if(thHalf) thHalf.setAttribute('d','M 46 209 A 17 17 0 0 0 46 243 Z'); // 左半分ぬり
+    setHole(th, 2, animate);
+    setSlash(true);
   }else{
-    if(thHalf) thHalf.setAttribute('d','');
+    setSlash(false);
     setHole(th, fing.t, animate);
   }
   // おもて穴
@@ -690,17 +730,24 @@ function detectPitch(buf, sampleRate){
     for(let i=0;i<M-lag;i++) sum += b[i]*b[i+lag];
     c[lag]=sum;
   }
-  let d=0; while(d<M-1 && c[d]>c[d+1]) d++;
-  let maxval=-1, maxpos=-1;
-  const minLag = Math.floor(sampleRate/2600);   // 上限 2600Hz
-  const maxLag = Math.floor(sampleRate/180);    // 下限 180Hz
-  for(let i=Math.max(d,minLag); i<Math.min(M,maxLag); i++){
-    if(c[i]>maxval){ maxval=c[i]; maxpos=i; }
+  // ラグで正規化（うしろのピークが不利にならないように）
+  const nc = new Float32Array(M);
+  for(let lag=0;lag<M;lag++) nc[lag] = c[lag]/(M-lag);
+  const minLag = Math.max(2, Math.floor(sampleRate/2600));   // 上限 2600Hz
+  const maxLag = Math.min(M-1, Math.floor(sampleRate/180));  // 下限 180Hz
+  let maxval=-1;
+  for(let i=minLag;i<maxLag;i++) if(nc[i]>maxval) maxval=nc[i];
+  // はっきりした周期性がなければ不検出（ざわざわしたノイズ対策）
+  if(maxval < 0.3*nc[0]) return {freq:-1, rms, threshold};
+  // オクターブ下誤検出対策：最大値の90%以上ある「いちばん手前の山」を採用
+  let maxpos=-1;
+  for(let i=Math.max(minLag,1); i<maxLag; i++){
+    if(nc[i]>=nc[i-1] && nc[i]>=nc[i+1] && nc[i]>=0.9*maxval){ maxpos=i; break; }
   }
   if(maxpos<=0) return {freq:-1, rms, threshold};
   // 放物線補間
   let T0=maxpos;
-  const x1=c[T0-1]||0, x2=c[T0], x3=c[T0+1]||0;
+  const x1=nc[T0-1]||0, x2=nc[T0], x3=nc[T0+1]||0;
   const a=(x1+x3-2*x2)/2, bb=(x3-x1)/2;
   if(a) T0 = T0 - bb/(2*a);
   return {freq: sampleRate/T0, rms, threshold};
@@ -781,29 +828,52 @@ function parseMusicXML(xmlText){
   const title =
     doc.querySelector('work > work-title')?.textContent ||
     doc.querySelector('movement-title')?.textContent || '';
-  const part = doc.querySelector('part');
-  if(!part) throw new Error('nopart');
   const stepMap = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
-  const notes=[];
-  let prevTiedMidi=null;
-  part.querySelectorAll('note').forEach(n=>{
-    if(n.querySelector('rest')) { prevTiedMidi=null; return; }
-    if(n.querySelector('chord')) return;                    // 和音は上の音だけ
-    const p = n.querySelector('pitch'); if(!p) return;
-    const step = p.querySelector('step')?.textContent;
-    const oct  = parseInt(p.querySelector('octave')?.textContent);
-    const alt  = parseInt(p.querySelector('alter')?.textContent||'0');
-    if(!(step in stepMap) || isNaN(oct)) return;
-    const midi = (oct+1)*12 + stepMap[step] + alt;
-    // タイでつながった音はまとめる
-    const tieStop = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='stop');
-    if(tieStop && prevTiedMidi===midi) return;
-    const tieStart = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='start');
-    prevTiedMidi = tieStart ? midi : null;
-    notes.push(midi);
+  const partEls = [...doc.querySelectorAll('part')];
+  if(partEls.length===0) throw new Error('nopart');
+
+  // 全パートを小節単位で読み取る
+  const candidates = [];
+  for(const part of partEls){
+    const measures = [];
+    let prevTiedMidi = null;
+    for(const meas of part.querySelectorAll('measure')){
+      const arr = [];
+      meas.querySelectorAll('note').forEach(n=>{
+        if(n.querySelector('rest')){ prevTiedMidi=null; return; }
+        if(n.querySelector('chord')) return;                  // 和音は上の音だけ
+        const p = n.querySelector('pitch'); if(!p) return;
+        const step = p.querySelector('step')?.textContent;
+        const oct  = parseInt(p.querySelector('octave')?.textContent);
+        const alt  = parseInt(p.querySelector('alter')?.textContent||'0');
+        if(!(step in stepMap) || isNaN(oct)) return;
+        const midi = (oct+1)*12 + stepMap[step] + alt;
+        // タイでつながった音はまとめる
+        const tieStop = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='stop');
+        if(tieStop && prevTiedMidi===midi) return;
+        const tieStart = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='start');
+        prevTiedMidi = tieStart ? midi : null;
+        arr.push(midi);
+      });
+      measures.push(arr);
+    }
+    const flat = measures.flat();
+    if(flat.length) candidates.push({measures, flat});
+  }
+  if(candidates.length===0) throw new Error('nonotes');
+
+  // 運指表にいちばんよく合う「パート × オクターブ補正」を自動選択
+  // （Flatの楽譜が実音＝1オクターブ上で書かれている場合などを吸収する）
+  let best = null;
+  candidates.forEach((cand, pi)=>{
+    for(const shift of [0,-12,12,-24,24]){
+      const cov = cand.flat.filter(m=>FINGERINGS.german[m+shift]).length / cand.flat.length;
+      const score = cov - Math.abs(shift)*0.0001 - pi*0.001;  // 同点ならシフトなし・先のパートを優先
+      if(!best || score > best.score) best = {cand, shift, cov, score};
+    }
   });
-  if(notes.length===0) throw new Error('nonotes');
-  return {title, notes};
+  const measures = best.cand.measures.map(m=>m.map(v=>v+best.shift));
+  return {title, measures, coverage: best.cov, shifted: best.shift!==0};
 }
 async function loadFile(file){
   try{
@@ -824,19 +894,22 @@ async function loadFile(file){
     }else{
       xmlText = await file.text();
     }
-    const {title,notes} = parseMusicXML(xmlText);
-    setSong(title || file.name.replace(/\.(mxl|xml|musicxml)$/i,''), notes);
+    const {title, measures, coverage, shifted} = parseMusicXML(xmlText);
+    setSong(title || file.name.replace(/\.(mxl|xml|musicxml)$/i,''), measures);
+    if(shifted) console.log('オクターブを自動補正しました');
     $('songSelect').value='';
   }catch(e){
     showToast('楽譜をよみこめませんでした。Flatから MusicXML で書き出したファイルをためしてね');
   }
 }
-function setSong(title, notes){
-  state.notes = notes;
+function setSong(title, measures){
+  state.measures = measures;
+  state.notes = measures.flat();
   state.songTitle = title;
   els.songTitle.textContent = '♪ ' + title;
-  const missing = notes.filter(m=>!getFingering(m,state.system));
+  const missing = state.notes.filter(m=>!getFingering(m,state.system));
   if(missing.length) showToast('運指表にない音が '+missing.length+' こあります（スキップできます）');
+  buildListView();
   restart();
   showToast('「'+title+'」をよみこんだよ！ 🎤マイクスタートでれんしゅう開始');
 }
@@ -846,7 +919,7 @@ function setSong(title, notes){
    ===================================================== */
 $('songSelect').addEventListener('change', e=>{
   const d = DEMO_SONGS[e.target.value];
-  if(d) setSong(d.title, d.notes.slice());
+  if(d) setSong(d.title, d.measures.map(m=>m.slice()));
 });
 $('fileBtn').addEventListener('click', ()=>$('fileInput').click());
 $('fileInput').addEventListener('change', e=>{
@@ -891,7 +964,7 @@ function segSetup(id, key, onChange){
     });
   });
 }
-segSetup('systemSeg','system', ()=>updateView());
+segSetup('systemSeg','system', ()=>{ updateView(); buildListView(); });
 segSetup('strictSeg','strict');
 segSetup('modeSeg','mode', v=>{
   if(v==='tap'){ stopMic(); els.micBtn.style.display='none'; els.tapNextBtn.style.display=''; }
@@ -904,6 +977,75 @@ document.addEventListener('keydown', e=>{
   if(e.code==='Space' && state.mode==='tap' && state.notes.length>0){
     e.preventDefault(); els.tapNextBtn.click();
   }
+});
+
+/* =====================================================
+   いちらんひょう（五線譜＋ドレミ＋運指）
+   ===================================================== */
+function staffSVG(midi){
+  // 音の高さ→五線上の位置（ト音記号、E4=いちばん下の線）
+  const LETIDX = [0,0,1,1,2,3,3,4,4,5,6,6];   // ピッチクラス→幹音の段
+  const ACC    = ['','♯','','♯','','','♯','','♯','','♭',''];
+  const pc = ((midi%12)+12)%12, oct = Math.floor(midi/12)-1;
+  const d = oct*7 + LETIDX[pc];                // 段番号（E4=30）
+  const step = 5, yE4 = 64;
+  const y = yE4 - (d-30)*step;
+  let s = `<svg class="nstaff" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg">`;
+  for(let k=0;k<5;k++){
+    const ly = yE4 - k*10;
+    s += `<line x1="16" x2="68" y1="${ly}" y2="${ly}" stroke="#A9C2BA" stroke-width="1.6"/>`;
+  }
+  s += `<text x="2" y="${yE4+10}" font-size="40" fill="#7A948D">𝄞</text>`;
+  // 加線
+  for(let ld=28; ld>=d-(d%2); ld-=2){
+    s += `<line x1="38" x2="60" y1="${yE4-(ld-30)*step}" y2="${yE4-(ld-30)*step}" stroke="#A9C2BA" stroke-width="1.6"/>`;
+  }
+  for(let ld=40; ld<=d; ld+=2){
+    s += `<line x1="38" x2="60" y1="${yE4-(ld-30)*step}" y2="${yE4-(ld-30)*step}" stroke="#A9C2BA" stroke-width="1.6"/>`;
+  }
+  if(ACC[pc]) s += `<text x="31" y="${y+5}" font-size="15" fill="#23423B" text-anchor="middle" font-weight="700">${ACC[pc]}</text>`;
+  s += `<ellipse cx="49" cy="${y}" rx="6.5" ry="4.8" fill="#23423B" transform="rotate(-12 49 ${y})"/>`;
+  s += `</svg>`;
+  return s;
+}
+function buildListView(){
+  const grid = $('listGrid');
+  grid.innerHTML = '';
+  $('listTitle').textContent = '♪ ' + (state.songTitle || '');
+  state.measures.forEach((meas, mi)=>{
+    if(meas.length===0) return;
+    const row = document.createElement('div'); row.className = 'measure';
+    const num = document.createElement('div'); num.className = 'mnum'; num.textContent = mi+1;
+    const wrap = document.createElement('div'); wrap.className = 'mnotes';
+    meas.forEach(midi=>{
+      const card = document.createElement('div'); card.className = 'ncard';
+      const n = noteName(midi);
+      card.innerHTML = staffSVG(midi) +
+        `<div class="nname">${n.high?'<span class="hi">高い</span>':''}${n.kana}</div>` +
+        `<svg class="nfing" viewBox="0 0 230 660" xmlns="http://www.w3.org/2000/svg"></svg>`;
+      const fsvg = card.querySelector('.nfing');
+      buildRecorderSVG(fsvg, {mini:true});
+      renderFingering(fsvg, getFingering(midi, state.system));
+      card.addEventListener('click', ()=>{
+        playNote(midi, 0.7);
+        card.classList.add('play');
+        setTimeout(()=>card.classList.remove('play'), 450);
+      });
+      wrap.appendChild(card);
+    });
+    row.appendChild(num); row.appendChild(wrap);
+    grid.appendChild(row);
+  });
+}
+let listMode = false;
+$('viewToggle').addEventListener('click', ()=>{
+  if(state.notes.length===0){ showToast('さきに きょくをえらんでね'); return; }
+  listMode = !listMode;
+  document.querySelector('main').style.display = listMode ? 'none' : '';
+  $('listView').style.display = listMode ? '' : 'none';
+  document.querySelector('.controls').style.display = listMode ? 'none' : '';
+  $('viewToggle').textContent = listMode ? '🎤 れんしゅうへもどる' : '👥 いちらんひょう';
+  if(listMode) stopMic();
 });
 
 /* ---------- 初期化 ---------- */
