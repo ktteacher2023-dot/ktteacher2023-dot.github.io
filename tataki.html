@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>はくたたき｜けいてぃの音楽ツールズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--main:#FF6B6B;--main-d:#d94f4f;--ink:#2B2B33;--paper:#FFF9F5;
+  --gold:#FFB731;--good:#7BE0AD}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--paper);color:var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;
+  display:flex;flex-direction:column;height:100dvh}
+
+/* ===== top bar ===== */
+#topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 14px 6px;flex:0 0 auto}
+#title{font-size:clamp(18px,4.5vw,26px);font-weight:900;color:var(--main);letter-spacing:.05em;white-space:nowrap}
+#songName{font-size:clamp(11px,2.8vw,13px);font-weight:700;color:#8a8a94;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:center}
+#stats{display:flex;gap:12px;font-weight:900;font-size:12px;white-space:nowrap}
+#stats b{color:var(--main);font-size:16px}
+
+/* ===== game canvas ===== */
+#gameWrap{flex:1 1 auto;min-height:0;position:relative;margin:0 10px}
+#game{position:absolute;inset:0;width:100%;height:100%;border-radius:20px;
+  background:linear-gradient(#FFFFFF,#FFF3EC);box-shadow:inset 0 0 0 3px #F6E3D9}
+
+/* ===== tap zone ===== */
+#tapBtn{flex:0 0 auto;margin:10px auto 8px;width:min(88vw,560px);height:clamp(64px,11dvh,96px);
+  border-radius:999px;border:none;background:var(--main);color:#fff;font-family:inherit;
+  font-size:clamp(20px,5vw,28px);font-weight:900;letter-spacing:.15em;cursor:pointer;
+  box-shadow:0 7px 0 var(--main-d);transition:transform .05s, box-shadow .05s}
+#tapBtn:active{transform:translateY(6px);box-shadow:0 1px 0 var(--main-d)}
+#tapBtn:disabled{background:#e8c9c0;box-shadow:0 7px 0 #d8b5aa;color:#fff;cursor:default}
+
+/* ===== bottom controls ===== */
+#controls{flex:0 0 auto;display:flex;gap:6px;padding:0 10px calc(10px + env(safe-area-inset-bottom));
+  justify-content:center;flex-wrap:wrap}
+.ctl{font-family:inherit;font-weight:900;font-size:clamp(11.5px,2.9vw,14px);
+  padding:8px 14px;border-radius:999px;border:2.5px solid var(--ink);
+  background:#fff;cursor:pointer;color:var(--ink);white-space:nowrap}
+.ctl.on{background:var(--ink);color:#fff}
+.ctl.accent{background:var(--main);border-color:var(--main);color:#fff}
+select.ctl{appearance:none;-webkit-appearance:none;max-width:34vw;text-overflow:ellipsis}
+#fileInput{display:none}
+
+/* ===== result overlay ===== */
+#result{position:absolute;inset:0;border-radius:20px;background:rgba(255,249,245,.96);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px}
+#result.show{display:flex}
+#resultStars{font-size:clamp(34px,9vw,54px);letter-spacing:.1em}
+#resultTitle{font-size:clamp(20px,5vw,30px);font-weight:900;color:var(--main)}
+#resultDetail{font-weight:900;font-size:clamp(13px,3.4vw,16px);color:#8a8a94;line-height:1.9}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="title">はくたたき</div>
+  <div id="songName">きらきらぼし</div>
+  <div id="stats"><span>コンボ <b id="combo">0</b></span><span>スコア <b id="score">0</b></span></div>
+</div>
+
+<div id="gameWrap">
+  <canvas id="game"></canvas>
+  <div id="result">
+    <div id="resultStars"></div>
+    <div id="resultTitle"></div>
+    <div id="resultDetail"></div>
+    <button class="ctl accent" id="retryBtn" style="margin-top:6px">もういっかい ▶</button>
+  </div>
+</div>
+
+<button id="tapBtn" disabled>タップ!</button>
+
+<div id="controls">
+  <button class="ctl accent" id="startBtn">▶ スタート</button>
+  <select class="ctl" id="songSel"></select>
+  <select class="ctl" id="modeSel">
+    <option value="beat" selected>はく ★</option>
+    <option value="offbeat">うらはく ★★</option>
+    <option value="hidden">かくれはく ★★★</option>
+    <option value="rhythm">リズム ♪</option>
+  </select>
+  <select class="ctl" id="speedSel">
+    <option value="0.75">ゆっくり</option>
+    <option value="1" selected>ふつう</option>
+    <option value="1.25">はやい</option>
+  </select>
+  <button class="ctl" id="loadBtn">📄 がくふ をよみこむ</button>
+  <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl">
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ================= demo songs (public domain) ================= */
+function seq(list){ // [[midi,dur],...] → notes {t,d,m}
+  let t = 0; const out = [];
+  list.forEach(([m, d]) => { if(m !== null) out.push({t, d, m}); t += d; });
+  return out;
+}
+const N = {C4:60,D4:62,E4:64,F4:65,G4:67,A4:69,B4:71,C5:72,D5:74};
+const DEMOS = [
+  { name:'きらきらぼし', bpm:100, beatsPerBar:4, notes: seq([
+    [N.C4,1],[N.C4,1],[N.G4,1],[N.G4,1],[N.A4,1],[N.A4,1],[N.G4,2],
+    [N.F4,1],[N.F4,1],[N.E4,1],[N.E4,1],[N.D4,1],[N.D4,1],[N.C4,2],
+    [N.G4,1],[N.G4,1],[N.F4,1],[N.F4,1],[N.E4,1],[N.E4,1],[N.D4,2],
+    [N.G4,1],[N.G4,1],[N.F4,1],[N.F4,1],[N.E4,1],[N.E4,1],[N.D4,2],
+    [N.C4,1],[N.C4,1],[N.G4,1],[N.G4,1],[N.A4,1],[N.A4,1],[N.G4,2],
+    [N.F4,1],[N.F4,1],[N.E4,1],[N.E4,1],[N.D4,1],[N.D4,1],[N.C4,2],
+  ])},
+  { name:'かえるのうた', bpm:104, beatsPerBar:4, notes: seq([
+    [N.C4,1],[N.D4,1],[N.E4,1],[N.F4,1],[N.E4,1],[N.D4,1],[N.C4,2],
+    [N.E4,1],[N.F4,1],[N.G4,1],[N.A4,1],[N.G4,1],[N.F4,1],[N.E4,2],
+    [N.C4,2],[N.C4,2],[N.C4,2],[N.C4,2],
+    [N.C4,.5],[N.C4,.5],[N.D4,.5],[N.D4,.5],[N.E4,.5],[N.E4,.5],[N.F4,.5],[N.F4,.5],
+    [N.E4,1],[N.D4,1],[N.C4,2],
+  ])},
+  { name:'ちょうちょう', bpm:108, beatsPerBar:4, notes: seq([
+    [N.G4,1],[N.E4,1],[N.E4,2],[N.F4,1],[N.D4,1],[N.D4,2],
+    [N.C4,1],[N.D4,1],[N.E4,1],[N.F4,1],[N.G4,1],[N.G4,1],[N.G4,2],
+    [N.G4,1],[N.E4,1],[N.E4,1],[N.E4,1],[N.F4,1],[N.D4,1],[N.D4,2],
+    [N.C4,1],[N.E4,1],[N.G4,1],[N.G4,1],[N.E4,1],[N.E4,1],[N.E4,2],
+  ])},
+];
+let songs = [...DEMOS];
+let songIdx = 0;
+
+function refreshSongSel(){
+  const sel = $('songSel');
+  sel.innerHTML = '';
+  songs.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = '♪ ' + s.name;
+    sel.appendChild(o);
+  });
+  sel.value = songIdx;
+}
+refreshSongSel();
+$('songSel').addEventListener('change', e => { songIdx = +e.target.value; resetGame(); });
+
+/* ================= MusicXML / MXL loading ================= */
+$('loadBtn').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    let xmlText;
+    if(file.name.toLowerCase().endsWith('.mxl')){
+      xmlText = await readMXL(await file.arrayBuffer());
+    } else {
+      xmlText = await file.text();
+    }
+    const song = parseMusicXML(xmlText, file.name.replace(/\.(mxl|musicxml|xml)$/i,''));
+    if(!song.notes.length) throw new Error('no notes');
+    songs.push(song);
+    songIdx = songs.length - 1;
+    refreshSongSel();
+    resetGame();
+    $('songName').textContent = '♪ ' + song.name + ' をよみこんだよ!';
+  }catch(err){
+    $('songName').textContent = 'よみこめなかった…(FlatからMusicXMLでかきだしてね)';
+  }
+  e.target.value = '';
+});
+
+/* --- minimal MXL (zip) reader using DecompressionStream --- */
+async function readMXL(buf){
+  const dv = new DataView(buf);
+  let eocd = -1;
+  for(let i = buf.byteLength - 22; i >= 0; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('bad zip');
+  const cdCount = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const td = new TextDecoder();
+  for(let n = 0; n < cdCount; n++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const csize = dv.getUint32(p + 20, true);
+    const fnLen = dv.getUint16(p + 28, true);
+    const exLen = dv.getUint16(p + 30, true);
+    const cmLen = dv.getUint16(p + 32, true);
+    const lhOff = dv.getUint32(p + 42, true);
+    const fname = td.decode(new Uint8Array(buf, p + 46, fnLen));
+    p += 46 + fnLen + exLen + cmLen;
+    if(fname.startsWith('META-INF') || !(/\.(xml|musicxml)$/i.test(fname))) continue;
+    const lfn = dv.getUint16(lhOff + 26, true);
+    const lex = dv.getUint16(lhOff + 28, true);
+    const dataStart = lhOff + 30 + lfn + lex;
+    const raw = new Uint8Array(buf, dataStart, csize);
+    if(method === 0) return td.decode(raw);
+    if(method === 8){
+      const ds = new DecompressionStream('deflate-raw');
+      const out = await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+      return td.decode(out);
+    }
+  }
+  throw new Error('no xml in mxl');
+}
+
+/* --- MusicXML → song --- */
+function parseMusicXML(text, fallbackName){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('parse error');
+  let name = doc.querySelector('work work-title')?.textContent
+          || doc.querySelector('movement-title')?.textContent
+          || fallbackName || 'よみこんだ きょく';
+  name = name.trim().slice(0, 24);
+  let bpm = 100;
+  const snd = doc.querySelector('sound[tempo]');
+  if(snd) bpm = parseFloat(snd.getAttribute('tempo')) || 100;
+  const pm = doc.querySelector('metronome per-minute');
+  if(pm) bpm = parseFloat(pm.textContent) || bpm;
+  bpm = Math.min(Math.max(bpm, 40), 200);
+  let beatsPerBar = 4;
+  const beatsEl = doc.querySelector('time beats');
+  const beatType = doc.querySelector('time beat-type');
+  if(beatsEl && beatType){
+    beatsPerBar = (parseInt(beatsEl.textContent) || 4) * 4 / (parseInt(beatType.textContent) || 4);
+  }
+  const part = doc.querySelector('part');
+  if(!part) throw new Error('no part');
+  const STEP = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  let divisions = 1, cursor = 0, mainVoice = null;
+  const notes = [];
+  part.querySelectorAll(':scope > measure').forEach(meas => {
+    for(const el of meas.children){
+      const tag = el.tagName;
+      if(tag === 'attributes'){
+        const d = el.querySelector('divisions');
+        if(d) divisions = parseInt(d.textContent) || divisions;
+      }
+      else if(tag === 'backup'){
+        cursor -= (parseInt(el.querySelector('duration')?.textContent) || 0) / divisions;
+      }
+      else if(tag === 'forward'){
+        cursor += (parseInt(el.querySelector('duration')?.textContent) || 0) / divisions;
+      }
+      else if(tag === 'note'){
+        if(el.querySelector('grace')) continue;
+        const dur = (parseInt(el.querySelector('duration')?.textContent) || 0) / divisions;
+        const isChord = !!el.querySelector('chord');
+        const voice = el.querySelector('voice')?.textContent || '1';
+        if(mainVoice === null) mainVoice = voice;
+        const pitch = el.querySelector('pitch');
+        if(voice === mainVoice && !isChord && pitch){
+          const step = pitch.querySelector('step')?.textContent || 'C';
+          const oct  = parseInt(pitch.querySelector('octave')?.textContent) || 4;
+          const alt  = parseInt(pitch.querySelector('alter')?.textContent) || 0;
+          const midi = (oct + 1) * 12 + (STEP[step] ?? 0) + alt;
+          const tieStop = [...el.querySelectorAll('tie')].some(t => t.getAttribute('type') === 'stop');
+          const prev = notes[notes.length - 1];
+          if(tieStop && prev && prev.m === midi && Math.abs(prev.t + prev.d - cursor) < 1e-6){
+            prev.d += dur;
+          } else {
+            notes.push({t: cursor, d: dur, m: midi});
+          }
+        }
+        if(!isChord) cursor += dur;
+      }
+    }
+  });
+  notes.sort((a,b) => a.t - b.t);
+  return { name, bpm, beatsPerBar, notes };
+}
+
+/* ================= audio ================= */
+let audio = null, songGain = null;
+function ensureAudio(){
+  if(!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+  if(audio.state === 'suspended') audio.resume();
+}
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function melodyNote(m, t, dur){
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = 'triangle'; o.frequency.value = mf(m);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(.2, t + .03);
+  g.gain.setValueAtTime(.2, Math.max(t + .03, t + dur - .09));
+  g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(songGain || audio.destination);
+  o.start(t); o.stop(t + dur + .05);
+}
+function beatClick(t, accent){
+  const dest = songGain || audio.destination;
+  if(accent){
+    // 1拍目「ドン」: 低音が沈み込む太鼓風キック
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(170, t);
+    o.frequency.exponentialRampToValueAtTime(52, t + .13);
+    g.gain.setValueAtTime(.6, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .26);
+    o.connect(g).connect(dest);
+    o.start(t); o.stop(t + .3);
+    // アタック感を出す短い打撃レイヤー
+    const o2 = audio.createOscillator(), g2 = audio.createGain();
+    o2.type = 'triangle'; o2.frequency.value = 300;
+    g2.gain.setValueAtTime(.22, t);
+    g2.gain.exponentialRampToValueAtTime(.001, t + .05);
+    o2.connect(g2).connect(dest);
+    o2.start(t); o2.stop(t + .06);
+  } else {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'square'; o.frequency.value = 640;
+    g.gain.setValueAtTime(.06, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .07);
+    o.connect(g).connect(dest);
+    o.start(t); o.stop(t + .08);
+  }
+}
+function hitSound(kind){
+  const t = audio.currentTime;
+  if(kind === 'perfect'){
+    [880, 1318.5].forEach((f, i) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.12, t + i * .04);
+      g.gain.exponentialRampToValueAtTime(.001, t + i * .04 + .2);
+      o.connect(g).connect(audio.destination);
+      o.start(t + i * .04); o.stop(t + i * .04 + .25);
+    });
+  } else {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'sine'; o.frequency.value = 740;
+    g.gain.setValueAtTime(.1, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .15);
+    o.connect(g).connect(audio.destination);
+    o.start(t); o.stop(t + .2);
+  }
+}
+
+/* ================= game state ================= */
+const cv = $('game'), ctx = cv.getContext('2d');
+let W = 0, H = 0;
+function resize(){
+  const r = cv.getBoundingClientRect();
+  W = r.width; H = r.height;
+  cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+}
+window.addEventListener('resize', () => setTimeout(resize, 60));
+
+let mode = 'beat', speed = 1;
+let gBeatDur = .6, gLen = 0;
+let playing = false, startTime = 0, markers = [], scheduled = [];
+let combo = 0, maxCombo = 0, score = 0, perfectN = 0, goodN = 0, missN = 0;
+let frogJump = 0, frogWobble = 0, popups = [], sparks = [];
+const APPROACH = 2.4;
+const HIT_X_RATIO = .18;
+
+$('modeSel').addEventListener('change', e => { mode = e.target.value; resetGame(); });
+$('speedSel').addEventListener('change', e => { speed = +e.target.value; resetGame(); });
+$('retryBtn').addEventListener('click', () => { resetGame(); startGame(); });
+$('startBtn').addEventListener('click', () => playing ? resetGame() : startGame());
+
+function buildMarkers(){
+  const song = songs[songIdx];
+  const beatDur = 60 / (song.bpm * speed);
+  gBeatDur = beatDur;
+  const len = Math.ceil(Math.max(...song.notes.map(n => n.t + n.d)));
+  gLen = len;
+  markers = [];
+  if(mode === 'rhythm'){
+    song.notes.forEach(n => markers.push({time: n.t * beatDur, hit: null, midi: n.m}));
+  } else if(mode === 'offbeat'){
+    for(let b = 0; b < len; b++){
+      markers.push({time: (b + .5) * beatDur, hit: null, off: true});
+    }
+  } else { // beat / hidden
+    for(let b = 0; b < len; b++){
+      markers.push({time: b * beatDur, hit: null, accent: b % song.beatsPerBar === 0});
+    }
+  }
+}
+
+function resetGame(){
+  playing = false;
+  scheduled.forEach(id => clearTimeout(id)); scheduled = [];
+  if(songGain){ try{ songGain.disconnect(); }catch(e){} songGain = null; }
+  combo = 0; score = 0; maxCombo = 0; perfectN = 0; goodN = 0; missN = 0;
+  popups = []; sparks = []; frogJump = 0;
+  $('combo').textContent = 0; $('score').textContent = 0;
+  $('tapBtn').disabled = true;
+  $('startBtn').textContent = '▶ スタート';
+  $('result').classList.remove('show');
+  $('songName').textContent = '♪ ' + songs[songIdx].name;
+  if(mode === 'offbeat') $('songName').textContent += '｜はくと はくの あいだを たたこう';
+  if(mode === 'hidden') $('songName').textContent += '｜こころの中で はくを かぞえよう';
+  buildMarkers();
+}
+
+function startGame(){
+  ensureAudio();
+  resize();
+  resetGame();
+  songGain = audio.createGain();
+  songGain.gain.value = 1;
+  songGain.connect(audio.destination);
+  playing = true;
+  $('tapBtn').disabled = false;
+  $('startBtn').textContent = '⏹ やめる';
+  const song = songs[songIdx];
+  const beatDur = 60 / (song.bpm * speed);
+  const lead = 1.2;
+  startTime = audio.currentTime + lead + APPROACH;
+  song.notes.forEach(n => melodyNote(n.m, startTime + n.t * beatDur, Math.max(n.d * beatDur * .95, .12)));
+  const len = Math.ceil(Math.max(...song.notes.map(n => n.t + n.d)));
+  if(mode === 'hidden'){
+    // ガイド: さいしょの2小節だけ拍が鳴り、あとは心の中の拍で
+    const guide = Math.min(song.beatsPerBar * 2, len);
+    for(let b = 0; b < guide; b++) beatClick(startTime + b * beatDur, b % song.beatsPerBar === 0);
+  } else {
+    for(let b = 0; b < len; b++) beatClick(startTime + b * beatDur, b % song.beatsPerBar === 0);
+  }
+  for(let c = 0; c < song.beatsPerBar; c++)
+    beatClick(startTime - (song.beatsPerBar - c) * beatDur, c === 0);
+  const endS = (Math.max(...markers.map(m => m.time)) + 1.6);
+  scheduled.push(setTimeout(showResult, (startTime - audio.currentTime + endS) * 1000));
+}
+
+/* ================= input & judging ================= */
+function tap(){
+  if(!playing) return;
+  ensureAudio();
+  const now = audio.currentTime - startTime;
+  let best = null, bestD = Infinity;
+  markers.forEach(mk => {
+    if(mk.hit !== null) return;
+    const d = Math.abs(now - mk.time);
+    if(d < bestD){ bestD = d; best = mk; }
+  });
+  if(!best || bestD > .3){ frogWobble = 1; return; }
+  if(bestD < .12){
+    best.hit = 'perfect'; perfectN++; combo++; score += 100 + combo * 2;
+    hitSound('perfect'); addPopup('ぴったり!', '#FF6B6B'); addSparks();
+    frogJump = 1;
+  } else if(bestD < .25){
+    best.hit = 'good'; goodN++; combo++; score += 50 + combo;
+    hitSound('good'); addPopup('いいね!', '#FF9F1C');
+    frogJump = .6;
+  } else {
+    best.hit = 'miss'; missN++; combo = 0;
+    addPopup('おっとっと', '#8a8a94'); frogWobble = 1;
+  }
+  maxCombo = Math.max(maxCombo, combo);
+  $('combo').textContent = combo;
+  $('score').textContent = score;
+}
+$('tapBtn').addEventListener('pointerdown', tap);
+cv.addEventListener('pointerdown', tap);
+window.addEventListener('keydown', e => {
+  if(e.code === 'Space'){ e.preventDefault(); tap(); }
+});
+
+function addPopup(text, color){
+  popups.push({text, color, y: 0, a: 1});
+}
+function addSparks(){
+  const hx = W * HIT_X_RATIO, hy = H * .42;
+  for(let i = 0; i < 7; i++){
+    const a = Math.random() * Math.PI * 2;
+    sparks.push({x: hx, y: hy, vx: Math.cos(a) * (1.5 + Math.random() * 2),
+                 vy: Math.sin(a) * (1.5 + Math.random() * 2) - 1, life: 1});
+  }
+}
+
+/* ================= render ================= */
+function drawChara(x, y, jump, wob){
+  const t = performance.now();
+  ctx.save();
+  ctx.translate(x, y - jump * 46);
+  ctx.rotate(wob * Math.sin(t * .04) * .18 + Math.sin(t * .002) * .03);
+  const squash = 1 + jump * .18;          // ジャンプで縦にぷるんと伸びる
+  ctx.scale(2 - squash, squash);
+
+  // ぼう(符幹)
+  ctx.strokeStyle = '#d94f4f';
+  ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(16, -6);
+  ctx.quadraticCurveTo(19, -22, 17, -38);
+  ctx.stroke();
+  // はた(符尾)
+  ctx.fillStyle = '#FFB731';
+  ctx.beginPath();
+  ctx.moveTo(17, -38);
+  ctx.quadraticCurveTo(34, -32, 28, -18);
+  ctx.quadraticCurveTo(26, -28, 16, -30);
+  ctx.closePath(); ctx.fill();
+
+  // たま(符頭)= からだ
+  ctx.save();
+  ctx.rotate(-.25);
+  ctx.fillStyle = '#FF6B6B';
+  ctx.beginPath(); ctx.ellipse(0, 0, 21, 17, 0, 0, 6.29); ctx.fill();
+  ctx.strokeStyle = '#d94f4f'; ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.restore();
+
+  // かお
+  const happy = jump > .25;
+  const blink = Math.sin(t * .003) > .992;
+  if(happy || blink){
+    // にっこり目 ^ ^
+    ctx.strokeStyle = '#5c1717'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(-8, -2, 4, Math.PI, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(6, -2, 4, Math.PI, 2 * Math.PI); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-8, -4, 5, 0, 6.29); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, -4, 5, 0, 6.29); ctx.fill();
+    ctx.fillStyle = '#2B2B33';
+    ctx.beginPath(); ctx.arc(-7, -4, 2.4, 0, 6.29); ctx.fill();
+    ctx.beginPath(); ctx.arc(7, -4, 2.4, 0, 6.29); ctx.fill();
+  }
+  // くち
+  ctx.strokeStyle = '#5c1717'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(-1, 3, happy ? 6 : 4.5, .18 * Math.PI, .82 * Math.PI);
+  ctx.stroke();
+  // ほっぺ
+  ctx.fillStyle = 'rgba(255,220,130,.7)';
+  ctx.beginPath(); ctx.arc(-15, 2, 3.2, 0, 6.29); ctx.fill();
+  ctx.beginPath(); ctx.arc(13, 2, 3.2, 0, 6.29); ctx.fill();
+
+  ctx.restore();
+}
+
+function render(){
+  requestAnimationFrame(render);
+  if(!W) resize();
+  ctx.clearRect(0, 0, W, H);
+  const laneY = H * .42;
+  const hitX = W * HIT_X_RATIO;
+  const pxPerSec = (W - hitX) / APPROACH;
+
+  ctx.strokeStyle = '#F3D9CE'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(10, laneY); ctx.lineTo(W - 10, laneY); ctx.stroke();
+
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#FF6B6B';
+  ctx.beginPath(); ctx.arc(hitX, laneY, 34, 0, 6.29); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,107,107,.08)';
+  ctx.beginPath(); ctx.arc(hitX, laneY, 34, 0, 6.29); ctx.fill();
+
+  const now = playing ? audio.currentTime - startTime : -APPROACH;
+
+  // うらはく: 表拍の位置をゴースト円で表示(たたく対象ではない)
+  if(mode === 'offbeat'){
+    const bpb = songs[songIdx].beatsPerBar;
+    for(let b = 0; b < gLen; b++){
+      const gx = hitX + (b * gBeatDur - now) * pxPerSec;
+      if(gx < -40 || gx > W + 40) continue;
+      ctx.strokeStyle = 'rgba(255,107,107,.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(gx, laneY, b % bpb === 0 ? 18 : 13, 0, 6.29); ctx.stroke();
+    }
+  }
+
+  markers.forEach(mk => {
+    if(playing && mk.hit === null && (now - mk.time) > .25){
+      mk.hit = 'miss'; missN++; combo = 0;
+      $('combo').textContent = 0;
+      addPopup('おっとっと', '#8a8a94'); frogWobble = 1;
+    }
+    const x = hitX + (mk.time - now) * pxPerSec;
+    if(x < -60 || x > W + 60) return;
+    if(mk.hit === 'perfect' || mk.hit === 'good') return;
+    let alpha = mk.hit === 'miss' ? .25 : 1;
+    // かくれはく: 判定円に近づくとマーカーが消えていく
+    if(mode === 'hidden' && mk.hit === null){
+      const p = (x - hitX) / (W - hitX);
+      alpha *= Math.max(0, Math.min(1, (p - .08) / .35));
+    }
+    ctx.globalAlpha = alpha;
+    if(mode === 'rhythm'){
+      const off = mk.midi ? (mk.midi - 65) * 2.2 : 0;
+      drawStar(x, laneY - off, 20, '#FFB731');
+    } else if(mode === 'offbeat'){
+      ctx.fillStyle = '#00B8A9';
+      ctx.beginPath(); ctx.arc(x, laneY, 20, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = "900 13px 'Zen Maru Gothic'";
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('ウラ', x, laneY + 1);
+    } else {
+      const r = mk.accent ? 26 : 20;
+      ctx.fillStyle = mk.accent ? '#FFB731' : '#FF8F8F';
+      ctx.beginPath(); ctx.arc(x, laneY, r, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 ' + (mk.accent ? 15 : 12) + "px 'Zen Maru Gothic'";
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(mk.accent ? 'ドン' : 'たん', x, laneY + 1);
+    }
+    ctx.globalAlpha = 1;
+  });
+
+  frogJump *= .88; frogWobble *= .9;
+  drawChara(hitX, laneY - 6, frogJump, frogWobble);
+
+  sparks.forEach(s => { s.x += s.vx; s.y += s.vy; s.vy += .08; s.life -= .03; });
+  sparks = sparks.filter(s => s.life > 0);
+  sparks.forEach(s => {
+    ctx.globalAlpha = s.life;
+    drawStar(s.x, s.y, 7, '#FFD23F');
+    ctx.globalAlpha = 1;
+  });
+
+  popups.forEach(p => { p.y += 1.4; p.a -= .025; });
+  popups = popups.filter(p => p.a > 0);
+  popups.forEach(p => {
+    ctx.globalAlpha = p.a;
+    ctx.fillStyle = p.color;
+    ctx.font = "900 26px 'Zen Maru Gothic'";
+    ctx.textAlign = 'center';
+    ctx.fillText(p.text, hitX + 10, laneY - 70 - p.y);
+    ctx.globalAlpha = 1;
+  });
+
+  if(playing && now < 0){
+    ctx.fillStyle = '#FF6B6B';
+    ctx.font = "900 40px 'Zen Maru Gothic'";
+    ctx.textAlign = 'center';
+    const song = songs[songIdx];
+    const beatDur = 60 / (song.bpm * speed);
+    const c = Math.ceil(-now / beatDur);
+    if(c <= song.beatsPerBar) ctx.fillText(c, W * .5, H * .3);
+  }
+}
+function drawStar(x, y, r, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for(let i = 0; i < 10; i++){
+    const rr = i % 2 === 0 ? r : r * .45;
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    ctx[i === 0 ? 'moveTo' : 'lineTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath(); ctx.fill();
+}
+requestAnimationFrame(render);
+
+/* ================= result ================= */
+function showResult(){
+  if(!playing) return;
+  playing = false;
+  $('tapBtn').disabled = true;
+  $('startBtn').textContent = '▶ スタート';
+  const total = perfectN + goodN + missN || 1;
+  const rate = (perfectN + goodN) / total;
+  let stars = '⭐', title = 'よくがんばったね!';
+  if(rate >= .95 && perfectN / total >= .7){ stars = '⭐⭐⭐'; title = 'はくたたき めいじん!'; }
+  else if(rate >= .8){ stars = '⭐⭐'; title = 'すごい! あとすこし!'; }
+  $('resultStars').textContent = stars;
+  $('resultTitle').textContent = title;
+  $('resultDetail').innerHTML =
+    'ぴったり ' + perfectN + '　いいね ' + goodN + '　おっとっと ' + missN +
+    '<br>さいだいコンボ ' + maxCombo + '　スコア ' + score;
+  $('result').classList.add('show');
+}
+
+/* init */
+resetGame();
+setTimeout(resize, 100);
+})();
+</script>
+</body>
+</html>
