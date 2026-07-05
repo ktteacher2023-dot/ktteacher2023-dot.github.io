@@ -93,7 +93,7 @@ a.home{
 <a class="home" href="../">← ツールズ</a>
 <header>
   <h1>🎼 しきしゃ たいけん</h1>
-  <div class="lead">まんなかを 上から下へ ふって みよう。ふる はやさで、きょくが すすむよ</div>
+  <div class="lead">①から じゅんばんに、ひかる ●を さわってね。さわる はやさで きょくが すすむよ</div>
 </header>
 
 <div class="bar" id="songBar">
@@ -107,7 +107,7 @@ a.home{
 <div id="stageWrap">
   <canvas id="stage"></canvas>
   <div class="hud" id="hud"></div>
-  <div class="centerMsg" id="centerMsg"><span class="big">さあ、しきしゃさん！</span>まんなかを 上から下へ すーっと ふってね</div>
+  <div class="centerMsg" id="centerMsg"><span class="big">さあ、しきしゃさん！</span>ひかっている ① を さわって はじめよう</div>
 </div>
 
 <div class="foot">
@@ -130,30 +130,27 @@ const SONGS = {
     {t:24,d:1,m:60},{t:25,d:1,m:64},{t:26,d:1,m:67},{t:27,d:1,m:67},
     {t:28,d:2,m:64},
   ]},
-  zou: { name:'ぞうさん', beatsPerBar:3, bpm:90, notes:[
-    {t:0,d:1,m:67},{t:1,d:1,m:64},{t:2,d:1,m:60},
-    {t:3,d:1,m:67},{t:4,d:1,m:64},{t:5,d:1,m:60},
-    {t:6,d:1,m:62},{t:7,d:1,m:64},{t:8,d:1,m:65},
-    {t:9,d:1,m:64},{t:10,d:1,m:62},{t:11,d:1,m:60},
-    {t:12,d:1,m:67},{t:13,d:1,m:64},{t:14,d:1,m:60},
-    {t:15,d:1,m:67},{t:16,d:1,m:64},{t:17,d:1,m:60},
-    {t:18,d:1,m:62},{t:19,d:1,m:65},{t:20,d:1,m:64},
-    {t:21,d:2,m:62},{t:23,d:1,m:60},
-    {t:24,d:3,m:60},
+  zou: { name:'ぞうさん', beatsPerBar:3, bpm:80, notes:[
+    {t:0,d:1.5,m:72},{t:1.5,d:0.5,m:69},{t:2,d:1,m:67},
+    {t:3,d:1.5,m:72},{t:4.5,d:0.5,m:69},{t:5,d:1,m:67},
+    {t:6,d:1.5,m:72},{t:7.5,d:0.5,m:74},{t:8,d:0.5,m:76},{t:8.5,d:0.5,m:79},{t:9,d:0.5,m:76},{t:9.5,d:0.5,m:76},{t:10,d:0.5,m:74},{t:10.5,d:0.5,m:72},{t:11,d:1,m:74},
+    {t:12,d:2,m:79},{t:14,d:1,m:76},
+    {t:15,d:0.5,m:81},{t:15.5,d:0.5,m:79},{t:16,d:1,m:76},{t:17,d:1,m:72},
+    {t:18,d:1.5,m:74},{t:19.5,d:0.5,m:76},{t:20,d:0.5,m:69},{t:20.5,d:0.5,m:67},{t:21,d:2,m:72},
   ]},
-  kira: { name:'きらきらぼし', beatsPerBar:4, bpm:104, notes:[
+  kira: { name:'きらきらぼし', beatsPerBar:4, bpm:80, notes:[
     {t:0,d:1,m:60},{t:1,d:1,m:60},{t:2,d:1,m:67},{t:3,d:1,m:67},
-    {t:4,d:1,m:69},{t:5,d:1,m:69},{t:6,d:2,m:67},
+    {t:4,d:1,m:69},{t:5,d:1,m:69},{t:6,d:1,m:67},
     {t:8,d:1,m:65},{t:9,d:1,m:65},{t:10,d:1,m:64},{t:11,d:1,m:64},
-    {t:12,d:1,m:62},{t:13,d:1,m:62},{t:14,d:2,m:60},
+    {t:12,d:1,m:62},{t:13,d:1,m:62},{t:14,d:1,m:60},
     {t:16,d:1,m:67},{t:17,d:1,m:67},{t:18,d:1,m:65},{t:19,d:1,m:65},
-    {t:20,d:1,m:64},{t:21,d:1,m:64},{t:22,d:2,m:62},
+    {t:20,d:1,m:64},{t:21,d:1,m:64},{t:22,d:1,m:62},
     {t:24,d:1,m:67},{t:25,d:1,m:67},{t:26,d:1,m:65},{t:27,d:1,m:65},
-    {t:28,d:1,m:64},{t:29,d:1,m:64},{t:30,d:2,m:62},
+    {t:28,d:1,m:64},{t:29,d:1,m:64},{t:30,d:1,m:62},
     {t:32,d:1,m:60},{t:33,d:1,m:60},{t:34,d:1,m:67},{t:35,d:1,m:67},
-    {t:36,d:1,m:69},{t:37,d:1,m:69},{t:38,d:2,m:67},
+    {t:36,d:1,m:69},{t:37,d:1,m:69},{t:38,d:1,m:67},
     {t:40,d:1,m:65},{t:41,d:1,m:65},{t:42,d:1,m:64},{t:43,d:1,m:64},
-    {t:44,d:1,m:62},{t:45,d:1,m:62},{t:46,d:2,m:60},
+    {t:44,d:1,m:62},{t:45,d:1,m:62},{t:46,d:1,m:60},
   ]},
 };
 
@@ -257,10 +254,10 @@ function ensureAudio(){
   }
 }
 const mf = m => 440*Math.pow(2,(m-69)/12);
-function playNote(midi, durSec){
+function playNote(midi, durSec, offset){
   ensureAudio();
-  const t = audio.currentTime;
-  const len = Math.max(0.18, Math.min(durSec, 1.4));
+  const t = audio.currentTime + (offset||0);
+  const len = Math.max(0.18, Math.min(durSec, 1.6));
   [0,7].forEach((det,i)=>{  // 軽い重ねで柔らかく
     const o=audio.createOscillator(), g=audio.createGain();
     o.type='triangle'; o.frequency.value=mf(midi); o.detune.value=det;
@@ -355,11 +352,12 @@ function fireBeat(){
   lightBeat(posInBar);
   clickSound(posInBar===0);
 
-  // この拍に始まる音符を鳴らす（長さは なぞる速さ に追従）
+  // この拍[beatIdx, beatIdx+1)に入る音符を、拍内の位置に応じて鳴らす（8分音符も再現）
   const durSec = curInterval/1000;
   song.notes.forEach(n=>{
-    if(Math.floor(n.t)===beatIdx){
-      playNote(n.m, n.d*durSec*0.95);
+    if(n.t >= beatIdx && n.t < beatIdx+1){
+      const off = (n.t - beatIdx) * durSec;   // 拍内オフセット（秒）
+      playNote(n.m, n.d*durSec*0.95, off);
     }
   });
 
@@ -391,87 +389,86 @@ function resize(){
 }
 window.addEventListener('resize', resize);
 
-let tracking=false, prevY=null, apexY=0, descending=false;
-let pointerX=0, pointerY=0, showPointer=false;
+let pointerX=0, pointerY=0, showPointer=false, tracking=false;
+let curPts=[];  // 現在の打点配列（checkHitで参照）
 
 stage.addEventListener('pointerdown', async e=>{
   ensureAudio();
   if(audio.state==='suspended'){ try{ await audio.resume(); }catch(_){} }
-  tracking=true; prevY=e.offsetY; apexY=e.offsetY; descending=false;
-  pointerX=e.offsetX; pointerY=e.offsetY; showPointer=true;
+  tracking=true; showPointer=true;
+  pointerX=e.offsetX; pointerY=e.offsetY;
   stage.setPointerCapture(e.pointerId);
+  checkHit(e.offsetX, e.offsetY);
 });
 stage.addEventListener('pointermove', e=>{
   if(!tracking) return;
-  const y=e.offsetY;
-  pointerX=e.offsetX; pointerY=y;
-  if(prevY===null){ prevY=y; return; }
-  if(y > prevY+0.6){                 // 下降中
-    if(!descending){ descending=true; apexY=prevY; }  // 山（上の頂点）を記録
-  } else if(y < prevY-0.6){          // 上昇に転じた
-    if(descending){                   // ここが谷＝振り下ろしの底
-      const amp = prevY - apexY;      // 山→谷の振り幅
-      if(amp > H*0.10){ fireBeat(); } // 十分に振ったら1拍
-      descending=false;
-    }
-  }
-  prevY=y;
+  pointerX=e.offsetX; pointerY=e.offsetY;
+  checkHit(e.offsetX, e.offsetY);
 });
-function endTrack(){ tracking=false; prevY=null; showPointer=false; }
+function endTrack(){ tracking=false; showPointer=false; }
 stage.addEventListener('pointerup', endTrack);
 stage.addEventListener('pointercancel', endTrack);
 stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
 
-/* ===================== ガイド描画 ===================== */
+// 「次に触るべき打点」に指が入ったら1拍
+function checkHit(x,y){
+  const posInBar = beatIdx % beatsPerBar;
+  const tp = curPts[posInBar];
+  if(!tp) return;
+  const R = Math.min(W,H)*0.11;
+  if(Math.hypot(x-tp.x, y-tp.y) < R){ fireBeat(); }
+}
+
+/* ===================== ガイド描画（打点方式） ===================== */
 function guidePath(){
-  // 指揮パターン。1拍目＝真ん中の上（振り始め）。そこから振り下ろして展開。
-  const cx=W/2, top=H*0.20, bot=H*0.76, mid=H*0.50, dx=W*0.24;
+  // 各拍の「打点」。1拍目＝真ん中の上。ここに触れると1拍。
+  const cx=W/2, top=H*0.20, bot=H*0.74, mid=H*0.48, dx=W*0.26;
   if(beatsPerBar===2){
     // 1(上)→2(下)
-    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2}],
-             curve:[{x:cx,y:top},{x:cx-W*0.13,y:mid},{x:cx,y:bot},{x:cx+W*0.13,y:mid},{x:cx,y:top}] };
+    return [{x:cx,y:top,n:1},{x:cx,y:bot,n:2}];
   }
   if(beatsPerBar===3){
-    // 1(上)→2(下)→3(右)→戻る
-    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx+dx,y:mid,n:3}],
-             curve:[{x:cx,y:top},{x:cx-W*0.05,y:bot},{x:cx+dx,y:mid},{x:cx,y:top}] };
+    // 三角形：1(上)→2(左下)→3(右下)
+    return [{x:cx,y:top,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3}];
   }
-  // 4拍子: 1(上)→2(下)→3(左)→4(右)→戻る
-  return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx-dx,y:mid,n:3},{x:cx+dx,y:mid,n:4}],
-           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx+dx*0.35,y:bot*0.9},{x:cx+dx,y:mid},{x:cx,y:top}] };
+  // 4拍子（画像1の標準指揮）：1(下)→2(左)→3(右)→4(上)
+  return [{x:cx,y:bot,n:1},{x:cx-dx,y:mid,n:2},{x:cx+dx,y:mid,n:3},{x:cx,y:top,n:4}];
 }
 function drawGuide(){
   if(!W) return;
   ctx.clearRect(0,0,W,H);
-  const g=guidePath();
-  // 軌道（各点をなめらかに通る曲線）
-  ctx.strokeStyle='rgba(95,92,224,0.20)';
-  ctx.lineWidth=Math.max(8,H*0.024); ctx.lineCap='round'; ctx.lineJoin='round';
-  const c=g.curve;
+  const pts=guidePath();
+  curPts=pts;
+  const posInBar = beatIdx % beatsPerBar;  // 次に触る打点
+  // 打点を結ぶ点線（順路）
+  ctx.strokeStyle='rgba(95,92,224,0.18)';
+  ctx.lineWidth=Math.max(3,H*0.008); ctx.setLineDash([6,10]); ctx.lineCap='round';
   ctx.beginPath();
-  ctx.moveTo(c[0].x,c[0].y);
-  for(let i=1;i<c.length-1;i++){
-    const xc=(c[i].x+c[i+1].x)/2, yc=(c[i].y+c[i+1].y)/2;
-    ctx.quadraticCurveTo(c[i].x,c[i].y,xc,yc);
-  }
-  ctx.quadraticCurveTo(c[c.length-2].x,c[c.length-2].y,c[c.length-1].x,c[c.length-1].y);
-  ctx.stroke();
-  // 拍番号
-  g.pts.forEach(p=>{
-    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(15,H*0.048),0,7);
-    ctx.fillStyle = p.n===1?'rgba(255,107,107,0.92)':'rgba(255,159,28,0.92)';
+  pts.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  // 打点
+  const R0=Math.max(24,H*0.062);
+  pts.forEach((p,i)=>{
+    const isNext = (i===posInBar);
+    const r = isNext ? R0*1.18 : R0;
+    if(isNext){  // 次に触る打点を緑リングで強調
+      ctx.beginPath(); ctx.arc(p.x,p.y,r+Math.max(7,H*0.02),0,7);
+      ctx.strokeStyle='rgba(0,184,169,0.9)'; ctx.lineWidth=Math.max(4,H*0.011); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7);
+    ctx.fillStyle = p.n===1 ? 'rgba(255,107,107,'+(isNext?1:0.9)+')' : 'rgba(255,159,28,'+(isNext?1:0.9)+')';
     ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(15,H*0.052)+'px "Zen Maru Gothic",sans-serif';
+    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(17,H*0.058)+'px "Zen Maru Gothic",sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(p.n, p.x, p.y+1);
   });
-  // なぞっている指先
+  // 指先
   if(showPointer){
-    ctx.beginPath(); ctx.arc(pointerX,pointerY,Math.max(9,H*0.028),0,7);
+    ctx.beginPath(); ctx.arc(pointerX,pointerY,Math.max(9,H*0.026),0,7);
     ctx.fillStyle='rgba(0,184,169,0.85)'; ctx.fill();
   }
 }
-function loop(){ if(showPointer) drawGuide(); requestAnimationFrame(loop); }
+function loop(){ drawGuide(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
 /* ===================== 初期化 ===================== */
