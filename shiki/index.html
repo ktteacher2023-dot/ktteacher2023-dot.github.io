@@ -424,21 +424,21 @@ stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
 
 /* ===================== ガイド描画 ===================== */
 function guidePath(){
-  // 指揮パターン。画像の軌道に忠実な、丸みのある曲線。下向き＝振り下ろし＝拍。
+  // 指揮パターン。1拍目＝真ん中の上（振り始め）。そこから振り下ろして展開。
   const cx=W/2, top=H*0.20, bot=H*0.76, mid=H*0.50, dx=W*0.24;
   if(beatsPerBar===2){
-    // 2拍子：下(1)→上(2) のU字
-    return { pts:[{x:cx,y:bot,n:1},{x:cx,y:top,n:2}],
-             curve:[{x:cx,y:top},{x:cx-W*0.15,y:mid},{x:cx,y:bot},{x:cx+W*0.15,y:mid},{x:cx,y:top}] };
+    // 1(上)→2(下)
+    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2}],
+             curve:[{x:cx,y:top},{x:cx-W*0.13,y:mid},{x:cx,y:bot},{x:cx+W*0.13,y:mid},{x:cx,y:top}] };
   }
   if(beatsPerBar===3){
-    // 3拍子：上→左下へ振り下ろし(1)→底で右へふくらむ(2)→右上へ戻る(3)。錨型。
-    return { pts:[{x:cx-dx*0.5,y:bot,n:1},{x:cx+dx,y:bot*0.96,n:2},{x:cx,y:top,n:3}],
-             curve:[{x:cx,y:top},{x:cx-dx*0.55,y:bot},{x:cx,y:bot+H*0.035},{x:cx+dx,y:bot*0.96},{x:cx+dx*0.5,y:mid},{x:cx,y:top}] };
+    // 1(上)→2(下)→3(右)→戻る
+    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx+dx,y:mid,n:3}],
+             curve:[{x:cx,y:top},{x:cx-W*0.05,y:bot},{x:cx+dx,y:mid},{x:cx,y:top}] };
   }
-  // 4拍子：上→真下(1)→左(2)→右へ横断(3)→上へ戻る(4)。各拍でカーブ。
-  return { pts:[{x:cx,y:bot,n:1},{x:cx-dx,y:mid,n:2},{x:cx+dx,y:mid,n:3},{x:cx,y:top,n:4}],
-           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx-dx*0.25,y:bot*0.96},{x:cx+dx,y:mid},{x:cx+dx*0.4,y:mid-H*0.05},{x:cx,y:top}] };
+  // 4拍子: 1(上)→2(下)→3(左)→4(右)→戻る
+  return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx-dx,y:mid,n:3},{x:cx+dx,y:mid,n:4}],
+           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx+dx*0.35,y:bot*0.9},{x:cx+dx,y:mid},{x:cx,y:top}] };
 }
 function drawGuide(){
   if(!W) return;
@@ -456,9 +456,6 @@ function drawGuide(){
   }
   ctx.quadraticCurveTo(c[c.length-2].x,c[c.length-2].y,c[c.length-1].x,c[c.length-1].y);
   ctx.stroke();
-  // スタート地点（上の○）
-  ctx.beginPath(); ctx.arc(c[0].x,c[0].y,Math.max(11,H*0.032),0,7);
-  ctx.strokeStyle='rgba(95,92,224,0.55)'; ctx.lineWidth=Math.max(3,H*0.008); ctx.stroke();
   // 拍番号
   g.pts.forEach(p=>{
     ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(15,H*0.048),0,7);
