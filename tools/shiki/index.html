@@ -433,9 +433,9 @@ function guidePath(){
     return { pts:[{x:cx,y:top,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3}],
              path:[{x:cx,y:top},{x:cx-dx,y:bot},{x:cx+dx,y:bot},{x:cx,y:top}] };
   }
-  // 4拍子「1＋三角形」(しきまな)：1(中央おへそ)→2(左下)→3(右下)→4(上頂点)
-  return { pts:[{x:cx,y:mid,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3},{x:cx,y:top,n:4}],
-           path:[{x:cx,y:top},{x:cx,y:mid},{x:cx,y:top},{x:cx-dx,y:bot},{x:cx+dx,y:bot},{x:cx,y:top}] };
+  // 4拍子（実際の指揮軌跡）：1中央→2左→3下(大弧)→4右(高く跳ね上げ)
+  return { pts:[{x:cx,y:mid,n:1},{x:cx-dx,y:mid,n:2},{x:cx+dx*0.2,y:bot,n:3},{x:cx+dx,y:mid,n:4}],
+           path:[{x:cx,y:top},{x:cx,y:mid},{x:cx-dx*0.5,y:top},{x:cx-dx,y:mid},{x:cx-dx*0.3,y:bot},{x:cx+dx*0.2,y:bot},{x:cx+dx,y:mid},{x:cx+dx*0.5,y:top},{x:cx+dx*1.05,y:mid-H*0.05}] };
 }
 function drawGuide(){
   if(!W) return;
