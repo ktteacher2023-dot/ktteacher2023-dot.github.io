@@ -424,44 +424,47 @@ stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
 
 /* ===================== ガイド描画 ===================== */
 function guidePath(){
-  // 拍子ごとの指揮パターン。下向き＝振り下ろし＝拍。三角形／標準形。
-  const cx=W/2, top=H*0.22, bot=H*0.76, mid=H*0.50, dx=W*0.22;
+  // 指揮パターン。画像の軌道に忠実な、丸みのある曲線。下向き＝振り下ろし＝拍。
+  const cx=W/2, top=H*0.20, bot=H*0.76, mid=H*0.50, dx=W*0.24;
   if(beatsPerBar===2){
     // 2拍子：下(1)→上(2) のU字
     return { pts:[{x:cx,y:bot,n:1},{x:cx,y:top,n:2}],
-             curve:[{x:cx,y:top},{x:cx-W*0.12,y:mid},{x:cx,y:bot},{x:cx+W*0.12,y:mid},{x:cx,y:top}] };
+             curve:[{x:cx,y:top},{x:cx-W*0.15,y:mid},{x:cx,y:bot},{x:cx+W*0.15,y:mid},{x:cx,y:top}] };
   }
   if(beatsPerBar===3){
-    // 3拍子：下(1)→右(2)→上(3) の三角形
-    return { pts:[{x:cx,y:bot,n:1},{x:cx+dx,y:mid,n:2},{x:cx,y:top,n:3}],
-             curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx+dx,y:mid},{x:cx,y:top}] };
+    // 3拍子：上→左下へ振り下ろし(1)→底で右へふくらむ(2)→右上へ戻る(3)。錨型。
+    return { pts:[{x:cx-dx*0.5,y:bot,n:1},{x:cx+dx,y:bot*0.96,n:2},{x:cx,y:top,n:3}],
+             curve:[{x:cx,y:top},{x:cx-dx*0.55,y:bot},{x:cx,y:bot+H*0.035},{x:cx+dx,y:bot*0.96},{x:cx+dx*0.5,y:mid},{x:cx,y:top}] };
   }
-  // 4拍子：下(1)→左(2)→右(3)→上(4)
+  // 4拍子：上→真下(1)→左(2)→右へ横断(3)→上へ戻る(4)。各拍でカーブ。
   return { pts:[{x:cx,y:bot,n:1},{x:cx-dx,y:mid,n:2},{x:cx+dx,y:mid,n:3},{x:cx,y:top,n:4}],
-           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx+dx,y:mid},{x:cx,y:top}] };
+           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx-dx*0.25,y:bot*0.96},{x:cx+dx,y:mid},{x:cx+dx*0.4,y:mid-H*0.05},{x:cx,y:top}] };
 }
 function drawGuide(){
   if(!W) return;
   ctx.clearRect(0,0,W,H);
   const g=guidePath();
-  // 軌道
-  ctx.strokeStyle='rgba(95,92,224,0.16)';
-  ctx.lineWidth=Math.max(6,H*0.02); ctx.lineCap='round'; ctx.lineJoin='round';
+  // 軌道（各点をなめらかに通る曲線）
+  ctx.strokeStyle='rgba(95,92,224,0.20)';
+  ctx.lineWidth=Math.max(8,H*0.024); ctx.lineCap='round'; ctx.lineJoin='round';
+  const c=g.curve;
   ctx.beginPath();
-  g.curve.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.moveTo(c[0].x,c[0].y);
+  for(let i=1;i<c.length-1;i++){
+    const xc=(c[i].x+c[i+1].x)/2, yc=(c[i].y+c[i+1].y)/2;
+    ctx.quadraticCurveTo(c[i].x,c[i].y,xc,yc);
+  }
+  ctx.quadraticCurveTo(c[c.length-2].x,c[c.length-2].y,c[c.length-1].x,c[c.length-1].y);
   ctx.stroke();
-  // 「上から下へ」の矢印ヒント（中央の縦線）
-  ctx.strokeStyle='rgba(255,107,107,0.28)';
-  ctx.lineWidth=Math.max(3,H*0.008);
-  ctx.beginPath(); ctx.moveTo(W/2,H*0.24); ctx.lineTo(W/2,H*0.72); ctx.stroke();
-  ctx.fillStyle='rgba(255,107,107,0.30)';
-  ctx.beginPath(); ctx.moveTo(W/2,H*0.75); ctx.lineTo(W/2-9,H*0.68); ctx.lineTo(W/2+9,H*0.68); ctx.fill();
+  // スタート地点（上の○）
+  ctx.beginPath(); ctx.arc(c[0].x,c[0].y,Math.max(11,H*0.032),0,7);
+  ctx.strokeStyle='rgba(95,92,224,0.55)'; ctx.lineWidth=Math.max(3,H*0.008); ctx.stroke();
   // 拍番号
   g.pts.forEach(p=>{
-    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(14,H*0.045),0,7);
-    ctx.fillStyle = p.n===1?'rgba(255,107,107,0.9)':'rgba(255,159,28,0.9)';
+    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(15,H*0.048),0,7);
+    ctx.fillStyle = p.n===1?'rgba(255,107,107,0.92)':'rgba(255,159,28,0.92)';
     ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(14,H*0.05)+'px "Zen Maru Gothic",sans-serif';
+    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(15,H*0.052)+'px "Zen Maru Gothic",sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(p.n, p.x, p.y+1);
   });
