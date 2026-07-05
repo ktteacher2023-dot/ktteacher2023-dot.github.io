@@ -288,6 +288,7 @@ function clickSound(strong){
 let song = SONGS.chou;
 let beatsPerBar = song.beatsPerBar;
 let totalBeats = 0;
+let lastNoteBeat = 0;    // 最後の音符が始まる拍（ここを鳴らしたら曲おわり）
 let beatIdx = 0;         // 次に鳴らす拍（0始まり）
 let playing = false;
 let lastBeatTime = 0;    // 直前に拍を刻んだ時刻(ms)
@@ -302,6 +303,7 @@ function selectSong(key){
   song = SONGS[key];
   beatsPerBar = song.beatsPerBar;
   totalBeats = computeTotalBeats(song);
+  lastNoteBeat = song.notes.length ? Math.floor(song.notes[song.notes.length-1].t) : 0;
   document.querySelectorAll('.song-btn').forEach(b=>b.classList.toggle('active', b.dataset.song===key));
   buildHud();
   resetPlay();
@@ -361,11 +363,12 @@ function fireBeat(){
     }
   });
 
+  const wasLast = beatIdx >= lastNoteBeat;   // 最後の音符を今鳴らしたか
   beatIdx++;
   const bar = Math.floor(beatIdx/beatsPerBar);
   $('progress').textContent = Math.min(bar,Math.ceil(totalBeats/beatsPerBar))+' / '+Math.ceil(totalBeats/beatsPerBar)+' しょうせつ';
 
-  if(beatIdx>=totalBeats){
+  if(wasLast){
     playing=false;
     $('centerMsg').innerHTML='<span class="big">🎉 えんそう かんりょう！</span>もういちど ふって、はじめから';
     $('centerMsg').style.display='';
@@ -421,43 +424,44 @@ stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
 
 /* ===================== ガイド描画 ===================== */
 function guidePath(){
-  // 拍子ごとの指揮パターン（正規化座標 0-1 を画面にマップ）
-  // 下向きが「振り下ろし＝拍」。各キー点に拍番号。
-  const cx=W/2, top=H*0.20, bot=H*0.78, left=W*0.24, right=W*0.76, mid=H*0.52;
+  // 指揮パターン。1拍目＝真ん中の上（振り始め）。そこから振り下ろして展開。
+  const cx=W/2, top=H*0.20, bot=H*0.76, mid=H*0.50, dx=W*0.24;
   if(beatsPerBar===2){
-    return { pts:[{x:cx,y:bot,n:1},{x:cx,y:top,n:2}],
-             curve:[{x:cx,y:top},{x:cx*0.75,y:mid},{x:cx,y:bot},{x:cx*1.25,y:mid},{x:cx,y:top}] };
+    // 1(上)→2(下)
+    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2}],
+             curve:[{x:cx,y:top},{x:cx-W*0.13,y:mid},{x:cx,y:bot},{x:cx+W*0.13,y:mid},{x:cx,y:top}] };
   }
   if(beatsPerBar===3){
-    return { pts:[{x:cx,y:bot,n:1},{x:right,y:mid,n:2},{x:cx,y:top,n:3}],
-             curve:[{x:cx,y:top},{x:cx,y:bot},{x:left,y:mid},{x:right,y:bot},{x:right,y:mid},{x:cx,y:top}] };
+    // 1(上)→2(下)→3(右)→戻る
+    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx+dx,y:mid,n:3}],
+             curve:[{x:cx,y:top},{x:cx-W*0.05,y:bot},{x:cx+dx,y:mid},{x:cx,y:top}] };
   }
-  // 4拍子
-  return { pts:[{x:cx,y:bot,n:1},{x:left,y:mid,n:2},{x:right,y:mid,n:3},{x:cx,y:top,n:4}],
-           curve:[{x:cx,y:top},{x:cx,y:bot},{x:left,y:mid},{x:cx,y:bot*0.9},{x:right,y:mid},{x:cx,y:top}] };
+  // 4拍子: 1(上)→2(下)→3(左)→4(右)→戻る
+  return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2},{x:cx-dx,y:mid,n:3},{x:cx+dx,y:mid,n:4}],
+           curve:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx,y:mid},{x:cx+dx*0.35,y:bot*0.9},{x:cx+dx,y:mid},{x:cx,y:top}] };
 }
 function drawGuide(){
   if(!W) return;
   ctx.clearRect(0,0,W,H);
   const g=guidePath();
-  // 軌道
-  ctx.strokeStyle='rgba(95,92,224,0.16)';
-  ctx.lineWidth=Math.max(6,H*0.02); ctx.lineCap='round'; ctx.lineJoin='round';
+  // 軌道（各点をなめらかに通る曲線）
+  ctx.strokeStyle='rgba(95,92,224,0.20)';
+  ctx.lineWidth=Math.max(8,H*0.024); ctx.lineCap='round'; ctx.lineJoin='round';
+  const c=g.curve;
   ctx.beginPath();
-  g.curve.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.moveTo(c[0].x,c[0].y);
+  for(let i=1;i<c.length-1;i++){
+    const xc=(c[i].x+c[i+1].x)/2, yc=(c[i].y+c[i+1].y)/2;
+    ctx.quadraticCurveTo(c[i].x,c[i].y,xc,yc);
+  }
+  ctx.quadraticCurveTo(c[c.length-2].x,c[c.length-2].y,c[c.length-1].x,c[c.length-1].y);
   ctx.stroke();
-  // 「上から下へ」の矢印ヒント（中央の縦線）
-  ctx.strokeStyle='rgba(255,107,107,0.28)';
-  ctx.lineWidth=Math.max(3,H*0.008);
-  ctx.beginPath(); ctx.moveTo(W/2,H*0.24); ctx.lineTo(W/2,H*0.72); ctx.stroke();
-  ctx.fillStyle='rgba(255,107,107,0.30)';
-  ctx.beginPath(); ctx.moveTo(W/2,H*0.75); ctx.lineTo(W/2-9,H*0.68); ctx.lineTo(W/2+9,H*0.68); ctx.fill();
   // 拍番号
   g.pts.forEach(p=>{
-    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(14,H*0.045),0,7);
-    ctx.fillStyle = p.n===1?'rgba(255,107,107,0.9)':'rgba(255,159,28,0.9)';
+    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(15,H*0.048),0,7);
+    ctx.fillStyle = p.n===1?'rgba(255,107,107,0.92)':'rgba(255,159,28,0.92)';
     ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(14,H*0.05)+'px "Zen Maru Gothic",sans-serif';
+    ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(15,H*0.052)+'px "Zen Maru Gothic",sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(p.n, p.x, p.y+1);
   });
