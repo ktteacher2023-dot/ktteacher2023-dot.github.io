@@ -1783,8 +1783,8 @@ restoreSong();
 (function(){
   // ★ここを、うたミエ販売note（フル版）のURLに差し替えてください
   var NOTE_URL = "https://note.com/kt_teacher";
-  // ★ポータル（音楽ツールズ）のトップ
-  var HOME_URL = "https://ktteacher.net/tools/";
+  // ★ポータル（音楽ツールズ）のトップ。相対パスにして現在のドメイン/プロトコルに追従
+  var HOME_URL = "../";
 
   function build(){
     if(document.getElementById("demoBar")) return;

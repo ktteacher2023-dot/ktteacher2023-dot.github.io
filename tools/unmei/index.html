@@ -369,15 +369,17 @@
   const dynFromY = y => Math.min(1, Math.max(0.05, 1 - y / H));
   let activePointer = null;
 
-  stage.addEventListener('pointerdown', e => {
+  stage.addEventListener('pointerdown', async e => {
     if (isPlayback || activePointer !== null) return;
+    const pid = e.pointerId, ox = e.offsetX, oy = e.offsetY;
     if (!ctx) initAudio();
-    ctx.resume();
+    // 音の装置が眠っている時は、1拍目を鳴らす前に必ず起こしきる（1拍目が無音で進むのを防ぐ）
+    if (ctx.state === 'suspended'){ try { await ctx.resume(); } catch(_){} }
     hint.style.opacity = 0;
-    activePointer = e.pointerId;
-    stage.setPointerCapture(e.pointerId);
+    activePointer = pid;
+    stage.setPointerCapture(pid);
 
-    const dyn = dynFromY(e.offsetY);
+    const dyn = dynFromY(oy);
     showDyn(dyn);
 
     const note = NOTES[idx];
@@ -399,8 +401,8 @@
       setTimeout(() => flashNote(i, false), 180);
     }
 
-    spawnBurst(e.offsetX, e.offsetY, dyn);
-    if (note.hold) holdPoint = {x: e.offsetX, y: e.offsetY, dyn};
+    spawnBurst(ox, oy, dyn);
+    if (note.hold) holdPoint = {x: ox, y: oy, dyn};
 
     idx++;
     if (!note.hold){

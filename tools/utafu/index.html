@@ -526,7 +526,7 @@
 
   // ---- transcription: frames -> quantized events ----
   function transcribe(){
-    const unit = 60/bpm/2;                 // seconds per 8th note (粗めにして安定)
+    const unit = 60/bpm;                   // seconds per 4分音符（子ども向けにリズムを単純化・安定化）
     const dur = frames.length? frames[frames.length-1].t : 0;
     let totalCells = Math.round(dur / unit);
     if(totalCells<1){ showEmpty('声が拾えませんでした。もう少し大きな声で、近くで歌ってみてください。'); return; }
@@ -617,7 +617,7 @@
   }
 
   // ---- duration decomposition (in 8th-note units) ----
-  const DUR_TABLE=[ [8,'w',0],[6,'h',1],[4,'h',0],[3,'q',1],[2,'q',0],[1,'8',0] ];
+  const DUR_TABLE=[ [4,'w',0],[3,'h',1],[2,'h',0],[1,'q',0] ];  // 全・付点2分・2分・4分のみ（8分/付点4分を廃止して読みやすく）
   function decompose(n){
     const out=[]; let rem=n; let guard=0;
     while(rem>0 && guard++<64){
@@ -638,7 +638,7 @@
 
   // ---- build measures and render ----
   function buildMeasures(events){
-    const cellsPerMeasure = timeNum*2;  // 8分音符グリッド（x/4拍子）
+    const cellsPerMeasure = timeNum;    // 4分音符グリッド（子ども向けにリズムを単純化）
     const measures=[]; let cur=[]; let pos=0; let tieGroup=0;
 
     function pushPiece(measureArr, piece){ measureArr.push(piece); }
