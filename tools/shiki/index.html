@@ -136,7 +136,7 @@ const SONGS = {
     {t:6,d:1.5,m:72},{t:7.5,d:0.5,m:74},{t:8,d:0.5,m:76},{t:8.5,d:0.5,m:79},{t:9,d:0.5,m:76},{t:9.5,d:0.5,m:76},{t:10,d:0.5,m:74},{t:10.5,d:0.5,m:72},{t:11,d:1,m:74},
     {t:12,d:2,m:79},{t:14,d:1,m:76},
     {t:15,d:0.5,m:81},{t:15.5,d:0.5,m:79},{t:16,d:1,m:76},{t:17,d:1,m:72},
-    {t:18,d:1.5,m:74},{t:19.5,d:0.5,m:76},{t:20,d:0.5,m:69},{t:20.5,d:0.5,m:67},{t:21,d:2,m:72},
+    {t:18,d:1.5,m:74},{t:19.5,d:0.5,m:76},{t:20,d:0.5,m:69},{t:20.5,d:0.5,m:67},{t:21,d:3,m:72},
   ]},
   kira: { name:'きらきらぼし', beatsPerBar:4, bpm:80, notes:[
     {t:0,d:1,m:60},{t:1,d:1,m:60},{t:2,d:1,m:67},{t:3,d:1,m:67},
@@ -300,7 +300,7 @@ function selectSong(key){
   song = SONGS[key];
   beatsPerBar = song.beatsPerBar;
   totalBeats = computeTotalBeats(song);
-  lastNoteBeat = song.notes.length ? Math.floor(song.notes[song.notes.length-1].t) : 0;
+  { const _ln = song.notes[song.notes.length-1]; lastNoteBeat = _ln ? Math.ceil(_ln.t + _ln.d) - 1 : 0; }
   document.querySelectorAll('.song-btn').forEach(b=>b.classList.toggle('active', b.dataset.song===key));
   buildHud();
   resetPlay();
@@ -421,31 +421,35 @@ function checkHit(x,y){
 
 /* ===================== ガイド描画（打点方式） ===================== */
 function guidePath(){
-  // 各拍の「打点」。1拍目＝真ん中の上。ここに触れると1拍。
-  const cx=W/2, top=H*0.20, bot=H*0.74, mid=H*0.48, dx=W*0.26;
+  // 各拍の「打点」(pts)と軌道(path)。ptsに触れると1拍。
+  const cx=W/2, top=H*0.18, bot=H*0.74, mid=H*0.46, dx=W*0.26;
   if(beatsPerBar===2){
-    // 1(上)→2(下)
-    return [{x:cx,y:top,n:1},{x:cx,y:bot,n:2}];
+    // 1(上)→2(下)：縦の往復
+    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2}],
+             path:[{x:cx,y:top},{x:cx,y:bot},{x:cx+W*0.12,y:mid},{x:cx,y:top}] };
   }
   if(beatsPerBar===3){
     // 三角形：1(上)→2(左下)→3(右下)
-    return [{x:cx,y:top,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3}];
+    return { pts:[{x:cx,y:top,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3}],
+             path:[{x:cx,y:top},{x:cx-dx,y:bot},{x:cx+dx,y:bot},{x:cx,y:top}] };
   }
-  // 4拍子（画像1の標準指揮）：1(下)→2(左)→3(右)→4(上)
-  return [{x:cx,y:bot,n:1},{x:cx-dx,y:mid,n:2},{x:cx+dx,y:mid,n:3},{x:cx,y:top,n:4}];
+  // 4拍子「1＋三角形」(しきまな)：1(中央おへそ)→2(左下)→3(右下)→4(上頂点)
+  return { pts:[{x:cx,y:mid,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3},{x:cx,y:top,n:4}],
+           path:[{x:cx,y:top},{x:cx,y:mid},{x:cx,y:top},{x:cx-dx,y:bot},{x:cx+dx,y:bot},{x:cx,y:top}] };
 }
 function drawGuide(){
   if(!W) return;
   ctx.clearRect(0,0,W,H);
-  const pts=guidePath();
+  const g=guidePath();
+  const pts=g.pts;
   curPts=pts;
   const posInBar = beatIdx % beatsPerBar;  // 次に触る打点
-  // 打点を結ぶ点線（順路）
+  // 軌道(path)を点線で描く
   ctx.strokeStyle='rgba(95,92,224,0.18)';
   ctx.lineWidth=Math.max(3,H*0.008); ctx.setLineDash([6,10]); ctx.lineCap='round';
   ctx.beginPath();
-  pts.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  g.path.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.setLineDash([]);
   // 打点
   const R0=Math.max(24,H*0.062);
   pts.forEach((p,i)=>{
