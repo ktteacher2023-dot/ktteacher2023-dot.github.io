@@ -107,7 +107,7 @@ a.home{
 <div id="stageWrap">
   <canvas id="stage"></canvas>
   <div class="hud" id="hud"></div>
-  <div class="centerMsg" id="centerMsg"><span class="big">さあ、しきしゃさん！</span>ひかっている ① を さわって はじめよう</div>
+  <div class="centerMsg" id="centerMsg"><span class="big">さあ、しきしゃさん！</span>「スタート」を おして、①へ ふりおろそう</div>
 </div>
 
 <div class="foot">
@@ -290,6 +290,7 @@ let beatIdx = 0;         // 次に鳴らす拍（0始まり）
 let playing = false;
 let lastBeatTime = 0;    // 直前に拍を刻んだ時刻(ms)
 let curInterval = 600;   // 拍間隔(ms) 推定
+let armed = false;       // スタート地点を通過して「構え」た状態か
 
 function computeTotalBeats(s){
   let mx=0; s.notes.forEach(n=> mx=Math.max(mx, n.t+n.d));
@@ -327,7 +328,7 @@ function lightBeat(posInBar){
 
 /* ===================== 進行 ===================== */
 function resetPlay(){
-  beatIdx=0; playing=false; lastBeatTime=0;
+  beatIdx=0; playing=false; lastBeatTime=0; armed=false;
   $('progress').textContent = '0 / '+Math.ceil(totalBeats/beatsPerBar)+' しょうせつ';
   $('tempoBadge').textContent='♩ = —';
   $('centerMsg').style.display='';
@@ -415,10 +416,17 @@ stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
 
 // 「次に触るべき打点」に指が入ったら1拍
 function checkHit(x,y){
+  const R = Math.min(W,H)*0.11;
+  // 演奏前：スタート地点（上）に触れたら「構え」
+  if(!playing && beatIdx===0){
+    const sp = guidePath().path[0];
+    if(Math.hypot(x-sp.x, y-sp.y) < R*1.25){ armed = true; }
+  }
   const posInBar = beatIdx % beatsPerBar;
   const tp = curPts[posInBar];
   if(!tp) return;
-  const R = Math.min(W,H)*0.11;
+  // 1拍目は、スタートを通過して構えてから（振り下ろしで）鳴る
+  if(beatIdx===0 && !armed) return;
   if(Math.hypot(x-tp.x, y-tp.y) < R){ fireBeat(); }
 }
 
@@ -458,6 +466,11 @@ function drawGuide(){
   const sp = g.path[0];
   const R0chk = Math.max(24,H*0.062);
   const spOverlap = pts.some(p => Math.hypot(p.x-sp.x, p.y-sp.y) < R0chk*1.1);
+  // 演奏前でまだ構えていないときは、スタート地点を緑リングで「ここを押してね」
+  if(!playing && beatIdx===0 && !armed){
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, Math.max(16,H*0.045), 0, 7);
+    ctx.strokeStyle='rgba(0,184,169,0.9)'; ctx.lineWidth=Math.max(4,H*0.011); ctx.stroke();
+  }
   if(!spOverlap){
     ctx.beginPath(); ctx.arc(sp.x, sp.y, Math.max(8,H*0.02), 0, 7);
     ctx.fillStyle='rgba(43,43,51,0.75)'; ctx.fill();
