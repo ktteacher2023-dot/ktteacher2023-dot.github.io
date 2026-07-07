@@ -693,10 +693,10 @@ function draw(t){
       for(const p of trace){
         const x=off+p.t*pps();
         if(x<-10||x>W+10){ flushBar(); prevT=p.t; continue; }
-        const snap=Math.round(p.midi);
+        const snap=(p.ok===true&&p.tg!=null)?p.tg:Math.round(p.midi);
         const col=p.ok===true?"#2FB380":"#FF7A59";
         if(segSnap===null){ segSnap=snap; segCol=col; segX0=x; segX1=x; }
-        else if(snap!==segSnap||col!==segCol||(prevT>=0&&p.t-prevT>0.12)){
+        else if(snap!==segSnap||col!==segCol||(prevT>=0&&p.t-prevT>0.30)){
           flushBar(); segSnap=snap; segCol=col; segX0=x; segX1=x;
         }else{ segX1=x; }
         prevT=p.t;
@@ -1090,16 +1090,14 @@ function micJudge(f,tAbs){
   if(m0<=30||m0>=100) return;
   // 平滑化:直近3回の中央値でチラつきを抑える
   recentM.push(m0); if(recentM.length>3) recentM.shift();
-  // 安定化:声の出始めは3コマそろうまで保留し、値が暴れている間(子音・息ノイズ)も保留
-  if(recentM.length<3) return;
-  if((Math.max(...recentM)-Math.min(...recentM))>0.8) return;
   const sorted=[...recentM].sort((a,b)=>a-b);
   const sm=sorted[Math.floor(sorted.length/2)];
   const mm=foldForDisplay(sm,tAbs);
   const ni=noteIdxAt(tAbs);
-  let ok=null, diff=0;
+  let ok=null, diff=0, tg=null;
   if(ni>=0){
     const target=song.notes[ni].midi+transpose();
+    tg=target;
     diff=mm-target;
     if($("octChk").checked) diff=((diff%12)+18)%12-6;
     ok=Math.abs(diff)<=tolerance();
@@ -1115,7 +1113,7 @@ function micJudge(f,tAbs){
       combo=0;
     }
   }
-  trace.push({t:tAbs,midi:mm,ok});
+  trace.push({t:tAbs,midi:mm,ok,tg:(ok===true?tg:null)});
 }
 
 function loop(){
