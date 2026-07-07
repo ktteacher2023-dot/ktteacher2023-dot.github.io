@@ -1070,7 +1070,6 @@ updateView();
 <!-- ===================== 無料版モード（フル版では以下を削除） ===================== -->
 <style>
   #fileBtn,#fileInput{display:none!important}
-  body{padding-bottom:64px}
   #demoBar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:#23423B;color:#fff;
     font-size:13px;font-weight:700;padding:10px 14px;display:flex;gap:10px;align-items:center;
     justify-content:center;flex-wrap:wrap;line-height:1.5}
@@ -1089,6 +1088,18 @@ updateView();
   bar.innerHTML='<span>これは<b>無料版</b>です（内蔵3曲）<span class="sub">｜自分の楽譜・きょうざいきょく・けっかカードはフル版で</span></span>'+
     '<a id="demoCta" href="'+NOTE_URL+'">🔓 フル版のくわしい内容を見る →</a>';
   document.body.appendChild(bar);
+
+  // アプリの操作バー(.controls)は画面下固定なので、CTAバーの高さぶん上に逃がす
+  function fitBar(){
+    var h = bar.offsetHeight;
+    var c = document.querySelector('.controls');
+    var ch = 0;
+    if(c){ c.style.bottom = h + 'px'; ch = c.offsetHeight; }
+    document.body.style.paddingBottom = (h + ch + 12) + 'px';
+  }
+  window.addEventListener('resize', fitBar);
+  window.addEventListener('load', fitBar);
+  fitBar();
 })();
 </script>
 <!-- ===================== 無料版モードここまで ===================== -->
