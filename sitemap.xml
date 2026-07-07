@@ -16,6 +16,26 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://ktteacher.net/tools/utamie/full/</loc>
+    <lastmod>2026-07-07</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ktteacher.net/tools/utamie/school/</loc>
+    <lastmod>2026-07-07</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ktteacher.net/tools/utamie/terms/</loc>
+    <lastmod>2026-07-07</lastmod>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://ktteacher.net/tools/yubimie/full/</loc>
+    <lastmod>2026-07-07</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://ktteacher.net/tools/unmei/</loc>
     <lastmod>2026-07-05</lastmod>
     <priority>0.8</priority>

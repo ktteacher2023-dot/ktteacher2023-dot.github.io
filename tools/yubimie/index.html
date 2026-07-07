@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ゆびミエ 🎵 リコーダーゆびれんしゅう</title>
+<title>ゆびミエ（無料版）🎵 リコーダーゆびれんしゅう</title>
 <link rel="canonical" href="https://ktteacher.net/tools/yubimie/">
-<meta name="description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式に対応、いちらん表は印刷もできる。無料の運指練習ツール。">
+<meta name="description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="ゆびミエ｜リコーダーの指づかいが見える練習アプリ">
-<meta property="og:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式に対応、いちらん表は印刷もできる。無料の運指練習ツール。">
+<meta property="og:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
 <meta property="og:url" content="https://ktteacher.net/tools/yubimie/">
 <meta property="og:image" content="https://ktteacher.net/ogp.png">
 <meta property="og:site_name" content="けいてぃの音楽ツールズ">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ゆびミエ｜リコーダーの指づかいが見える練習アプリ">
-<meta name="twitter:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式に対応、いちらん表は印刷もできる。無料の運指練習ツール。">
+<meta name="twitter:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
 <meta name="twitter:image" content="https://ktteacher.net/ogp.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&display=swap" rel="stylesheet">
@@ -41,21 +41,16 @@ html,body{height:100%}
 body{
   font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
   background:var(--bg);color:var(--ink);
-  font-weight:700;
-  /* 1画面完結レイアウト：ヘッダー＋曲えらび＋本体＋ボタンを縦に配置し、本体が残り全部を使う */
-  height:100vh;height:100dvh;
-  display:flex;flex-direction:column;
-  overflow:hidden;
+  font-weight:700;overflow-x:hidden;
 }
 button{font-family:inherit;font-weight:700;cursor:pointer;border:none}
 
 /* ---------- header ---------- */
 header{
-  flex:none;
   display:flex;align-items:center;gap:10px;
-  padding:8px 16px 4px;max-width:1100px;margin:0 auto;width:100%;
+  padding:10px 16px;max-width:1100px;margin:0 auto;
 }
-.logo{font-size:22px;font-weight:900;letter-spacing:.02em}
+.logo{font-size:26px;font-weight:900;letter-spacing:.02em}
 .logo .mie{color:var(--accent)}
 .tagline{font-size:12px;color:var(--muted);margin-top:2px}
 header .spacer{flex:1}
@@ -67,14 +62,9 @@ header .spacer{flex:1}
 
 /* ---------- song bar ---------- */
 .songbar{
-  flex:none;
-  max-width:1100px;margin:0 auto;padding:0 16px 8px;width:100%;
-  display:flex;gap:8px;align-items:center;
-  flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+  max-width:1100px;margin:0 auto;padding:0 16px 10px;
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
 }
-.songbar::-webkit-scrollbar{display:none}
-.songbar>*{flex:none}
 .songbar select{
   font-family:inherit;font-weight:700;font-size:14px;color:var(--ink);
   background:var(--card);border:2px solid var(--line);border-radius:14px;
@@ -88,34 +78,34 @@ header .spacer{flex:1}
 
 /* ---------- layout ---------- */
 main{
-  flex:1;min-height:0;
-  max-width:1100px;margin:0 auto;padding:0 14px 10px;width:100%;
-  display:grid;grid-template-columns:minmax(150px,26%) 1fr;gap:12px;
+  max-width:1100px;margin:0 auto;padding:0 16px 120px;
+  display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:16px;
 }
 @media(max-width:760px){
-  main{grid-template-columns:minmax(118px,30%) 1fr;gap:8px;padding:0 10px 8px}
+  main{grid-template-columns:1fr}
 }
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
 
 /* ---------- recorder ---------- */
-#recorderCard{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:0;padding:10px}
-#recorderSvg{height:100%;max-height:100%;width:auto;max-width:100%;display:block}
+#recorderCard{display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden}
+#recorderSvg{width:100%;max-width:300px;height:auto;display:block}
+@media(max-width:760px){#recorderSvg{max-width:220px}}
 .hole-open{fill:#fff;stroke:var(--ink);stroke-width:3}
 .hole-closed{fill:var(--accent);stroke:var(--accent);stroke-width:3}
 .hole-closed-anim{animation:pop .25s ease;transform-box:fill-box;transform-origin:center}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
 
 /* ---------- note panel ---------- */
-.note-panel{display:flex;flex-direction:column;gap:10px;min-height:0}
-.now-card{text-align:center;position:relative;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.note-panel{display:flex;flex-direction:column;gap:14px}
+.now-card{text-align:center;position:relative}
 .progress-label{font-size:13px;color:var(--muted)}
-.big-note{font-size:min(13vw,15vh,84px);font-weight:900;line-height:1.15;letter-spacing:.02em}
+.big-note{font-size:min(17vw,84px);font-weight:900;line-height:1.15;letter-spacing:.02em}
 .big-note .oct{font-size:.38em;vertical-align:middle;color:var(--muted);margin-right:.15em}
 .note-letter{font-size:15px;color:var(--muted)}
-.hold-bar{height:12px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:8px;flex:none}
+.hold-bar{height:12px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
 .hold-bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:8px;transition:width .05s linear}
 .hearing{
-  margin-top:6px;font-size:14px;min-height:20px;color:var(--muted);
+  margin-top:10px;font-size:15px;min-height:24px;color:var(--muted);
 }
 .hearing .ok{color:var(--green)}
 .hearing .ng{color:var(--accent)}
@@ -132,31 +122,31 @@ main{
 .combo.bump{animation:comboBump .3s ease}
 @keyframes comboBump{50%{transform:scale(1.4)}}
 
-.next-card{display:flex;align-items:center;gap:14px;flex:none;padding:10px 16px}
+.next-card{display:flex;align-items:center;gap:14px}
 .next-card .label{font-size:13px;color:var(--muted);writing-mode:horizontal-tb}
 .next-name{font-size:30px;font-weight:900}
 .next-name .oct{font-size:.45em;color:var(--muted)}
-#nextMini{height:min(150px,17vh);width:auto;max-width:60px;flex:none}
+#nextMini{width:56px;height:150px;flex:none}
 
 .progress-track{height:10px;background:var(--line);border-radius:8px;overflow:hidden}
 .progress-track>div{height:100%;width:0%;background:var(--blue);border-radius:8px;transition:width .3s ease}
 
 /* ---------- bottom controls ---------- */
 .controls{
-  flex:none;
-  background:rgba(255,255,255,.92);
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
   border-top:2px solid var(--line);
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
 }
 .controls-inner{max-width:1100px;margin:0 auto;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .ctl{
-  border-radius:16px;padding:10px 14px;font-size:15px;background:var(--card);
+  border-radius:16px;padding:12px 18px;font-size:16px;background:var(--card);
   border:2px solid var(--line);color:var(--ink);box-shadow:var(--shadow);
 }
 .ctl:active{transform:scale(.95)}
-.ctl.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-size:16px;padding:10px 22px}
+.ctl.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-size:18px;padding:12px 26px}
 .ctl.primary.listening{background:var(--green);border-color:var(--green)}
-.ctl.big-next{background:var(--blue);border-color:var(--blue);color:#fff;font-size:16px;padding:10px 26px}
+.ctl.big-next{background:var(--blue);border-color:var(--blue);color:#fff;font-size:18px;padding:12px 30px}
 .ctl:disabled{opacity:.4}
 
 /* ---------- sparkles ---------- */
@@ -211,7 +201,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
 .toast.show{opacity:1}
 
 /* ---------- いちらんひょう ---------- */
-#listView{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:1100px;margin:0 auto;padding:0 16px 24px;width:100%}
+#listView{max-width:1100px;margin:0 auto;padding:0 16px 40px}
 .list-head{margin-bottom:12px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 #listTitle{font-size:18px;font-weight:900}
 .list-hint{font-size:13px;color:var(--muted)}
@@ -227,9 +217,8 @@ input[type=range]{accent-color:var(--accent);width:130px}
 .nfing{width:46px;height:auto;display:block}
 
 @media print{
-  html,body{height:auto;overflow:visible;display:block}
   header,.songbar,.controls,main,.toast,#clearOverlay{display:none!important}
-  #listView{display:block!important;padding:0;overflow:visible;height:auto}
+  #listView{display:block!important;padding:0}
   body{background:#fff}
   .list-hint{display:none}
   .measure{box-shadow:none;border:1.5px solid #bbb;break-inside:avoid;page-break-inside:avoid}
@@ -1077,5 +1066,31 @@ buildRecorderSVG(els.svg);
 buildRecorderSVG(els.mini,{mini:true});
 updateView();
 </script>
+
+<!-- ===================== 無料版モード（フル版では以下を削除） ===================== -->
+<style>
+  #fileBtn,#fileInput{display:none!important}
+  body{padding-bottom:64px}
+  #demoBar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:#23423B;color:#fff;
+    font-size:13px;font-weight:700;padding:10px 14px;display:flex;gap:10px;align-items:center;
+    justify-content:center;flex-wrap:wrap;line-height:1.5}
+  #demoBar .sub{opacity:.85;font-weight:500}
+  #demoCta{background:var(--accent);color:#fff;text-decoration:none;border-radius:999px;
+    padding:8px 16px;font-weight:900;white-space:nowrap;transition:transform .15s}
+  #demoCta:hover{transform:translateY(-2px)}
+  @media print{ #demoBar{display:none!important} }
+</style>
+<script>
+"use strict";
+(function(){
+  var NOTE_URL = "full/";  /* 販売LP（tools/yubimie/full/） */
+  var bar=document.createElement("div");
+  bar.id="demoBar";
+  bar.innerHTML='<span>これは<b>無料版</b>です（内蔵3曲）<span class="sub">｜自分の楽譜・きょうざいきょく・けっかカードはフル版で</span></span>'+
+    '<a id="demoCta" href="'+NOTE_URL+'">🔓 フル版のくわしい内容を見る →</a>';
+  document.body.appendChild(bar);
+})();
+</script>
+<!-- ===================== 無料版モードここまで ===================== -->
 </body>
 </html>

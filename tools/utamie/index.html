@@ -1782,7 +1782,7 @@ restoreSong();
 <script>
 (function(){
   // ★ここを、うたミエ販売note（フル版）のURLに差し替えてください
-  var NOTE_URL = "https://note.com/kt_teacher";
+  var NOTE_URL = "full/";  /* 販売LP（tools/utamie/full/） */
   // ★ポータル（音楽ツールズ）のトップ。相対パスにして現在のドメイン/プロトコルに追従
   var HOME_URL = "../";
 
@@ -1794,7 +1794,7 @@ restoreSong();
       '🎁 これは <u>無料デモ版</u> です'+
       '<span class="sub">デモ曲「きらきら星」で、歌声がその場で線になって見える体験ができます。'+
       '教材曲の読み込み・移調・録音・保存は<b>フル版</b>で。</span>'+
-      '<a id="demoCta" href="'+NOTE_URL+'">🔓 フル版（教材曲・移調・録音・保存）を見る →</a>'+
+      '<a id="demoCta" href="'+NOTE_URL+'">🔓 フル版（教材曲・移調・録音・保存）のくわしい内容を見る →</a>'+
       '<br><a id="backHome" href="'+HOME_URL+'">← 音楽ツールズのトップへ</a>';
     var panel=document.querySelector(".panel");
     if(panel&&panel.parentNode){ panel.parentNode.insertBefore(bar,panel); }
