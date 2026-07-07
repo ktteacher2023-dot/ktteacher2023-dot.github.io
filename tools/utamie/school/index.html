@@ -233,9 +233,9 @@
                   Googleフォームなら そのURL
    SCHOOL_PRICE : 1校あたりの年額（税込・数字のみ、例 "19,800円（税込）"）。見積対応のみなら空のまま
    INVOICE      : 適格請求書発行事業者なら true、未登録なら false */
-var CONTACT = "";
+var CONTACT = "mailto:ktteacher2023@gmail.com";
 var SCHOOL_PRICE = "";
-var INVOICE = null;
+var INVOICE = false;
 /* ============================================================ */
 document.querySelectorAll("[data-contact]").forEach(function(a){
   if(CONTACT) a.href = CONTACT;
