@@ -172,6 +172,7 @@
     <span class="ctl" id="othersCtl" style="display:none">いっしょに鳴らす: <span id="partPlayList"></span></span>
     <span class="ctl"><input type="checkbox" id="octChk" checked> オクターブちがいOK</span>
     <span class="ctl"><input type="checkbox" id="nameChk" checked> 音名を表示</span>
+    <span class="ctl"><input type="checkbox" id="waveChk"> 🌊 なみ線で見る</span>
     <span class="ctl"><input type="checkbox" id="lyricChk" checked> 歌詞を表示</span>
     <span class="ctl">マイク
       <select id="micSel">
@@ -674,31 +675,58 @@ function draw(t){
 
   // 歌声の軌跡(ぴったり=緑、ずれ=オレンジ)
   if(trace.length){
-    ctx2d.lineWidth=4; ctx2d.lineCap="round"; ctx2d.lineJoin="round";
-    let path=[], curColor=null;
-    const flush=()=>{ if(path.length<2){path=[];return;}
-      ctx2d.strokeStyle=curColor||"#FF7A59";
-      ctx2d.beginPath(); ctx2d.moveTo(path[0][0],path[0][1]);
-      for(const p of path) ctx2d.lineTo(p[0],p[1]);
-      ctx2d.stroke(); path=[]; };
-    let prevT=-1;
-    const minDt=1.5/pps(); // 画面上1.5px未満は間引き
-    let lastKeptT=-1;
-    for(const p of trace){
-      const x=off+p.t*pps();
-      if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
-      const col=p.ok===true?"#2FB380":"#FF7A59";
-      if(lastKeptT>=0&&p.t-lastKeptT<minDt&&col===curColor){ prevT=p.t; continue; }
-      lastKeptT=p.t;
-      if(prevT>=0&&p.t-prevT>0.12) flush();
-      if(curColor!==null&&col!==curColor&&path.length){ 
-        const lastPt=path[path.length-1];
-        flush(); path=[lastPt];
+    const waveMode=$("waveChk")&&$("waveChk").checked;
+    if(!waveMode){
+      // ── まっすぐモード(既定)：お手本と同じ、半音にそろえた水平の棒で描く ──
+      ctx2d.lineWidth=7; ctx2d.lineCap="round";
+      let segSnap=null, segCol=null, segX0=0, segX1=0, prevT=-1;
+      const flushBar=()=>{
+        if(segSnap===null) return;
+        const y=yOf(segSnap);
+        ctx2d.strokeStyle=segCol||"#FF7A59";
+        ctx2d.beginPath(); ctx2d.moveTo(segX0,y); ctx2d.lineTo(Math.max(segX1,segX0+3),y); ctx2d.stroke();
+        segSnap=null;
+      };
+      for(const p of trace){
+        const x=off+p.t*pps();
+        if(x<-10||x>W+10){ flushBar(); prevT=p.t; continue; }
+        const snap=Math.round(p.midi);
+        const col=p.ok===true?"#2FB380":"#FF7A59";
+        if(segSnap===null){ segSnap=snap; segCol=col; segX0=x; segX1=x; }
+        else if(snap!==segSnap||col!==segCol||(prevT>=0&&p.t-prevT>0.12)){
+          flushBar(); segSnap=snap; segCol=col; segX0=x; segX1=x;
+        }else{ segX1=x; }
+        prevT=p.t;
       }
-      curColor=col;
-      path.push([x,yOf(p.midi)]); prevT=p.t;
+      flushBar();
+    }else{
+      // ── なみ線モード：声の高さの動きをそのまま線で描く ──
+      ctx2d.lineWidth=4; ctx2d.lineCap="round"; ctx2d.lineJoin="round";
+      let path=[], curColor=null;
+      const flush=()=>{ if(path.length<2){path=[];return;}
+        ctx2d.strokeStyle=curColor||"#FF7A59";
+        ctx2d.beginPath(); ctx2d.moveTo(path[0][0],path[0][1]);
+        for(const p of path) ctx2d.lineTo(p[0],p[1]);
+        ctx2d.stroke(); path=[]; };
+      let prevT=-1;
+      const minDt=1.5/pps(); // 画面上1.5px未満は間引き
+      let lastKeptT=-1;
+      for(const p of trace){
+        const x=off+p.t*pps();
+        if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
+        const col=p.ok===true?"#2FB380":"#FF7A59";
+        if(lastKeptT>=0&&p.t-lastKeptT<minDt&&col===curColor){ prevT=p.t; continue; }
+        lastKeptT=p.t;
+        if(prevT>=0&&p.t-prevT>0.12) flush();
+        if(curColor!==null&&col!==curColor&&path.length){ 
+          const lastPt=path[path.length-1];
+          flush(); path=[lastPt];
+        }
+        curColor=col;
+        path.push([x,yOf(p.midi)]); prevT=p.t;
+      }
+      flush();
     }
-    flush();
   }
 
   // れんしゅう区間以外をうすく隠す(音符・歌声の上から)
@@ -1707,7 +1735,7 @@ $("rangeAllBtn").addEventListener("click",()=>{
 const SAVED_CONTROLS=[
   ["tempoSlider","value"],["volSlider","value"],["strictSel","value"],["micSel","value"],
   ["guideChk","checked"],["metroChk","checked"],["octChk","checked"],
-  ["nameChk","checked"],["lyricChk","checked"]
+  ["nameChk","checked"],["lyricChk","checked"],["waveChk","checked"]
 ];
 function saveSettings(){
   const o={};

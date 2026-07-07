@@ -317,6 +317,13 @@ input[type=range]{accent-color:var(--accent);width:130px}
     </div>
   </div>
   <div class="setting-row">
+    <span>ずのむき</span>
+    <div class="seg" id="flipSeg">
+      <button data-v="up" class="on">ふきくちが上</button>
+      <button data-v="down">ふきくちが下</button>
+    </div>
+  </div>
+  <div class="setting-row">
     <span>れんしゅうモード</span>
     <div class="seg" id="modeSeg">
       <button data-v="mic" class="on">🎤 ふく</button>
@@ -428,6 +435,7 @@ const state = {
   measures: [],         // 小節ごとの配列（いちらんひょう用）
   index: 0,
   system: 'german',
+  flipView: 'up',
   mode: 'mic',          // 'mic' | 'tap'
   strict: 'strict',     // 'strict' | 'easy'
   sensitivity: 7,
@@ -461,9 +469,12 @@ const els = {
    ===================================================== */
 const HOLE_Y = [205, 258, 311, 400, 453, 506, 559];  // 穴1〜7のy座標
 const BODY_X = 128;                                   // 本体中心x
-function buildRecorderSVG(svg, {mini=false}={}){
+function buildRecorderSVG(svg, {mini=false, flip=false}={}){
+  const FH = 660;                       // 図全体の高さ
+  const TY = y => flip ? FH - y : y;    // 文字用のy反転
   const s = [];
-  // 本体
+  // ── 形（本体・穴など）は1つのグループにまとめ、反転時はグループごと上下反転 ──
+  s.push(`<g ${flip?`transform="translate(0,${FH}) scale(1,-1)"`:''}>`);
   s.push(`<g stroke="#23423B" stroke-width="4" fill="#FFF8F0">
     <path d="M ${BODY_X-26} 92 L ${BODY_X-20} 20 Q ${BODY_X} 4 ${BODY_X+20} 20 L ${BODY_X+26} 92 Z"/>
     <rect x="${BODY_X-28}" y="90" width="56" height="70" rx="8"/>
@@ -474,20 +485,11 @@ function buildRecorderSVG(svg, {mini=false}={}){
   // ジョイントの線
   s.push(`<line x1="${BODY_X-25}" y1="352" x2="${BODY_X+25}" y2="352" stroke="#D8E5E0" stroke-width="4"/>`);
   s.push(`<line x1="${BODY_X-23}" y1="596" x2="${BODY_X+23}" y2="596" stroke="#D8E5E0" stroke-width="4"/>`);
-  if(!mini){
-    // 手のラベル
-    s.push(`<text x="${BODY_X+52}" y="262" font-size="17" fill="#7A948D" font-weight="700">ひだり手</text>`);
-    s.push(`<text x="${BODY_X+52}" y="483" font-size="17" fill="#7A948D" font-weight="700">みぎ手</text>`);
-  }
-  // うら穴（サムホール）: 左側に別枠で表示
-  s.push(`<g>
-    <rect x="8" y="168" width="76" height="96" rx="14" fill="#F2F7F5" stroke="#D8E5E0" stroke-width="3"/>
-    <text x="46" y="192" font-size="16" fill="#7A948D" text-anchor="middle" font-weight="700">うら</text>
-    <circle data-part="thumbHole" cx="46" cy="226" r="17" class="hole-open"/>
-    <line data-part="thumbSlash" x1="35" y1="239" x2="57" y2="213" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" visibility="hidden"/>
-    ${mini ? '' : '<text data-part="thumbHint" x="46" y="259" font-size="11" fill="#FF6B5E" text-anchor="middle" font-weight="700" visibility="hidden">すこしあける</text>'}
-    <line x1="84" y1="216" x2="${BODY_X-30}" y2="212" stroke="#D8E5E0" stroke-width="3" stroke-dasharray="6 5"/>
-  </g>`);
+  // うら穴（サムホール）の枠・穴・つなぎ線（文字は下で別に描く）
+  s.push(`<rect x="8" y="168" width="76" height="96" rx="14" fill="#F2F7F5" stroke="#D8E5E0" stroke-width="3"/>`);
+  s.push(`<circle data-part="thumbHole" cx="46" cy="226" r="17" class="hole-open"/>`);
+  s.push(`<line data-part="thumbSlash" x1="35" y1="239" x2="57" y2="213" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" visibility="hidden"/>`);
+  s.push(`<line x1="84" y1="216" x2="${BODY_X-30}" y2="212" stroke="#D8E5E0" stroke-width="3" stroke-dasharray="6 5"/>`);
   // おもての穴 1〜7（6,7 はダブルホール）
   for(let i=0;i<7;i++){
     const y = HOLE_Y[i];
@@ -499,7 +501,17 @@ function buildRecorderSVG(svg, {mini=false}={}){
     }else{
       s.push(`<circle data-part="hole${i}" cx="${BODY_X}" cy="${y}" r="17" class="hole-open"/>`);
     }
-    if(!mini) s.push(`<text x="${BODY_X-46}" y="${y+6}" font-size="16" fill="#7A948D" text-anchor="middle">${i+1}</text>`);
+  }
+  s.push(`</g>`);
+  // ── 文字は反転させず、位置だけ計算して正立のまま描く ──
+  if(!mini){
+    s.push(`<text x="${BODY_X+52}" y="${flip ? TY(262) : 262}" font-size="17" fill="#7A948D" font-weight="700">ひだり手</text>`);
+    s.push(`<text x="${BODY_X+52}" y="${flip ? TY(483) : 483}" font-size="17" fill="#7A948D" font-weight="700">みぎ手</text>`);
+  }
+  s.push(`<text x="46" y="${flip ? TY(168+96)+24 : 192}" font-size="16" fill="#7A948D" text-anchor="middle" font-weight="700">うら</text>`);
+  if(!mini) s.push(`<text data-part="thumbHint" x="46" y="${flip ? TY(226)+33 : 259}" font-size="11" fill="#FF6B5E" text-anchor="middle" font-weight="700" visibility="hidden">すこしあける</text>`);
+  for(let i=0;i<7;i++){
+    if(!mini) s.push(`<text x="${BODY_X-46}" y="${TY(HOLE_Y[i])+6}" font-size="16" fill="#7A948D" text-anchor="middle">${i+1}</text>`);
   }
   svg.innerHTML = s.join('');
 }
@@ -691,7 +703,7 @@ let micStream=null, analyser=null, micBuf=null, rafId=null;
 async function startMic(){
   try{
     micStream = await navigator.mediaDevices.getUserMedia({
-      audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}
+      audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:true}  /* AGCオン: 生入力が小さい端末でも音量が届くように */
     });
   }catch(e){
     showToast('マイクがつかえませんでした。ブラウザの許可を確認してね');
@@ -729,7 +741,7 @@ function detectPitch(buf, sampleRate){
   let rms=0;
   for(let i=0;i<N;i++) rms += buf[i]*buf[i];
   rms = Math.sqrt(rms/N);
-  const threshold = 0.03 * Math.pow(0.686, state.sensitivity - 1);  // かんど1〜10（対数スケール 0.03〜0.001）
+  const threshold = 0.012 * Math.pow(0.686, state.sensitivity - 1);  // かんど1〜10（対数スケール 0.012〜0.0004）
   if(rms < threshold) return {freq:-1, rms, threshold};
   // 端のしずかな部分をカット
   let r1=0, r2=N-1; const th=0.2*rms;
@@ -778,9 +790,9 @@ function loop(){
 
   // レベルメーター（音がとどいているかの見える化）
   const lf = $('levelFill');
-  lf.style.width = Math.min(100, rms/0.04*100) + '%';
+  lf.style.width = Math.min(100, rms/0.02*100) + '%';
   lf.classList.toggle('hot', rms >= threshold);
-  $('levelMark').style.left = Math.min(96, threshold/0.04*100) + '%';
+  $('levelMark').style.left = Math.min(96, threshold/0.02*100) + '%';
 
   let ok=false, heardHTML='';
   if(freq>0){
@@ -978,6 +990,13 @@ function segSetup(id, key, onChange){
   });
 }
 segSetup('systemSeg','system', ()=>{ updateView(); buildListView(); });
+segSetup('flipSeg','flipView', ()=>{ rebuildRecorderViews(); });
+function rebuildRecorderViews(){
+  const flip = state.flipView==='down';
+  buildRecorderSVG(els.svg,{flip});
+  buildRecorderSVG(els.mini,{mini:true,flip});
+  updateView();
+}
 segSetup('strictSeg','strict');
 segSetup('modeSeg','mode', v=>{
   if(v==='tap'){ stopMic(); els.micBtn.style.display='none'; els.tapNextBtn.style.display=''; }
@@ -1037,7 +1056,7 @@ function buildListView(){
         `<div class="nname">${n.high?'<span class="hi">高い</span>':''}${n.kana}</div>` +
         `<svg class="nfing" viewBox="0 0 230 660" xmlns="http://www.w3.org/2000/svg"></svg>`;
       const fsvg = card.querySelector('.nfing');
-      buildRecorderSVG(fsvg, {mini:true});
+      buildRecorderSVG(fsvg, {mini:true, flip: state.flipView==='down'});
       renderFingering(fsvg, getFingering(midi, state.system));
       card.addEventListener('click', ()=>{
         playNote(midi, 0.7);
