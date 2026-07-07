@@ -857,10 +857,33 @@ function parseMusicXML(xmlText){
   const partEls = [...doc.querySelectorAll('part')];
   if(partEls.length===0) throw new Error('nopart');
 
+  // 楽譜のくり返し記号(リピート・1番/2番かっこ)を展開する
+  //   ゆびミエはこれまでこの情報を読んでおらず、小節を書かれた順に1回ずつ
+  //   流すだけだったため、くり返しのある曲が展開されずに先へ進んでいた。
+  function expandRepeats(measures, barlines){
+    const order=[]; let i=0, start=0, pass=1, guard=0;
+    while(i<measures.length && guard++<3000){
+      const b=barlines[i];
+      if(b.fwd) start=i;
+      if(b.ending && !b.ending.includes(pass)){ i++; continue; }
+      order.push(i);
+      if(b.bwd && pass<b.bwd){ pass++; i=start; continue; }
+      if(b.bwd){
+        pass=1; start=i+1;
+      }else if(b.ending){
+        const next=barlines[i+1];
+        if(!next || !next.ending){ pass=1; start=i+1; }
+      }
+      i++;
+    }
+    return order.map(idx=>measures[idx]);
+  }
+
   // 全パートを小節単位で読み取る
   const candidates = [];
   for(const part of partEls){
     const measures = [];
+    const barlines = [];
     let prevTiedMidi = null;
     for(const meas of part.querySelectorAll('measure')){
       const arr = [];
@@ -881,9 +904,27 @@ function parseMusicXML(xmlText){
         arr.push(midi);
       });
       measures.push(arr);
+      let fwd=false, bwd=0, endStart=null, endStop=false;
+      meas.querySelectorAll(':scope > barline').forEach(bl=>{
+        const rep=bl.querySelector('repeat');
+        if(rep){
+          if(rep.getAttribute('direction')==='forward') fwd=true;
+          if(rep.getAttribute('direction')==='backward') bwd=Number(rep.getAttribute('times'))||2;
+        }
+        const end=bl.querySelector('ending');
+        if(end){
+          const ty=end.getAttribute('type');
+          if(ty==='start') endStart=(end.getAttribute('number')||'').split(/[,\s]+/).map(Number).filter(x=>x>0);
+          else endStop=true;
+        }
+      });
+      barlines.push({fwd,bwd,endStart,endStop});
     }
-    const flat = measures.flat();
-    if(flat.length) candidates.push({measures, flat});
+    let activeEnding=null;
+    barlines.forEach(b=>{ if(b.endStart) activeEnding=b.endStart; b.ending=activeEnding; if(b.endStop) activeEnding=null; });
+    const expanded = expandRepeats(measures, barlines);
+    const flat = expanded.flat();
+    if(flat.length) candidates.push({measures:expanded, flat});
   }
   if(candidates.length===0) throw new Error('nonotes');
 
