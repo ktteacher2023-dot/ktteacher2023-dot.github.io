@@ -680,10 +680,11 @@ function draw(t){
       // ── まっすぐモード(既定)：お手本と同じ、半音にそろえた水平の棒で描く ──
       ctx2d.lineWidth=7; ctx2d.lineCap="round";
       let segSnap=null, segCol=null, segX0=0, segX1=0, prevT=-1;
-      const MIN_BAR=0.08*pps();  // これより短い確定済みの棒はノイズとして描かない
+      const MIN_OK=0.10*pps(), MIN_NG=0.20*pps();  // 確定済みの棒の最低長さ(緑/オレンジ)。短いものはノイズとして描かない
       const flushBar=(isLive)=>{
         if(segSnap===null) return;
-        if(!isLive && (segX1-segX0)<MIN_BAR){ segSnap=null; return; }
+        const minLen = segCol==="#2FB380" ? MIN_OK : MIN_NG;
+        if(!isLive && (segX1-segX0)<minLen){ segSnap=null; return; }
         const y=yOf(segSnap);
         ctx2d.strokeStyle=segCol||"#FF7A59";
         ctx2d.beginPath(); ctx2d.moveTo(segX0,y); ctx2d.lineTo(Math.max(segX1,segX0+3),y); ctx2d.stroke();
@@ -1089,8 +1090,9 @@ function micJudge(f,tAbs){
   if(m0<=30||m0>=100) return;
   // 平滑化:直近3回の中央値でチラつきを抑える
   recentM.push(m0); if(recentM.length>3) recentM.shift();
-  // 安定化:直近の値が半音以上暴れている間(歌い出しの子音・息のノイズ等)は保留
-  if(recentM.length>=2 && (Math.max(...recentM)-Math.min(...recentM))>1.0) return;
+  // 安定化:声の出始めは3コマそろうまで保留し、値が暴れている間(子音・息ノイズ)も保留
+  if(recentM.length<3) return;
+  if((Math.max(...recentM)-Math.min(...recentM))>0.8) return;
   const sorted=[...recentM].sort((a,b)=>a-b);
   const sm=sorted[Math.floor(sorted.length/2)];
   const mm=foldForDisplay(sm,tAbs);
