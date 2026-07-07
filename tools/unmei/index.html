@@ -244,23 +244,28 @@
   function initAudio(){
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -18; comp.ratio.value = 6;
+    comp.threshold.value = -8; comp.ratio.value = 3;  // 強弱の差を潰さないよう軽めに
     filter = ctx.createBiquadFilter();
     filter.type = 'lowpass'; filter.frequency.value = 2400; filter.Q.value = 0.6;
     master = ctx.createGain(); master.gain.value = 0.9;
     master.connect(filter).connect(comp).connect(ctx.destination);
   }
 
+  /* 強弱→音量・音色の変換（②きづく：pp と ff の差が耳ではっきりわかるように）
+     人の耳は音量を対数で感じるため、指数カーブで約20dBの幅をつける */
+  const ampOf = d => 0.028 * Math.pow(15, d);            // pp≈0.03 → ff≈0.36
+  const filterHz = d => 420 + Math.pow(d, 1.5) * 6200;   // よわい=こもった音、つよい=明るい音
+
   function playShort(midis, dyn, t){
-    filter.frequency.setTargetAtTime(900 + dyn * 3600, t, 0.05);
+    filter.frequency.setTargetAtTime(filterHz(dyn), t, 0.05);
     midis.forEach(m => {
       [-5, 5].forEach(dt => {
         const o = ctx.createOscillator(), g = ctx.createGain();
         o.type = 'sawtooth'; o.frequency.value = midiHz(m); o.detune.value = dt;
         o.connect(g).connect(master);
-        const peak = (0.10 + dyn * 0.22) * (m < 55 ? 1.3 : 1);
+        const peak = ampOf(dyn) * (m < 55 ? 1.3 : 1);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(peak, t + 0.015);
+        g.gain.linearRampToValueAtTime(peak, t + (0.034 - dyn * 0.026));
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
         o.start(t); o.stop(t + 0.3);
       });
@@ -268,7 +273,7 @@
   }
 
   function playHold(midis, dyn, t){
-    filter.frequency.setTargetAtTime(900 + dyn * 3600, t, 0.05);
+    filter.frequency.setTargetAtTime(filterHz(dyn), t, 0.05);
     const parts = [];
     midis.forEach(m => {
       [-6, 6].forEach(dt => {
@@ -279,7 +284,7 @@
         parts.push({o, g, m});
       });
     });
-    const peakOf = (m, v) => (0.09 + v * 0.20) * (m < 55 ? 1.3 : 1);
+    const peakOf = (m, v) => ampOf(v) * 0.92 * (m < 55 ? 1.3 : 1);
     parts.forEach(({g, m}) => {
       g.gain.setValueAtTime(0.0001, t);
       g.gain.linearRampToValueAtTime(peakOf(m, dyn), t + 0.03);
@@ -287,7 +292,7 @@
     return {
       setDyn(v, rt){
         parts.forEach(({g, m}) => g.gain.setTargetAtTime(peakOf(m, v), rt, 0.09));
-        filter.frequency.setTargetAtTime(900 + v * 3600, rt, 0.12);
+        filter.frequency.setTargetAtTime(filterHz(v), rt, 0.12);
       },
       release(rt){
         parts.forEach(({o, g}) => {
@@ -315,6 +320,7 @@
   function showDyn(v){
     const mark = dynMark(v);
     dynValue.textContent = mark;
+    dynValue.style.fontSize = Math.round(18 + v * 20) + 'px';  // pp=小さく ff=大きく
     dynValue.style.color = (mark === 'f' || mark === 'ff') ? 'var(--accent)' : 'var(--ink)';
   }
   function showBanner(msg, ms){
@@ -339,22 +345,22 @@
   let flash = 0;          // タップした瞬間、画面全体がふわっと光る
 
   function spawnBurst(x, y, dyn){
-    const n = Math.round(12 + dyn * 28);
+    const n = Math.round(5 + Math.pow(dyn, 1.6) * 55);
     for (let i = 0; i < n; i++){
       const ang = Math.random() * Math.PI * 2;
-      const sp = (1.5 + Math.random() * 4) * (0.6 + dyn * 1.6);
+      const sp = (1.5 + Math.random() * 4) * (0.35 + dyn * 2.3);
       particles.push({
         x, y,
         vx: Math.cos(ang) * sp,
         vy: Math.sin(ang) * sp - dyn * 1.2,
         life: 1,
         decay: 0.015 + Math.random() * 0.02,
-        size: (2 + Math.random() * 4) * (0.7 + dyn),
+        size: (2 + Math.random() * 4) * (0.45 + dyn * 1.5),
         hue: 38 - dyn * 22 + Math.random() * 8,   // よわい=黄 → つよい=赤
         note: Math.random() < 0.18                 // ときどき音符が飛ぶ
       });
     }
-    flash = Math.min(0.35, 0.08 + dyn * 0.3);
+    flash = Math.min(0.55, 0.015 + dyn * dyn * 0.6);
   }
 
   function resize(){
@@ -525,12 +531,12 @@
     // 「だーん」のオーラ：指のまわりで光が脈打つ。強弱でオーラが育つ
     if (holdVoice && holdPoint){
       const d = holdPoint.dyn;
-      const base = 40 + d * 150;
+      const base = 24 + d * 220;
       const pulse = base * (1 + Math.sin(performance.now() / 110) * 0.06);
       const grad = g2d.createRadialGradient(
         holdPoint.x, holdPoint.y, 5, holdPoint.x, holdPoint.y, pulse);
-      grad.addColorStop(0, `rgba(232,84,47,${(0.30 + d * 0.25).toFixed(3)})`);
-      grad.addColorStop(0.6, `rgba(255,200,56,${(0.16 + d * 0.15).toFixed(3)})`);
+      grad.addColorStop(0, `rgba(232,84,47,${(0.16 + d * 0.44).toFixed(3)})`);
+      grad.addColorStop(0.6, `rgba(255,200,56,${(0.08 + d * 0.28).toFixed(3)})`);
       grad.addColorStop(1, 'rgba(255,200,56,0)');
       g2d.fillStyle = grad;
       g2d.beginPath();

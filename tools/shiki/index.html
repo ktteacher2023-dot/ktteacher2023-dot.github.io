@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>しきしゃ たいけん｜けいてぃの音楽ツールズ</title>
 <link rel="canonical" href="https://ktteacher.net/tools/shiki/">
-<meta name="description" content="画面をなぞって指揮をすると、その速さで曲が進む音楽ツール。ゆっくり振ればゆっくり、速く振れば速く。2・3・4拍子のデモ曲つき、Flatの楽譜（MusicXML）も読み込めます。登録なしの無料ツール。">
+<meta name="description" content="画面をなぞって指揮をすると、その速さで曲が進む音楽ツール。ゆっくり振ればゆっくり、速く振れば速く。4拍子のデモ曲つき、Flatの楽譜（MusicXML）も読み込めます。登録なしの無料ツール。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="しきしゃ たいけん｜なぞると曲が進む指揮ツール">
-<meta property="og:description" content="画面をなぞって指揮すると、その速さで曲が進む。2・3・4拍子のデモ曲つき、Flatの楽譜も読み込める無料ツール。">
+<meta property="og:description" content="画面をなぞって指揮すると、その速さで曲が進む。4拍子のデモ曲つき、Flatの楽譜も読み込める無料ツール。">
 <meta property="og:url" content="https://ktteacher.net/tools/shiki/">
 <meta property="og:image" content="https://ktteacher.net/ogp.png">
 <meta property="og:site_name" content="けいてぃの音楽ツールズ">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="しきしゃ たいけん｜なぞると曲が進む指揮ツール">
-<meta name="twitter:description" content="なぞる速さで曲が進む指揮ツール。2・3・4拍子のデモ曲つき、Flatの楽譜も読み込める。">
+<meta name="twitter:description" content="なぞる速さで曲が進む指揮ツール。4拍子のデモ曲つき、Flatの楽譜も読み込める。">
 <meta name="twitter:image" content="https://ktteacher.net/ogp.png">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -97,9 +97,7 @@ a.home{
 </header>
 
 <div class="bar" id="songBar">
-  <button class="song-btn active" data-song="chou">🦋 ちょうちょう<span style="font-size:11px">（2ぷし）</span></button>
-  <button class="song-btn" data-song="zou">🐘 ぞうさん<span style="font-size:11px">（3ぷし）</span></button>
-  <button class="song-btn" data-song="kira">⭐ きらきらぼし<span style="font-size:11px">（4ぷし）</span></button>
+  <button class="song-btn active" data-song="kira">⭐ きらきらぼし<span style="font-size:11px">（4ぷし）</span></button>
   <button class="load-btn" id="loadBtn">＋ Flatのがくふ</button>
   <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl" style="display:none">
 </div>
@@ -120,24 +118,6 @@ a.home{
 /* ===================== デモ曲データ ===================== */
 /* note: {t:開始拍, d:長さ拍, m:MIDI} */
 const SONGS = {
-  chou: { name:'ちょうちょう', beatsPerBar:2, bpm:100, notes:[
-    {t:0,d:1,m:67},{t:1,d:1,m:64},{t:2,d:2,m:64},
-    {t:4,d:1,m:65},{t:5,d:1,m:62},{t:6,d:2,m:62},
-    {t:8,d:1,m:60},{t:9,d:1,m:62},{t:10,d:1,m:64},{t:11,d:1,m:65},
-    {t:12,d:1,m:67},{t:13,d:1,m:67},{t:14,d:2,m:67},
-    {t:16,d:1,m:67},{t:17,d:1,m:64},{t:18,d:2,m:64},
-    {t:20,d:1,m:65},{t:21,d:1,m:62},{t:22,d:2,m:62},
-    {t:24,d:1,m:60},{t:25,d:1,m:64},{t:26,d:1,m:67},{t:27,d:1,m:67},
-    {t:28,d:2,m:64},
-  ]},
-  zou: { name:'ぞうさん', beatsPerBar:3, bpm:80, notes:[
-    {t:0,d:1.5,m:72},{t:1.5,d:0.5,m:69},{t:2,d:1,m:67},
-    {t:3,d:1.5,m:72},{t:4.5,d:0.5,m:69},{t:5,d:1,m:67},
-    {t:6,d:1.5,m:72},{t:7.5,d:0.5,m:74},{t:8,d:0.5,m:76},{t:8.5,d:0.5,m:79},{t:9,d:0.5,m:76},{t:9.5,d:0.5,m:76},{t:10,d:0.5,m:74},{t:10.5,d:0.5,m:72},{t:11,d:1,m:74},
-    {t:12,d:2,m:79},{t:14,d:1,m:76},
-    {t:15,d:0.5,m:81},{t:15.5,d:0.5,m:79},{t:16,d:1,m:76},{t:17,d:1,m:72},
-    {t:18,d:1.5,m:74},{t:19.5,d:0.5,m:76},{t:20,d:0.5,m:69},{t:20.5,d:0.5,m:67},{t:21,d:3,m:72},
-  ]},
   kira: { name:'きらきらぼし', beatsPerBar:4, bpm:80, notes:[
     {t:0,d:1,m:60},{t:1,d:1,m:60},{t:2,d:1,m:67},{t:3,d:1,m:67},
     {t:4,d:1,m:69},{t:5,d:1,m:69},{t:6,d:1,m:67},
@@ -170,6 +150,10 @@ $('fileInput').addEventListener('change', async e=>{
     }
     const song = parseMusicXML(text, file.name.replace(/\.(musicxml|xml)$/i,''));
     if(!song.notes.length){ alert('音がみつかりませんでした'); return; }
+    if(song.beatsPerBar !== 4){
+      alert('この楽譜は '+song.beatsPerBar+' 拍子みたい。いまは 4拍子 のきょくだけ たいけんできるよ');
+      return;
+    }
     SONGS.loaded = song;
     // ボタンを追加/更新
     let b = document.querySelector('[data-song="loaded"]');
@@ -282,7 +266,7 @@ function clickSound(strong){
 }
 
 /* ===================== 状態 ===================== */
-let song = SONGS.chou;
+let song = SONGS.kira;
 let beatsPerBar = song.beatsPerBar;
 let totalBeats = 0;
 let lastNoteBeat = 0;    // 最後の音符が始まる拍（ここを鳴らしたら曲おわり）
@@ -433,18 +417,7 @@ function checkHit(x,y){
 /* ===================== ガイド描画（打点方式） ===================== */
 function guidePath(){
   // 各拍の「打点」(pts)と軌道(path)。ptsに触れると1拍。
-  const cx=W/2, top=H*0.18, bot=H*0.74, mid=H*0.46, dx=W*0.26;
-  if(beatsPerBar===2){
-    // スタート(上)→1(下・振り下ろし)→2(上に戻る)
-    // ①(上・スタート)→②(下)
-    return { pts:[{x:cx,y:top,n:1},{x:cx,y:bot,n:2}],
-             path:[{x:cx,y:top},{x:cx,y:bot},{x:cx+W*0.12,y:mid},{x:cx,y:top}] };
-  }
-  if(beatsPerBar===3){
-    // ①(上・スタート)→②(左下)→③(右下)：三角形
-    return { pts:[{x:cx,y:top,n:1},{x:cx-dx,y:bot,n:2},{x:cx+dx,y:bot,n:3}],
-             path:[{x:cx,y:top},{x:cx-dx,y:bot},{x:cx+dx,y:bot},{x:cx,y:top}] };
-  }
+  const cx=W/2, top=H*0.18, bot=H*0.74, dx=W*0.26;
   // 4拍子（画像のジグザグ形）：始点(上)→1(中央下)→2(左下)→3(中央下=1と同じ)→4(右下)→始点へ
   return { pts:[{x:cx,y:bot,n:1},{x:cx-dx,y:bot,n:2},{x:cx,y:bot,n:3},{x:cx+dx,y:bot,n:4}],
            path:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx*0.85,y:top+H*0.12},{x:cx-dx,y:bot},{x:cx-dx*0.1,y:top+H*0.10},{x:cx,y:bot},{x:cx+dx*0.85,y:top+H*0.12},{x:cx+dx,y:bot},{x:cx,y:top}] };
@@ -517,7 +490,7 @@ function loop(){ drawGuide(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
 /* ===================== 初期化 ===================== */
-selectSong('chou');
+selectSong('kira');
 setTimeout(resize, 60);
 window.addEventListener('load', resize);
 </script>
