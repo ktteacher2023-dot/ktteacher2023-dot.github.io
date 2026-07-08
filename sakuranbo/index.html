@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>バナナさん・さくらんぼさん｜けいてぃの音楽ツールズ</title>
+<link rel="canonical" href="https://ktteacher.net/tools/sakuranbo/">
+<meta name="description" content="黒い鍵盤のかたまり（2つ・3つ）を目印に、「ド」の場所を見つける。鍵盤のはじめの一歩を、あそびながら。無料の鍵盤導入ツール。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="バナナさん・さくらんぼさん｜「ド」の位置を見つける鍵盤あそび">
+<meta property="og:description" content="黒い鍵盤のかたまり（2つ・3つ）を目印に、「ド」の場所を見つける。鍵盤のはじめの一歩を、あそびながら。無料の鍵盤導入ツール。">
+<meta property="og:url" content="https://ktteacher.net/tools/sakuranbo/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="バナナさん・さくらんぼさん｜「ド」の位置を見つける鍵盤あそび">
+<meta name="twitter:description" content="黒い鍵盤のかたまり（2つ・3つ）を目印に、「ド」の場所を見つける。鍵盤のはじめの一歩を、あそびながら。無料の鍵盤導入ツール。">
+<meta name="twitter:image" content="https://ktteacher.net/ogp.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#fff7ee; --bg2:#ffe9d6;
+    --ink:#4a3b32;
+    --pink:#ff7fa3; --pink-d:#ff5c86;
+    --cream:#fffdf9;
+    --yellow:#ffd44d; --yellow-d:#f4b400;
+    --red:#ff5b5b; --red-d:#e23b3b;
+    --leaf:#6ecb6e;
+    --sky:#8fd3ff;
+    --shadow:rgba(120,80,50,.18);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:"M PLUS Rounded 1c",sans-serif;
+    color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    overflow:hidden;
+    user-select:none; -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+
+  /* ===== スタート画面（①あそぶ 導線：まず1タップで音の世界へ）===== */
+  #start{
+    position:fixed; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:26px; text-align:center; padding:24px;
+    background:linear-gradient(160deg,#fff2e2,#ffe0cf);
+  }
+  #start h1{
+    font-size:clamp(28px,6vw,52px); font-weight:800; margin:0;
+    letter-spacing:.02em; line-height:1.3;
+    text-shadow:2px 2px 0 #fff;
+  }
+  #start .fruits{font-size:clamp(46px,11vw,90px); line-height:1;}
+  #start p{margin:0; font-size:clamp(15px,3.4vw,20px); opacity:.8;}
+  .bigbtn{
+    border:none; cursor:pointer;
+    font-family:inherit; font-weight:800;
+    font-size:clamp(22px,5vw,32px); color:#fff;
+    padding:20px 54px; border-radius:999px;
+    background:linear-gradient(180deg,var(--pink),var(--pink-d));
+    box-shadow:0 8px 0 #d94873, 0 12px 22px var(--shadow);
+    transition:transform .08s, box-shadow .08s;
+  }
+  .bigbtn:active{transform:translateY(5px); box-shadow:0 3px 0 #d94873,0 6px 12px var(--shadow);}
+
+  /* ===== ヘッダ ===== */
+  #app{position:fixed; inset:0; display:none; flex-direction:column;}
+  header{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; flex:0 0 auto;
+  }
+  .brand{font-weight:800; font-size:clamp(15px,3.2vw,20px); white-space:nowrap;}
+  .brand small{font-weight:700; opacity:.6; font-size:.7em;}
+  .spacer{flex:1;}
+  .modewrap{display:flex; background:#fff; border-radius:999px; padding:4px; box-shadow:0 3px 8px var(--shadow);}
+  .modewrap button{
+    border:none; cursor:pointer; font-family:inherit; font-weight:800;
+    font-size:clamp(13px,3vw,16px); color:var(--ink);
+    padding:8px 16px; border-radius:999px; background:transparent;
+  }
+  .modewrap button.on{background:linear-gradient(180deg,var(--yellow),var(--yellow-d)); color:#5a4200;}
+  .iconbtn{
+    border:none; cursor:pointer; background:#fff; color:var(--ink);
+    width:44px; height:44px; border-radius:14px; font-size:20px;
+    box-shadow:0 3px 8px var(--shadow); display:grid; place-items:center;
+  }
+  .iconbtn:active{transform:translateY(2px);}
+
+  /* ===== お題バナー（②きづく／③なまえ の言葉かけ）===== */
+  #banner{
+    flex:0 0 auto; margin:2px 14px 0;
+    background:#fff; border-radius:20px; padding:12px 18px;
+    box-shadow:0 4px 10px var(--shadow);
+    display:flex; align-items:center; gap:14px; min-height:60px;
+    transition:background .25s;
+  }
+  #banner.hidden{display:none;}
+  #promptText{font-weight:800; font-size:clamp(18px,4.4vw,28px); line-height:1.25;}
+  #promptText .hl{color:var(--pink-d);}
+  #promptText .hlb{color:var(--yellow-d);}
+  .scorebox{margin-left:auto; text-align:right; white-space:nowrap;}
+  .scorebox.zeroflash{animation:zeroshake .5s;}
+  @keyframes zeroshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px) rotate(-2deg)}40%{transform:translateX(5px) rotate(2deg)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  .float.zero{color:#e23b3b;}
+  .scorebox .s{font-weight:800; font-size:clamp(16px,3.6vw,22px);}
+  .scorebox .c{font-size:clamp(11px,2.6vw,13px); opacity:.7;}
+
+  /* ===== ステージ（キャラ＋鍵盤）===== */
+  #stage{flex:1 1 auto; position:relative; display:flex; align-items:flex-end; justify-content:center; padding:8px 12px 18px;}
+  #board{position:relative; width:100%; max-width:1400px;}
+  #chars{position:absolute; left:0; top:0; width:100%; pointer-events:none; z-index:5;}
+  .char{
+    position:absolute; transform:translate(-50%,0);
+    display:flex; flex-direction:column; align-items:center;
+    transition:transform .12s;
+    filter:drop-shadow(0 4px 5px var(--shadow));
+    cursor:pointer; pointer-events:auto;
+  }
+  .char svg{display:block;}
+  .char .say{
+    margin-top:-4px; background:#fff; border-radius:12px; padding:2px 9px;
+    font-weight:800; font-size:13px; box-shadow:0 2px 5px var(--shadow);
+    opacity:0; transform:scale(.6); transition:.18s; white-space:nowrap;
+  }
+  .char.hop{animation:hop .5s ease;}
+  .char.show-say .say{opacity:1; transform:scale(1);}
+  @keyframes hop{0%{transform:translate(-50%,0)}30%{transform:translate(-50%,-18px)}55%{transform:translate(-50%,0)}70%{transform:translate(-50%,-7px)}100%{transform:translate(-50%,0)}}
+  /* レベルアップ時：フルーツを隠す（黒鍵だけで探す）。.peek で一瞬だけ見せる */
+  #chars.hide-fruit .char{opacity:0; pointer-events:none;}
+  #chars.hide-fruit .char.peek{opacity:1;}
+  .lvlpill{
+    flex:0 0 auto; font-weight:800; font-size:clamp(13px,3vw,17px);
+    background:linear-gradient(180deg,#8fd3ff,#5db4ef); color:#083b5c;
+    padding:6px 12px; border-radius:999px; box-shadow:0 3px 6px var(--shadow); white-space:nowrap;
+  }
+
+  /* 鍵盤 */
+  #keyboard{position:relative; width:100%; height:44vh; min-height:180px; max-height:320px;
+    margin-top:118px; /* キャラ帯ぶんの余白（JSで上書き） */}
+  .wkey{
+    position:absolute; top:0; bottom:0;
+    background:linear-gradient(180deg,#ffffff,#fff6ea);
+    border:2px solid #e7d3bf; border-top:none;
+    border-radius:0 0 10px 10px;
+    box-shadow:inset 0 -6px 10px rgba(220,180,140,.25);
+  }
+  .wkey .lbl{
+    position:absolute; left:0; right:0; bottom:10px; text-align:center;
+    font-weight:800; font-size:clamp(13px,2.6vw,20px); color:#c9a074;
+    opacity:0; transition:opacity .3s;
+  }
+  .wkey.showlbl .lbl{opacity:1;}
+  .wkey.isdo .lbl{color:var(--pink-d);}
+  .wkey.press{background:linear-gradient(180deg,#ffe9d0,#ffd9b0);}
+  .wkey.correct{animation:winkey .6s ease;}
+  .wkey.wrong{animation:shake .35s;}
+  .bkey{
+    position:absolute; top:0; z-index:3;
+    background:linear-gradient(180deg,#5a4a44,#2f2622);
+    border-radius:0 0 8px 8px;
+    box-shadow:0 5px 8px rgba(0,0,0,.35), inset 0 -4px 6px rgba(255,255,255,.12);
+  }
+  .bkey.press{background:linear-gradient(180deg,#7a6259,#4a3a34);}
+  .bkey.correct{animation:winkey .6s ease;}
+  @keyframes winkey{0%,100%{filter:brightness(1)}30%{filter:brightness(1.4)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+  /* ドを示す指さしヒント矢印 */
+  #arrow{position:absolute; z-index:6; pointer-events:none; opacity:0; transition:opacity .2s; font-size:34px; transform:translate(-50%,-100%);}
+  #arrow.show{opacity:1; animation:point .8s ease infinite;}
+  @keyframes point{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-70%)}}
+
+  /* パーティクル */
+  .pt{position:absolute; z-index:8; width:14px; height:14px; border-radius:50%; pointer-events:none;
+    animation:burst .7s ease-out forwards;}
+  @keyframes burst{
+    0%{transform:translate(-50%,-50%) scale(.4); opacity:1;}
+    100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1); opacity:0;}
+  }
+  /* 得点フロート */
+  .float{position:absolute; z-index:9; font-weight:800; color:var(--pink-d);
+    font-size:clamp(18px,4vw,28px); pointer-events:none; text-shadow:1px 1px 0 #fff;
+    animation:floatup 1s ease-out forwards;}
+  @keyframes floatup{0%{transform:translate(-50%,0); opacity:0;}20%{opacity:1;}100%{transform:translate(-50%,-70px); opacity:0;}}
+
+  /* ===== 設定パネル（先生向け）===== */
+  #settings{
+    position:fixed; top:0; right:0; height:100%; width:min(340px,86vw); z-index:40;
+    background:var(--cream); box-shadow:-6px 0 24px var(--shadow);
+    transform:translateX(105%); transition:transform .28s; padding:22px; overflow:auto;
+  }
+  #settings.open{transform:translateX(0);}
+  #settings h2{margin:0 0 6px; font-size:20px;}
+  #settings .sub{opacity:.6; font-size:13px; margin:0 0 18px;}
+  .row{margin:16px 0;}
+  .row label{font-weight:800; display:block; margin-bottom:8px; font-size:15px;}
+  .seg{display:flex; gap:8px; flex-wrap:wrap;}
+  .seg button{
+    border:2px solid #eadfce; background:#fff; cursor:pointer; font-family:inherit; font-weight:800;
+    padding:9px 14px; border-radius:12px; color:var(--ink); font-size:15px;
+  }
+  .seg button.on{background:var(--yellow); border-color:var(--yellow-d);}
+  input[type=range]{width:100%;}
+  .closex{position:absolute; top:14px; right:14px;}
+  .credit{margin-top:28px; padding-top:16px; border-top:1px dashed #e2d3bf; font-size:12px; opacity:.7; text-align:center; line-height:1.7;}
+  .credit a{color:var(--pink-d); text-decoration:none; font-weight:800;}
+  .backdrop{position:fixed; inset:0; background:rgba(60,40,25,.25); z-index:39; display:none;}
+  .backdrop.open{display:block;}
+
+  /* トースト */
+  #toast{position:fixed; left:50%; top:22%; transform:translateX(-50%) scale(.8); z-index:60;
+    background:#fff; padding:18px 26px; border-radius:22px; box-shadow:0 10px 30px var(--shadow);
+    font-weight:800; font-size:clamp(18px,4.4vw,26px); text-align:center; opacity:0; pointer-events:none;
+    transition:.3s;}
+  #toast.show{opacity:1; transform:translateX(-50%) scale(1);}
+  #toast .big{font-size:1.5em; display:block;}
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }        /* スマホではアイコンだけ（省スペース） */
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+
+<!-- ================= スタート画面 ================= -->
+<div id="start">
+  <div class="fruits">🍒　🍌</div>
+  <h1>バナナさん・<br>さくらんぼさん</h1>
+  <p>くろい けんばんの おともだちを みつけて、<br>「ド」のばしょを さがそう！</p>
+  <button class="bigbtn" id="startBtn">▶ はじめる</button>
+</div>
+
+<!-- ================= アプリ本体 ================= -->
+<div id="app">
+  <header>
+    <div class="brand">🍒🍌 バナナさん・さくらんぼさん</div>
+    <div class="spacer"></div>
+    <div class="modewrap">
+      <button id="modeFree" class="on">じゆう</button>
+      <button id="modeGame">さがそう</button>
+    </div>
+    <button class="iconbtn" id="fsBtn" title="ぜんがめん">⛶</button>
+    <button class="iconbtn" id="gearBtn" title="せってい">⚙</button>
+  </header>
+
+  <!-- ②きづく／③なまえ の言葉かけがここに出る -->
+  <div id="banner" class="hidden">
+    <div id="lvlPill" class="lvlpill">Lv.1</div>
+    <div id="promptText"></div>
+    <div class="scorebox">
+      <div class="s"><span id="score">0</span>てん</div>
+      <div class="c">れんぞく <span id="combo">0</span></div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="board">
+      <div id="chars"></div>
+      <div id="arrow">👇</div>
+      <div id="keyboard"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 設定（先生向け）================= -->
+<div class="backdrop" id="backdrop"></div>
+<div id="settings">
+  <button class="iconbtn closex" id="closeSet">✕</button>
+  <h2>せんせい せってい</h2>
+  <p class="sub">授業中に子どもが触りにくい位置にまとめています</p>
+
+  <div class="row">
+    <label>けんばんの ひろさ</label>
+    <div class="seg" id="octSeg">
+      <button data-oct="1">1オクターブ</button>
+      <button data-oct="2" class="on">2オクターブ</button>
+      <button data-oct="3">3オクターブ</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>ドレミの なまえを みせる</label>
+    <div class="seg" id="lblSeg">
+      <button data-lbl="off" class="on">かくす</button>
+      <button data-lbl="do">「ド」だけ</button>
+      <button data-lbl="all">ぜんぶ</button>
+    </div>
+    <p class="sub" style="margin-top:8px">「感じさせてから名前を」＝最初は“かくす”推奨。ドを何回か見つけると自動で名前が出ます。</p>
+  </div>
+
+  <div class="row">
+    <label>さくらんぼ→ド の やじるしヒント</label>
+    <div class="seg" id="hintSeg">
+      <button data-hint="on" class="on">つける</button>
+      <button data-hint="off">けす</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>フルーツさんの おたすけ</label>
+    <div class="seg" id="fruitSeg">
+      <button data-fruit="auto" class="on">レベルで</button>
+      <button data-fruit="show">ずっと出す</button>
+      <button data-fruit="hide">かくす</button>
+    </div>
+    <p class="sub" style="margin-top:8px">「レベルで」＝はじめはフルーツあり。正解を重ねるとレベル2になり、フルーツが消えて黒鍵だけで探します。</p>
+  </div>
+
+  <div class="row">
+    <label>まちがえたら 0てん</label>
+    <div class="seg" id="zeroSeg">
+      <button data-zero="on" class="on">する</button>
+      <button data-zero="off">しない</button>
+    </div>
+    <p class="sub" style="margin-top:8px">「する」＝1回まちがえると点が0にもどります（集中して挑戦）。低学年は「しない」がやさしいです。</p>
+  </div>
+
+  <div class="row">
+    <label>おとの おおきさ <span id="volLabel">70</span></label>
+    <input type="range" id="vol" min="0" max="100" value="70">
+  </div>
+
+  <div class="credit">
+    © けいてぃの音楽ツールズ<br>
+    音楽教育者けいてぃ<br>
+    <a href="../" id="portalLink">▶ 音楽ツールズ ポータル</a>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   バナナさん・さくらんぼさん 見つけゲーム
+   ねらい：黒鍵グループ（🍒=2つ／🍌=3つ）を手がかりに「ド」の位置を見つける
+   フロー：①あそぶ（自由に鳴らす）→②きづく（さくらんぼの左どなり＝ド）→③なまえ（ドの名前が付く）
+   ---------------------------------------------------------------------
+   ★フルーツの割り当て（教室に合わせてここだけ入れ替えればOK）
+     さくらんぼ🍒 = 黒鍵2つのグループ（この左どなりの白鍵が「ド」）
+     バナナ🍌     = 黒鍵3つのグループ
+   ===================================================================== */
+  const FRUIT = {
+    two:   { key:'cherry', emoji:'🍒', name:'さくらんぼさん' },
+    three: { key:'banana', emoji:'🍌', name:'バナナさん' }
+  };
+
+  // ---- 音まわり（AudioContextはユーザー操作後にresume）----
+  let audioCtx=null, masterGain=null, volume=0.7;
+  async function startAudio(){
+    if(!audioCtx){
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      masterGain=audioCtx.createGain();
+      masterGain.gain.value=volume;
+      masterGain.connect(audioCtx.destination);
+    }
+    if(audioCtx.state==='suspended') await audioCtx.resume();
+  }
+  function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+  function playNote(midi, gainScale){
+    if(!audioCtx) return;
+    gainScale = (gainScale==null?1:gainScale);
+    const t=audioCtx.currentTime, f=midiToFreq(midi);
+    const g=audioCtx.createGain();
+    g.connect(masterGain);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(1*gainScale,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+0.9);
+    // やわらかい音：三角波＋1オクターブ上を少し重ねる
+    const o1=audioCtx.createOscillator(); o1.type='triangle'; o1.frequency.value=f;
+    const o2=audioCtx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2;
+    const g2=audioCtx.createGain(); g2.gain.value=0.25; g2.connect(g);
+    o1.connect(g); o2.connect(g2);
+    o1.start(t); o2.start(t); o1.stop(t+0.95); o2.stop(t+0.95);
+  }
+
+  // ---- 鍵盤データ ----
+  // 1オクターブ内の白鍵と黒鍵（semitone= C起点）
+  const WHITES=[{n:'ド',s:0},{n:'レ',s:2},{n:'ミ',s:4},{n:'ファ',s:5},{n:'ソ',s:7},{n:'ラ',s:9},{n:'シ',s:11}];
+  // 黒鍵：どの白鍵の右にあるか(afterWhiteIndex) と グループ(two/three)
+  const BLACKS=[
+    {s:1, after:0, grp:'cherry'},  // ド#（さくらんぼ左）
+    {s:3, after:1, grp:'cherry'},  // レ#（さくらんぼ右）
+    {s:6, after:3, grp:'banana'},  // ファ#
+    {s:8, after:4, grp:'banana'},  // ソ#
+    {s:10,after:5, grp:'banana'}   // ラ#
+  ];
+  const START_OCT=4; // 表示開始はC4から
+
+  // ---- 状態 ----
+  let octaves=2, labelMode='off', hintOn=true;
+  let mode='free';                 // 'free' | 'game'
+  let score=0, combo=0, doFound=0, namesRevealed=false;
+  let level=1, gameCorrect=0, fruitMode='auto'; // fruitMode: 'auto'|'show'|'hide'
+  let zeroOnMiss=true;             // まちがえたら0てんにする（先生設定で切替）
+  const LEVELUP_AT=6;              // この回数 正解でレベル2（フルーツが隠れる）
+  let currentTarget=null;          // {type:'cherry'|'banana'|'do'}
+  const board=document.getElementById('board');
+  const kb=document.getElementById('keyboard');
+  const charsLayer=document.getElementById('chars');
+  const arrow=document.getElementById('arrow');
+
+  // ===== 鍵盤とキャラを描画（サイズ確定後に呼ぶ）=====
+  function build(){
+    kb.innerHTML=''; charsLayer.innerHTML='';
+    const numWhite=octaves*7;
+    const boardW=board.clientWidth;
+    const wW=boardW/numWhite;
+    const kbH=kb.clientHeight;
+    const bW=wW*0.62, bH=kbH*0.62;
+    const charZone=Math.max(96, Math.min(150, wW*1.7));
+    kb.style.marginTop=charZone+'px';
+
+    const whiteEls={}; // key: "octIndex-whiteIndex" -> element
+
+    // --- 白鍵 ---
+    for(let o=0;o<octaves;o++){
+      WHITES.forEach((w,wi)=>{
+        const left=(o*7+wi)*wW;
+        const el=document.createElement('div');
+        el.className='wkey';
+        el.style.left=left+'px'; el.style.width=wW+'px';
+        const midi=(START_OCT+o+1)*12 + w.s;
+        el.dataset.midi=midi; el.dataset.note=w.n; el.dataset.isdo=(w.s===0);
+        if(w.s===0) el.classList.add('isdo');
+        el.innerHTML='<span class="lbl">'+w.n+'</span>';
+        applyLabel(el,w.s);
+        kb.appendChild(el);
+        whiteEls[o+'-'+wi]=el;
+        bindKey(el, {midi, isBlack:false, isDo:(w.s===0), oct:o, grp:null});
+      });
+    }
+    // --- 黒鍵 ---
+    for(let o=0;o<octaves;o++){
+      BLACKS.forEach(b=>{
+        const wLeft=(o*7+b.after)*wW;
+        const bLeft=wLeft+wW-(bW/2); // 白鍵の右境界に中心を合わせる
+        const el=document.createElement('div');
+        el.className='bkey';
+        el.style.left=bLeft+'px'; el.style.width=bW+'px'; el.style.height=bH+'px';
+        const midi=(START_OCT+o+1)*12 + b.s;
+        el.dataset.midi=midi; el.dataset.grp=b.grp; el.dataset.oct=o;
+        kb.appendChild(el);
+        bindKey(el, {midi, isBlack:true, isDo:false, oct:o, grp:b.grp});
+      });
+    }
+
+    // --- キャラ（各オクターブに 🍒×1・🍌×1 を黒鍵グループの上へ）---
+    for(let o=0;o<octaves;o++){
+      placeChar('cherry', o, wW, charZone, whiteEls[o+'-0']); // さくらんぼ（ド=whiteEls o-0 を指す）
+      placeChar('banana', o, wW, charZone, null);
+    }
+    positionArrowHide();
+    applyFruitVisibility();
+  }
+
+  function applyLabel(el,semitone){
+    el.classList.remove('showlbl');
+    if(labelMode==='all') el.classList.add('showlbl');
+    else if(labelMode==='do' && semitone===0) el.classList.add('showlbl');
+    else if(namesRevealed && semitone===0) el.classList.add('showlbl');
+  }
+
+  // キャラ配置：グループの黒鍵の中心Xの上に置く
+  function placeChar(grpKey,o,wW,charZone,doWhiteEl){
+    const grpBlacks=[...kb.querySelectorAll('.bkey')].filter(b=>b.dataset.oct==o && b.dataset.grp===grpKey);
+    if(!grpBlacks.length) return;
+    let minL=Infinity,maxR=-Infinity;
+    grpBlacks.forEach(b=>{const l=parseFloat(b.style.left),w=parseFloat(b.style.width);minL=Math.min(minL,l);maxR=Math.max(maxR,l+w);});
+    const cx=(minL+maxR)/2;
+    const size=Math.min(charZone*0.82, wW*1.5);
+    const c=document.createElement('div');
+    c.className='char';
+    c.style.left=cx+'px';
+    c.style.top=(charZone - size - 6)+'px';
+    c.style.width=size+'px';
+    const isCherry=(grpKey==='cherry');
+    c.innerHTML=(isCherry?cherrySVG(size):bananaSVG(size))
+      +'<div class="say">やっほー！</div>';
+    c.dataset.grp=grpKey;
+    c.dataset.oct=o;
+    // キャラをタップ → グループの黒鍵をまとめて鳴らす（🍒=2つ／🍌=3つ）
+    c.addEventListener('pointerdown',(e)=>{
+      e.preventDefault();
+      handleGroupHit(grpBlacks, grpKey, o, c);
+    });
+    charsLayer.appendChild(c);
+    if(isCherry && doWhiteEl){ c.dataset.doLeft = parseFloat(doWhiteEl.style.left)+parseFloat(doWhiteEl.style.width)/2; }
+  }
+
+  // ---- かわいいSVGキャラ（自作＝ライセンス問題なし）----
+  function cherrySVG(s){return `
+   <svg width="${s}" height="${s}" viewBox="0 0 100 100">
+    <path d="M50 18 Q62 6 78 14" fill="none" stroke="#6a8f3a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 18 Q40 8 26 16" fill="none" stroke="#6a8f3a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M74 12 q9 -4 12 4 q-8 5 -12 -4" fill="#8fd14f"/>
+    <circle cx="30" cy="62" r="24" fill="#ff5b5b"/>
+    <circle cx="70" cy="62" r="24" fill="#e23b3b"/>
+    <circle cx="23" cy="55" r="7" fill="#ff9d9d" opacity=".7"/>
+    <circle cx="63" cy="55" r="7" fill="#ff8181" opacity=".7"/>
+    <circle cx="25" cy="60" r="4" fill="#fff"/><circle cx="26" cy="61" r="2" fill="#3a2a22"/>
+    <circle cx="37" cy="60" r="4" fill="#fff"/><circle cx="38" cy="61" r="2" fill="#3a2a22"/>
+    <path d="M27 70 q4 4 8 0" fill="none" stroke="#7a1f1f" stroke-width="2.5" stroke-linecap="round"/>
+   </svg>`;}
+  function bananaSVG(s){return `
+   <svg width="${s}" height="${s}" viewBox="0 0 100 100">
+    <!-- 房のへた -->
+    <path d="M50 12 q-4 -6 3 -8 q6 2 3 9 z" fill="#7a5a1a"/>
+    <!-- 3本のバナナを大きくファンさせて“3つ”をはっきり見せる（各バナナに輪郭線）-->
+    <g transform="translate(50 20) rotate(-32)">
+      <path d="M0 0 C -8 6 -10 20 -6 34 C -3 46 3 52 7 51 C 4 48 2 34 3 18 C 4 9 4 4 2 0 Z"
+            fill="#f2c200" stroke="#e08e00" stroke-width="1.6" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(50 20) rotate(32)">
+      <path d="M0 0 C 8 6 10 20 6 34 C 3 46 -3 52 -7 51 C -4 48 -2 34 -3 18 C -4 9 -4 4 -2 0 Z"
+            fill="#f2c200" stroke="#e08e00" stroke-width="1.6" stroke-linejoin="round"/>
+    </g>
+    <!-- まんなか（前）のバナナ：顔つき -->
+    <g transform="translate(50 20) rotate(0)">
+      <path d="M0 0 C -8 6 -10 20 -6 34 C -3 46 3 52 7 51 C 4 48 2 34 3 18 C 4 9 4 4 2 0 Z"
+            fill="#ffdb54" stroke="#e08e00" stroke-width="1.6" stroke-linejoin="round"/>
+      <circle cx="-3" cy="26" r="3.1" fill="#fff"/><circle cx="-2.4" cy="26.6" r="1.6" fill="#3a2a22"/>
+      <circle cx="3.4" cy="26" r="3.1" fill="#fff"/><circle cx="4" cy="26.6" r="1.6" fill="#3a2a22"/>
+      <circle cx="-4.8" cy="31" r="3" fill="#ff9d5b" opacity=".55"/>
+      <path d="M-2 33 q3 3 7 -0.5" fill="none" stroke="#a06a12" stroke-width="2" stroke-linecap="round"/>
+    </g>
+   </svg>`;}
+
+  // ===== タップ処理 =====
+  function bindKey(el,info){
+    el.addEventListener('pointerdown',(e)=>{ e.preventDefault(); handleHit(info, el); });
+  }
+
+  // 単一の鍵盤タップ（黒鍵1つ・白鍵1つ）
+  function handleHit(info, el){
+    const hidden = info.grp && fruitsHidden(); // レベルが上がって🍒🍌が隠れている
+    if(hidden){
+      // フルーツが見えなくても、黒鍵1つ触れば そのグループぶん（2つ/3つ）まとめて鳴る
+      playGroup(groupBlacksOf(info.oct, info.grp));
+    }else{
+      playNote(info.midi);
+      pressAnim(el);
+    }
+    const judging = (mode==='game' && currentTarget);
+    // フルーツが見えているときだけ、触ったグループのキャラを反応させる（隠れている時は答えをバラさない）
+    if(info.grp && !judging && !fruitsHidden()){
+      reactChar(info.grp, info.oct, info.grp==='cherry'?'さくらんぼ！':'バナナ！');
+    }
+    judge(info, el);
+  }
+
+  // 指定オクターブ・グループ（cherry/banana）の黒鍵をまとめて取得
+  function groupBlacksOf(oct, grpKey){
+    return [...kb.querySelectorAll('.bkey')].filter(b=>b.dataset.oct==oct && b.dataset.grp===grpKey);
+  }
+
+  // キャラ（フルーツ）タップ：さくらんぼ=黒2つ／バナナ=黒3つ を順番に鳴らす
+  function handleGroupHit(grpBlacks, grpKey, oct, charEl){
+    playGroup(grpBlacks);
+    const judging = (mode==='game' && currentTarget);
+    const midEl = grpBlacks[Math.floor(grpBlacks.length/2)];
+    const info = {midi:+midEl.dataset.midi, isBlack:true, isDo:false, oct, grp:grpKey};
+    if(!judging){
+      cueChar(grpKey, oct, grpKey==='cherry' ? 'いっしょに 2つ！' : 'いっしょに 3つ！');
+    }
+    judge(info, midEl);
+  }
+
+  // グループの黒鍵を “いつも” まとめて鳴らす（🍒=2つ／🍌=3つ）
+  function playGroup(blacks){
+    const gs = blacks.length>=3 ? 0.62 : 0.72; // 重なるぶん少し音量を下げる
+    blacks.forEach(b=>{ playNote(+b.dataset.midi, gs); pressAnim(b); });
+  }
+  function pressAnim(el){ el.classList.add('press'); setTimeout(()=>el.classList.remove('press'),150); }
+
+  // ゲーム中の正誤判定
+  function judge(info, el){
+    if(!(mode==='game' && currentTarget)) return;
+    let correct=false;
+    if(currentTarget.type==='do')      correct = info.isDo;
+    else if(currentTarget.type==='cherry') correct = (info.grp==='cherry');
+    else if(currentTarget.type==='banana') correct = (info.grp==='banana');
+    if(correct){ onCorrect(info, el); }
+    else       { onWrong(info, el); }
+  }
+
+  function reactChar(grpKey,oct,msg){
+    const c=[...charsLayer.children].find(x=>x.dataset.grp===grpKey && x.dataset.oct==oct);
+    if(!c) return;
+    c.querySelector('.say').textContent=msg;
+    c.classList.remove('hop','show-say'); void c.offsetWidth;
+    c.classList.add('hop','show-say');
+    setTimeout(()=>c.classList.remove('show-say'),900);
+  }
+
+  // フルーツが隠れているか（レベル2 or 先生設定「かくす」）
+  function fruitsHidden(){
+    if(fruitMode==='show') return false;
+    if(fruitMode==='hide') return true;
+    return (mode==='game' && level>=2); // auto
+  }
+  function applyFruitVisibility(){
+    charsLayer.classList.toggle('hide-fruit', fruitsHidden());
+  }
+  // フルーツが隠れていれば一瞬だけ見せてヒント、出ていれば普通に跳ねる
+  function cueChar(grpKey,oct,msg){
+    if(fruitsHidden()){ peekChar(grpKey,oct,msg); }
+    else { reactChar(grpKey,oct,msg); }
+  }
+  function peekChar(grpKey,oct,msg){
+    const c=[...charsLayer.children].find(x=>x.dataset.grp===grpKey && x.dataset.oct==oct);
+    if(!c) return;
+    c.querySelector('.say').textContent=msg;
+    c.classList.add('peek');
+    c.classList.remove('hop','show-say'); void c.offsetWidth;
+    c.classList.add('hop','show-say');
+    clearTimeout(c._peek);
+    c._peek=setTimeout(()=>{ c.classList.remove('peek','show-say'); },1300);
+  }
+
+  function levelUp(){
+    level=2; applyFruitVisibility(); updateLevelPill();
+    toast('レベル2！','フルーツさんが かくれたよ🙈<br>くろい けんばんで さがそう！');
+  }
+  function updateLevelPill(){
+    const p=document.getElementById('lvlPill');
+    if(p) p.textContent='Lv.'+level;
+  }
+
+  // ===== 正解 =====
+  function onCorrect(info, el){
+    combo++; gameCorrect++; const gain=10*Math.max(1,combo);
+    score+=gain; updateScore();
+    el.classList.add('correct'); setTimeout(()=>el.classList.remove('correct'),600);
+    const r=el.getBoundingClientRect(), br=board.getBoundingClientRect();
+    const px=r.left-br.left+r.width/2, py=r.top-br.top+r.height*0.4;
+    burst(px,py); floatText(px,py, combo>=2? '+'+gain+'　れんぞく'+combo+'！' : '+'+gain);
+
+    if(currentTarget.type==='do'){
+      doFound++;
+      // ②きづく → ③なまえ：ドを見つけるたびに「さくらんぼの左どなり」を体で確認
+      cueChar('cherry', info.oct, 'ドは わたしの左！');
+      showArrowToDo(info.oct);
+      // 3回見つけたら名前が付く（③なまえ）
+      if(doFound===3 && !namesRevealed){
+        namesRevealed=true;
+        refreshLabels();
+        toast('みつけた🎵','この しろいおとの なまえは<br><b style="color:#ff5c86">「ド」</b>！');
+      }
+    }
+
+    // レベルアップ判定（フルーツが自動で消えるモードのときだけ）
+    let delay = currentTarget.type==='do'?1050:750;
+    if(fruitMode==='auto' && level===1 && gameCorrect>=LEVELUP_AT){
+      setTimeout(levelUp, delay); delay += 1400; // レベルアップ演出のぶん次の出題を遅らせる
+    }
+    setTimeout(nextRound, delay);
+  }
+
+  // ===== 不正解（やさしく）=====
+  function onWrong(info, el){
+    combo=0;
+    // まちがえたら 0てん（設定ON時）
+    if(zeroOnMiss && score>0){
+      score=0;
+      flashZero();
+    }
+    updateScore();
+    el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),350);
+    const o=pickAnyOct();
+    if(currentTarget.type==='do'){
+      // ヒント：さくらんぼを（隠れていればチラッと）見せて「左どなり」を教える
+      cueChar('cherry', o, 'わたしの 左どなりだよ！');
+      showArrowToDo(o);
+    }else if(currentTarget.type==='cherry'){
+      cueChar('cherry', o, 'くろ2つが わたし🍒');
+    }else{
+      cueChar('banana', o, 'くろ3つが ぼく🍌');
+    }
+  }
+  // 0てんリセットの合図（スコア欄を揺らして「0てん…」をふわっと）
+  function flashZero(){
+    const box=document.querySelector('.scorebox');
+    if(box){ box.classList.remove('zeroflash'); void box.offsetWidth; box.classList.add('zeroflash'); }
+    const br=board.getBoundingClientRect();
+    const f=document.createElement('div'); f.className='float zero';
+    f.textContent='0てん…'; f.style.left=(br.width-46)+'px'; f.style.top='6px';
+    board.appendChild(f); setTimeout(()=>f.remove(),1000);
+  }
+  function pickAnyOct(){return Math.floor(Math.random()*octaves);}
+
+  // ===== ドへの指さし矢印 =====
+  function showArrowToDo(oct){
+    const dos=[...kb.querySelectorAll('.wkey')].filter(w=>w.dataset.isdo==='true');
+    const target=dos[oct]||dos[0];
+    if(!target) return;
+    const left=parseFloat(target.style.left)+parseFloat(target.style.width)/2;
+    arrow.style.left=left+'px';
+    arrow.style.top=(parseFloat(getComputedStyle(kb).marginTop))+'px';
+    arrow.classList.add('show');
+    clearTimeout(arrow._t);
+    arrow._t=setTimeout(()=>arrow.classList.remove('show'),1600);
+  }
+  function positionArrowHide(){ arrow.classList.remove('show'); }
+
+  // ===== ラウンド（お題）生成 =====
+  // 序盤で🍒🍌を覚え、その後は「ド探し」中心に（ねらい＝ドの位置）
+  const ROUND_PATTERN=['cherry','banana','cherry','banana','do','do','do','cherry','do','banana','do','do'];
+  let roundIdx=0;
+  function nextRound(){
+    if(mode!=='game') return;
+    const type=ROUND_PATTERN[roundIdx % ROUND_PATTERN.length];
+    roundIdx++;
+    currentTarget={type};
+    const pt=document.getElementById('promptText');
+    if(type==='cherry')      pt.innerHTML='🍒 <span class="hl">さくらんぼさん</span>（くろ2つ）を タッチ！';
+    else if(type==='banana') pt.innerHTML='🍌 <span class="hlb">バナナさん</span>（くろ3つ）を タッチ！';
+    else                     pt.innerHTML='さがそう！ <span class="hl">「ド」</span>は どこかな？<br><span style="font-size:.7em;opacity:.75">ヒント：さくらんぼさんの ひだりどなりの しろ</span>';
+    if(type==='do' && hintOn) setTimeout(()=>showArrowToDo(pickAnyOct()),250);
+  }
+
+  function updateScore(){
+    document.getElementById('score').textContent=score;
+    document.getElementById('combo').textContent=combo;
+  }
+
+  // ===== 演出 =====
+  function burst(x,y){
+    const cols=['#ff5b5b','#ffd44d','#8fd3ff','#6ecb6e','#ff7fa3','#fff'];
+    for(let i=0;i<16;i++){
+      const p=document.createElement('div'); p.className='pt';
+      p.style.left=x+'px'; p.style.top=y+'px';
+      p.style.background=cols[i%cols.length];
+      const a=Math.random()*Math.PI*2, d=40+Math.random()*70;
+      p.style.setProperty('--dx',Math.cos(a)*d+'px');
+      p.style.setProperty('--dy',(Math.sin(a)*d-30)+'px');
+      board.appendChild(p); setTimeout(()=>p.remove(),750);
+    }
+  }
+  function floatText(x,y,txt){
+    const f=document.createElement('div'); f.className='float'; f.style.left=x+'px'; f.style.top=y+'px';
+    f.textContent=txt; board.appendChild(f); setTimeout(()=>f.remove(),1000);
+  }
+  function toast(big,msg){
+    const t=document.getElementById('toast');
+    t.innerHTML='<span class="big">'+big+'</span>'+msg;
+    t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400);
+  }
+
+  // ===== モード切替 =====
+  function setMode(m){
+    mode=m;
+    document.getElementById('modeFree').classList.toggle('on',m==='free');
+    document.getElementById('modeGame').classList.toggle('on',m==='game');
+    const banner=document.getElementById('banner');
+    if(m==='game'){
+      banner.classList.remove('hidden');
+      score=0; combo=0; roundIdx=0; gameCorrect=0; level=1;
+      updateScore(); updateLevelPill(); applyFruitVisibility(); nextRound();
+    }else{
+      banner.classList.add('hidden'); currentTarget=null; positionArrowHide();
+      applyFruitVisibility();
+    }
+  }
+
+  function refreshLabels(){
+    kb.querySelectorAll('.wkey').forEach(el=>{
+      const s=noteSemitone(el.dataset.note);
+      applyLabel(el,s);
+    });
+  }
+  function noteSemitone(n){const m={'ド':0,'レ':2,'ミ':4,'ファ':5,'ソ':7,'ラ':9,'シ':11};return m[n];}
+
+  // ===== 設定UI =====
+  function initSettings(){
+    const gear=document.getElementById('gearBtn'), panel=document.getElementById('settings'), bd=document.getElementById('backdrop');
+    const open=()=>{panel.classList.add('open');bd.classList.add('open');};
+    const close=()=>{panel.classList.remove('open');bd.classList.remove('open');};
+    gear.onclick=open; document.getElementById('closeSet').onclick=close; bd.onclick=close;
+
+    document.getElementById('octSeg').addEventListener('click',e=>{
+      const b=e.target.closest('button'); if(!b)return;
+      document.querySelectorAll('#octSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); octaves=+b.dataset.oct; build();
+      if(mode==='game') nextRound();
+    });
+    document.getElementById('lblSeg').addEventListener('click',e=>{
+      const b=e.target.closest('button'); if(!b)return;
+      document.querySelectorAll('#lblSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); labelMode=b.dataset.lbl; refreshLabels();
+    });
+    document.getElementById('hintSeg').addEventListener('click',e=>{
+      const b=e.target.closest('button'); if(!b)return;
+      document.querySelectorAll('#hintSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); hintOn=(b.dataset.hint==='on');
+    });
+    document.getElementById('fruitSeg').addEventListener('click',e=>{
+      const b=e.target.closest('button'); if(!b)return;
+      document.querySelectorAll('#fruitSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); fruitMode=b.dataset.fruit;
+      if(fruitMode==='auto' && mode!=='game') level=1; // 自由モードに戻したらレベルもリセット
+      applyFruitVisibility(); updateLevelPill();
+    });
+    document.getElementById('zeroSeg').addEventListener('click',e=>{
+      const b=e.target.closest('button'); if(!b)return;
+      document.querySelectorAll('#zeroSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); zeroOnMiss=(b.dataset.zero==='on');
+    });
+    const vol=document.getElementById('vol');
+    vol.addEventListener('input',()=>{
+      volume=vol.value/100; document.getElementById('volLabel').textContent=vol.value;
+      if(masterGain) masterGain.gain.value=volume;
+    });
+    // portalLink は実URL（https://ktteacher.net/tools/）へ通常遷移
+  }
+
+  // ===== 全画面 =====
+  document.getElementById('fsBtn').onclick=()=>{
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+    else{ document.exitFullscreen?.(); }
+  };
+
+  // ===== モードボタン =====
+  document.getElementById('modeFree').onclick=()=>setMode('free');
+  document.getElementById('modeGame').onclick=()=>setMode('game');
+
+  // ===== 起動 =====
+  document.getElementById('startBtn').onclick=async()=>{
+    await startAudio();
+    document.getElementById('start').style.display='none';
+    document.getElementById('app').style.display='flex';
+    requestAnimationFrame(()=>{ build(); initSettings(); });
+  };
+
+  // リサイズで再描画（レイアウトが崩れないように）
+  let rz; window.addEventListener('resize',()=>{ if(document.getElementById('app').style.display==='none')return; clearTimeout(rz); rz=setTimeout(build,150); });
+</script>
+</body>
+</html>

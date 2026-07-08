@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ふーっとせんせい｜けいてぃの音楽ツールズ</title>
+<link rel="canonical" href="https://ktteacher.net/tools/fuutto/">
+<meta name="description" content="マイクに「ふーっ」。たんぽぽ・しゃぼん玉・ろうそくで、歌う前の息の支えを楽しく育てる。登録なしで使えるウォームアップツール。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ふーっとせんせい｜息の支えを育てる無料ツール">
+<meta property="og:description" content="マイクに「ふーっ」。たんぽぽ・しゃぼん玉・ろうそくで、歌う前の息の支えを楽しく育てる。登録なしで使えるウォームアップツール。">
+<meta property="og:url" content="https://ktteacher.net/tools/fuutto/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ふーっとせんせい｜息の支えを育てる無料ツール">
+<meta name="twitter:description" content="マイクに「ふーっ」。たんぽぽ・しゃぼん玉・ろうそくで、歌う前の息の支えを楽しく育てる。登録なしで使えるウォームアップツール。">
+<meta name="twitter:image" content="https://ktteacher.net/ogp.png">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--main:#00B8A9;--ink:#2B2B33;--sky:#EAFBF9}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--sky);color:var(--ink);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow:hidden;
+  user-select:none;touch-action:manipulation}
+header{padding:18px 20px 4px;text-align:center}
+h1{font-size:clamp(24px,5vw,34px);font-weight:900;color:var(--main);letter-spacing:.06em}
+.sub{font-size:13px;font-weight:700;color:#7a8a88;margin-top:2px}
+#canvas{margin-top:8px;background:linear-gradient(#ffffff,#EAFBF9 70%);
+  border-radius:24px;box-shadow:0 4px 0 rgba(0,0,0,.05);touch-action:none}
+#meterWrap{width:min(88vw,520px);margin-top:12px}
+#meterLabel{font-size:12.5px;font-weight:700;color:#7a8a88;display:flex;justify-content:space-between}
+#meter{height:14px;border-radius:999px;background:#fff;overflow:hidden;margin-top:4px;
+  border:2px solid #cfe9e5}
+#meterFill{height:100%;width:0%;border-radius:999px;background:var(--main);transition:width .08s linear}
+#msg{margin-top:10px;font-size:clamp(16px,3.5vw,20px);font-weight:900;min-height:1.6em;color:var(--main)}
+#controls{display:flex;gap:10px;margin:14px 0 24px;flex-wrap:wrap;justify-content:center}
+.ctl{font-family:inherit;font-weight:900;font-size:15px;padding:12px 20px;border-radius:999px;
+  border:3px solid var(--ink);background:#fff;cursor:pointer;color:var(--ink)}
+.ctl.on{background:var(--ink);color:#fff}
+#micBtn{background:var(--main);border-color:var(--main);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }        /* スマホではアイコンだけ（省スペース） */
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+<header>
+  <h1>ふーっとせんせい</h1>
+  <div class="sub">マイクに「ふーっ」。ながく しずかに ふけるかな?</div>
+</header>
+
+<canvas id="canvas"></canvas>
+
+<div id="meterWrap">
+  <div id="meterLabel"><span>いきの つよさ</span><span id="timeLabel"></span></div>
+  <div id="meter"><div id="meterFill"></div></div>
+</div>
+<div id="msg"></div>
+
+<div id="controls">
+  <button class="ctl" id="micBtn">🎤 マイクをつかう</button>
+  <button class="ctl scene on" data-scene="dandelion">🌼 たんぽぽ</button>
+  <button class="ctl scene" data-scene="bubble">🫧 しゃぼんだま</button>
+  <button class="ctl scene" data-scene="candle">🕯 ろうそく</button>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('canvas'), ctx = cv.getContext('2d');
+  const fill = document.getElementById('meterFill'), msg = document.getElementById('msg'),
+        timeLabel = document.getElementById('timeLabel');
+  let W, H;
+  function resize(){
+    W = Math.min(window.innerWidth * .92, 520);
+    H = Math.min(window.innerHeight * .48, 380);
+    cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  // ---- mic ----
+  let analyser = null, dataArr = null, level = 0, smooth = 0;
+  document.getElementById('micBtn').addEventListener('click', async () => {
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:{
+        echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ac.createMediaStreamSource(stream);
+      analyser = ac.createAnalyser();
+      analyser.fftSize = 1024;
+      src.connect(analyser);
+      dataArr = new Float32Array(analyser.fftSize);
+      document.getElementById('micBtn').textContent = '🎤 マイク オン';
+      document.getElementById('micBtn').disabled = true;
+      msg.textContent = 'ふーっと ふいてみよう!';
+    }catch(e){
+      msg.textContent = 'マイクが つかえないみたい。せんせいに きいてね。';
+    }
+  });
+  function readLevel(){
+    if(!analyser) return 0;
+    analyser.getFloatTimeDomainData(dataArr);
+    let sum = 0;
+    for(let i = 0; i < dataArr.length; i++) sum += dataArr[i] * dataArr[i];
+    return Math.sqrt(sum / dataArr.length);           // RMS 0..~0.5
+  }
+
+  // breath state: sustained level above threshold
+  const TH = 0.045;
+  let blowing = false, blowStart = 0, blowTime = 0, best = 0;
+
+  // ---- scenes ----
+  let scene = 'dandelion';
+  document.querySelectorAll('.scene').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.scene').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    scene = b.dataset.scene;
+    initScene();
+  }));
+
+  // dandelion seeds
+  let seeds = [];
+  // bubble
+  let bubble = {r:0, x:0, y:0, floating:false, popped:false, popT:0};
+  let floaters = [];
+  // candle
+  let flameLean = 0, flameFlicker = 0;
+
+  function initScene(){
+    seeds = [];
+    if(scene === 'dandelion'){
+      for(let i = 0; i < 22; i++){
+        seeds.push({attached:true, angle:(Math.PI*2/22)*i, x:0, y:0, vx:0, vy:0, r:0, wob:Math.random()*6.28});
+      }
+      msg.textContent = 'ながく ふくと とおくまで とぶよ';
+    }
+    if(scene === 'bubble'){
+      bubble = {r:0, x:W*.28, y:H*.62, floating:false, popped:false, popT:0};
+      floaters = [];
+      msg.textContent = 'そーっと ふくと おおきく ふくらむよ';
+    }
+    if(scene === 'candle'){
+      msg.textContent = 'やさしく ふくと ほのおが ダンスするよ';
+    }
+    best = 0;
+  }
+  initScene();
+
+  // ---- draw helpers ----
+  function drawDandelion(now){
+    const cx = W*.5, cy = H*.66;
+    // stem
+    ctx.strokeStyle = '#7CB86A'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, H); ctx.quadraticCurveTo(cx-10, cy+60, cx, cy); ctx.stroke();
+    // core
+    ctx.fillStyle = '#E8E4D8';
+    ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 6.29); ctx.fill();
+    const wind = smooth * 900;
+    seeds.forEach(s => {
+      if(s.attached){
+        s.wob += .02;
+        const len = 34 + Math.sin(s.wob)*2;
+        const px = cx + Math.cos(s.angle)*len, py = cy + Math.sin(s.angle)*len;
+        drawSeed(px, py, 0);
+        // detach when blowing hard enough (staggered)
+        if(blowing && Math.random() < .012 + smooth*.15){
+          s.attached = false;
+          s.x = px; s.y = py;
+          s.vx = 1.5 + wind*.01 + Math.random()*1.2;
+          s.vy = -1 - Math.random()*1.4;
+        }
+      }else{
+        s.vx += .002 + smooth*.03;
+        s.vy += Math.sin(now*.002 + s.wob)*.02 - .005;
+        s.x += s.vx; s.y += s.vy;
+        drawSeed(s.x, s.y, s.vx);
+      }
+    });
+    // regrow when all gone
+    if(seeds.every(s => !s.attached && (s.x > W+40 || s.y < -40))){
+      initScene();
+      msg.textContent = 'ぜんぶ とんだ! もういっかい 🌼';
+    }
+  }
+  function drawSeed(x, y, drift){
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let a = 0; a < 6; a++){
+      const ang = (Math.PI*2/6)*a - drift*.05;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(ang)*9, y + Math.sin(ang)*9 - 6);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#C9C2AE';
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y+9); ctx.stroke();
+    ctx.fillStyle = '#B9A88F';
+    ctx.beginPath(); ctx.arc(x, y+10, 2.4, 0, 6.29); ctx.fill();
+  }
+
+  function drawBubble(){
+    // wand
+    ctx.strokeStyle = '#FF9F1C'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(bubble.x - 60, bubble.y + 70); ctx.lineTo(bubble.x - 18, bubble.y + 22); ctx.stroke();
+    ctx.strokeStyle = '#FFB84D'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(bubble.x, bubble.y, 18, 0, 6.29); ctx.stroke();
+
+    if(bubble.popped){
+      bubble.popT++;
+      ctx.strokeStyle = 'rgba(120,200,255,.7)'; ctx.lineWidth = 3;
+      for(let a = 0; a < 8; a++){
+        const ang = (Math.PI*2/8)*a;
+        const rr = 10 + bubble.popT*3;
+        ctx.beginPath();
+        ctx.moveTo(bubble.x + Math.cos(ang)*rr, bubble.y + Math.sin(ang)*rr);
+        ctx.lineTo(bubble.x + Math.cos(ang)*(rr+8), bubble.y + Math.sin(ang)*(rr+8));
+        ctx.stroke();
+      }
+      if(bubble.popT > 16){ bubble = {r:0, x:W*.28, y:H*.62, floating:false, popped:false, popT:0}; }
+    }else if(!bubble.floating){
+      if(blowing){
+        if(smooth > .22){                 // too strong → pop
+          bubble.popped = true;
+          msg.textContent = 'つよすぎて われちゃった! そーっとね 🫧';
+        }else{
+          bubble.r += smooth * 2.2 + .12;
+        }
+      }else if(bubble.r > 16){            // release → float away
+        bubble.floating = true;
+        floaters.push({x:bubble.x, y:bubble.y, r:bubble.r, vy:-.8 - bubble.r*.01, wob:Math.random()*6});
+        if(bubble.r > best){ best = bubble.r; msg.textContent = 'おおきい! きろく こうしん 🎉'; }
+        bubble = {r:0, x:W*.28, y:H*.62, floating:false, popped:false, popT:0};
+      }
+      if(bubble.r > 0) paintBubble(bubble.x, bubble.y, bubble.r);
+    }
+    floaters = floaters.filter(f => f.y + f.r > -20);
+    floaters.forEach(f => {
+      f.wob += .03; f.y += f.vy; f.x += Math.sin(f.wob)*.6;
+      paintBubble(f.x, f.y, f.r);
+    });
+  }
+  function paintBubble(x, y, r){
+    const g = ctx.createRadialGradient(x - r*.3, y - r*.3, r*.1, x, y, r);
+    g.addColorStop(0, 'rgba(255,255,255,.9)');
+    g.addColorStop(.7, 'rgba(150,220,255,.25)');
+    g.addColorStop(1, 'rgba(100,190,255,.5)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.29); ctx.fill();
+  }
+
+  function drawCandle(now){
+    const cx = W*.5, base = H*.82;
+    // candle body
+    ctx.fillStyle = '#FFF3E0';
+    roundRect(cx-26, base-110, 52, 110, 10); ctx.fill();
+    ctx.fillStyle = '#FFD9A0';
+    roundRect(cx-26, base-110, 52, 14, 7); ctx.fill();
+    // wick
+    ctx.strokeStyle = '#6b5b4a'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx, base-110); ctx.lineTo(cx, base-122); ctx.stroke();
+    // flame — leans with breath, flickers
+    flameLean += ((smooth*260) - flameLean) * .1;
+    flameFlicker = Math.sin(now*.02)*3 + Math.sin(now*.043)*2;
+    const fx = cx + flameLean + flameFlicker, fy = base - 128;
+    const h = 44 - Math.min(smooth*90, 22);      // strong breath shrinks flame
+    ctx.save();
+    ctx.translate(fx, fy);
+    ctx.rotate(flameLean*.008);
+    const fg = ctx.createRadialGradient(0, 0, 2, 0, -h*.3, h);
+    fg.addColorStop(0, '#FFF8B0'); fg.addColorStop(.5, '#FFB840'); fg.addColorStop(1, 'rgba(255,120,40,.1)');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(0, 10);
+    ctx.quadraticCurveTo(-14, -h*.35, 0, -h);
+    ctx.quadraticCurveTo(14, -h*.35, 0, 10);
+    ctx.fill();
+    ctx.restore();
+    if(blowing && smooth > .05 && smooth < .16) msg.textContent = 'いいかんじ! ほのおが ダンスしてる 🕯';
+  }
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  // ---- main loop ----
+  function loop(now){
+    level = readLevel();
+    smooth += (level - smooth) * .25;
+    const pct = Math.min(smooth / .3, 1) * 100;
+    fill.style.width = pct + '%';
+    fill.style.background = smooth > .22 ? '#FF6B6B' : 'var(--main)';
+
+    const t = performance.now();
+    if(smooth > TH){
+      if(!blowing){ blowing = true; blowStart = t; }
+      blowTime = (t - blowStart) / 1000;
+      timeLabel.textContent = blowTime.toFixed(1) + ' びょう';
+    }else{
+      if(blowing && blowTime > 1.5 && scene === 'dandelion'){
+        msg.textContent = blowTime.toFixed(1) + 'びょうも ふけた! すごい 🌬';
+      }
+      blowing = false; blowTime = 0;
+    }
+
+    ctx.clearRect(0, 0, W, H);
+    if(scene === 'dandelion') drawDandelion(now);
+    if(scene === 'bubble') drawBubble();
+    if(scene === 'candle') drawCandle(now);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

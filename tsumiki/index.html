@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>おとつみき｜けいてぃの音楽ツールズ</title>
+<link rel="canonical" href="https://ktteacher.net/tools/tsumiki/">
+<meta name="description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="おとつみき｜音を積んで作曲する無料ツール">
+<meta property="og:description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta property="og:url" content="https://ktteacher.net/tools/tsumiki/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="おとつみき｜音を積んで作曲する無料ツール">
+<meta name="twitter:description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta name="twitter:image" content="https://ktteacher.net/ogp.png">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2B2B33;--main:#5F5CE0;--paper:#F7FBFF}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Zen Maru Gothic',sans-serif;background:var(--paper);color:var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;
+  display:flex;flex-direction:column;height:100dvh}
+
+#topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px 4px;flex:0 0 auto;flex-wrap:wrap}
+h1{font-size:clamp(19px,4.5vw,27px);font-weight:900;color:var(--main);letter-spacing:.05em}
+#setRow{display:flex;gap:6px;flex-wrap:wrap}
+.ctl{font-family:inherit;font-weight:900;font-size:clamp(11px,2.7vw,13.5px);
+  padding:8px 13px;border-radius:999px;border:2.5px solid var(--ink);
+  background:#fff;cursor:pointer;color:var(--ink);white-space:nowrap}
+.ctl.accent{background:var(--main);border-color:var(--main);color:#fff}
+select.ctl{appearance:none;-webkit-appearance:none}
+
+#gridWrap{flex:1 1 auto;min-height:0;display:flex;align-items:stretch;gap:4px;
+  padding:6px 10px}
+#labels{display:grid;gap:3px;flex:0 0 auto}
+.lab{display:flex;align-items:center;justify-content:center;font-weight:900;
+  font-size:clamp(9.5px,2.3vw,13px);width:clamp(28px,7.5vw,42px);border-radius:8px;color:#fff}
+#grid{flex:1 1 auto;display:grid;gap:3px;min-width:0}
+.cell{border-radius:22%;background:#E7ECF5;border:none;cursor:pointer;
+  transition:transform .08s;position:relative;min-width:0}
+.cell.beat2{background:#DDE4F0}
+.cell.barline{box-shadow:-3px 0 0 rgba(95,92,224,.35)}
+.cell.on{transform:scale(1.02)}
+.cell.playhead::after{content:'';position:absolute;inset:0;border-radius:22%;
+  box-shadow:inset 0 0 0 3px rgba(43,43,51,.4)}
+.cell.percRow{border-radius:50%}
+
+#controls{flex:0 0 auto;display:flex;gap:7px;padding:6px 12px calc(11px + env(safe-area-inset-bottom));
+  justify-content:center;align-items:center;flex-wrap:wrap}
+#tempoWrap{display:flex;align-items:center;gap:5px;font-weight:900;font-size:11.5px;color:#8a8a99}
+#tempo{width:clamp(70px,18vw,130px);accent-color:var(--main)}
+#toast{position:fixed;left:50%;bottom:18%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;font-weight:900;font-size:14px;
+  padding:12px 22px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }        /* スマホではアイコンだけ（省スペース） */
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+
+<div id="topbar">
+  <h1>おとつみき</h1>
+  <div id="setRow">
+    <select class="ctl" id="scaleSel">
+      <option value="0" selected>♪ ドレミソラ</option>
+      <option value="1">♪ ドレミファソラシ</option>
+      <option value="2">♪ にほんの おんかい</option>
+      <option value="3">♪ おきなわの おんかい</option>
+    </select>
+    <select class="ctl" id="meterSel">
+      <option value="4" selected>4びょうし</option>
+      <option value="3">3びょうし</option>
+      <option value="2">2びょうし</option>
+    </select>
+    <select class="ctl" id="barsSel">
+      <option value="2" selected>2しょうせつ</option>
+      <option value="4">4しょうせつ</option>
+      <option value="8">8しょうせつ</option>
+    </select>
+    <span id="pager" style="display:none;align-items:center;gap:4px">
+      <button class="ctl" id="pgPrev">◀</button>
+      <span id="pgLabel" style="font-weight:900;font-size:12.5px;min-width:3em;text-align:center"></span>
+      <button class="ctl" id="pgNext">▶</button>
+    </span>
+  </div>
+</div>
+
+<div id="gridWrap">
+  <div id="labels"></div>
+  <div id="grid"></div>
+</div>
+
+<div id="controls">
+  <button class="ctl accent" id="playBtn">▶ ならす</button>
+  <div id="tempoWrap">おそい <input type="range" id="tempo" min="70" max="180" value="110"> はやい</div>
+  <button class="ctl" id="demoBtn">🎁 おてほん</button>
+  <button class="ctl" id="shareBtn">🔗 さくひんリンク</button>
+  <button class="ctl" id="loadBtn">📥 よみこむ</button>
+  <button class="ctl" id="clearBtn">🧹 けす</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const PITCH_ROWS = 8, PERC_ROWS = 2, ROWS = PITCH_ROWS + PERC_ROWS;
+const MAX_COLS = 64;
+
+/* ===== scales (top = high) ===== */
+const COLORS = {'ド':'#FF6B6B','レ':'#FF9F1C','ミ':'#FFD23F','ファ':'#7BE0AD','ソ':'#00B8A9','ラ':'#4EA8DE','シ':'#9B5DE5'};
+const SCALES = [
+  { name:'ドレミソラ', rows:[
+    {n:'ミ',m:76},{n:'レ',m:74},{n:'ド',m:72},{n:'ラ',m:69},
+    {n:'ソ',m:67},{n:'ミ',m:64},{n:'レ',m:62},{n:'ド',m:60}]},
+  { name:'ドレミファソラシ', rows:[
+    {n:'ド',m:72},{n:'シ',m:71},{n:'ラ',m:69},{n:'ソ',m:67},
+    {n:'ファ',m:65},{n:'ミ',m:64},{n:'レ',m:62},{n:'ド',m:60}]},
+  { name:'にほんの おんかい', rows:[
+    {n:'ラ',m:81},{n:'ファ',m:77},{n:'ミ',m:76},{n:'ド',m:72},
+    {n:'シ',m:71},{n:'ラ',m:69},{n:'ファ',m:65},{n:'ミ',m:64}]},
+  { name:'おきなわの おんかい', rows:[
+    {n:'ファ',m:77},{n:'ミ',m:76},{n:'ド',m:72},{n:'シ',m:71},
+    {n:'ソ',m:67},{n:'ファ',m:65},{n:'ミ',m:64},{n:'ド',m:60}]},
+];
+const PERC = [
+  {n:'たいこ', c:'#8a6f5c'},
+  {n:'て',     c:'#6b6b76'},
+];
+
+let scaleIdx = 0, meter = 4, bars = 2, cols = 16;
+let page = 0;                                  // いま見えているページ(1ページ=2小節)
+const pageSize = () => meter * 4;              // 2小節ぶんのマス数
+const viewStart = () => page * pageSize();
+const pageCount = () => Math.ceil(cols / pageSize());
+const state = Array.from({length: ROWS}, () => Array(MAX_COLS).fill(false));
+let cells = [];
+
+/* ===== build UI ===== */
+function build(){
+  cols = meter * 2 * bars;                // 1マス=半拍
+  if(page > pageCount() - 1) page = 0;
+  // labels
+  const labels = $('labels');
+  labels.innerHTML = '';
+  labels.style.gridTemplateRows = 'repeat(' + ROWS + ',1fr)';
+  SCALES[scaleIdx].rows.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'lab';
+    d.textContent = r.n;
+    d.style.background = COLORS[r.n];
+    labels.appendChild(d);
+  });
+  PERC.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'lab';
+    d.textContent = p.n;
+    d.style.background = p.c;
+    labels.appendChild(d);
+  });
+  // grid: いまのページの2小節ぶんだけ表示
+  const grid = $('grid');
+  grid.innerHTML = '';
+  const ps = pageSize();
+  grid.style.gridTemplateColumns = 'repeat(' + ps + ',1fr)';
+  grid.style.gridTemplateRows = 'repeat(' + ROWS + ',1fr)';
+  cells = [];
+  for(let r = 0; r < ROWS; r++){
+    cells.push([]);
+    for(let lc = 0; lc < ps; lc++){
+      const c = viewStart() + lc;
+      const b = document.createElement('button');
+      b.className = 'cell'
+        + (Math.floor(lc / 2) % 2 ? ' beat2' : '')          // 拍ごとの濃淡
+        + (lc === meter * 2 ? ' barline' : '')              // 小節線
+        + (r >= PITCH_ROWS ? ' percRow' : '');
+      b.dataset.r = r; b.dataset.c = c;
+      grid.appendChild(b);
+      cells[r].push(b);
+      paintCellLocal(r, lc);
+    }
+  }
+  updatePager();
+}
+function updatePager(){
+  const n = pageCount();
+  $('pager').style.display = n > 1 ? 'inline-flex' : 'none';
+  $('pgLabel').textContent = 'ページ ' + (page + 1) + '/' + n;
+}
+function gotoPage(p){
+  page = Math.min(Math.max(p, 0), pageCount() - 1);
+  build();
+}
+$('pgPrev').addEventListener('click', () => gotoPage(page - 1));
+$('pgNext').addEventListener('click', () => gotoPage(page + 1));
+function rowColor(r){
+  return r < PITCH_ROWS ? COLORS[SCALES[scaleIdx].rows[r].n] : PERC[r - PITCH_ROWS].c;
+}
+function paintCellLocal(r, lc){
+  const c = viewStart() + lc;
+  const b = cells[r][lc];
+  b.classList.toggle('on', state[r][c]);
+  b.style.background = state[r][c] ? rowColor(r) : '';
+}
+function paintCell(r, c){                  // c は曲全体での列番号
+  const lc = c - viewStart();
+  if(lc >= 0 && lc < cells[r].length) paintCellLocal(r, lc);
+}
+function setCell(r, c, v){
+  state[r][c] = v;
+  paintCell(r, c);
+  hashDirty = true;
+}
+
+/* ===== paint / drag input ===== */
+let painting = false, paintValue = true;
+function cellFromEvent(e){
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if(el && el.classList.contains('cell')) return [+el.dataset.r, +el.dataset.c];
+  return null;
+}
+$('grid').addEventListener('pointerdown', e => {
+  const rc = cellFromEvent(e);
+  if(!rc) return;
+  painting = true;
+  paintValue = !state[rc[0]][rc[1]];
+  setCell(rc[0], rc[1], paintValue);
+  if(paintValue) preview(rc[0]);
+});
+window.addEventListener('pointermove', e => {
+  if(!painting) return;
+  const rc = cellFromEvent(e);
+  if(rc && state[rc[0]][rc[1]] !== paintValue){
+    setCell(rc[0], rc[1], paintValue);
+    if(paintValue) preview(rc[0]);
+  }
+});
+window.addEventListener('pointerup', () => painting = false);
+
+/* ===== audio ===== */
+let audio = null, songGain = null;
+function ensureAudio(){
+  if(!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+  if(audio.state === 'suspended') audio.resume();
+}
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function note(m, t, dur, dest){
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = 'triangle'; o.frequency.value = mf(m);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(.15, t + .015);
+  g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(dest || audio.destination);
+  o.start(t); o.stop(t + dur + .05);
+}
+function taiko(t, dest){
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(50, t + .12);
+  g.gain.setValueAtTime(.5, t);
+  g.gain.exponentialRampToValueAtTime(.001, t + .22);
+  o.connect(g).connect(dest || audio.destination);
+  o.start(t); o.stop(t + .25);
+}
+function clap(t, dest){
+  const len = audio.sampleRate * .1;
+  const buf = audio.createBuffer(1, len, audio.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  const f = audio.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .8;
+  const g = audio.createGain();
+  g.gain.value = .55;
+  src.connect(f).connect(g).connect(dest || audio.destination);
+  src.start(t);
+}
+function playRow(r, t, dest){
+  if(r < PITCH_ROWS) note(SCALES[scaleIdx].rows[r].m, t, .4, dest);
+  else if(r === PITCH_ROWS) taiko(t, dest);
+  else clap(t, dest);
+}
+function preview(r){
+  ensureAudio();
+  playRow(r, audio.currentTime, null);
+}
+
+/* ===== playback ===== */
+let playing = false, col = 0, timer = null;
+function stepDur(){ return 60 / (+$('tempo').value) / 2; }
+function step(){
+  const t = audio.currentTime + .05;
+  for(let r = 0; r < ROWS; r++) if(state[r][col]) playRow(r, t, songGain);
+  // 再生位置のページへ自動でめくる
+  const wantPage = Math.floor(col / pageSize());
+  if(wantPage !== page){ page = wantPage; build(); }
+  const lc = col - viewStart();
+  document.querySelectorAll('.playhead').forEach(el => el.classList.remove('playhead'));
+  for(let r = 0; r < ROWS; r++) cells[r][lc].classList.add('playhead');
+  col = (col + 1) % cols;
+  timer = setTimeout(step, stepDur() * 1000);
+}
+function stopPlay(){
+  playing = false;
+  clearTimeout(timer);
+  if(songGain){ try{ songGain.disconnect(); }catch(e){} songGain = null; }
+  document.querySelectorAll('.playhead').forEach(el => el.classList.remove('playhead'));
+  $('playBtn').textContent = '▶ ならす';
+}
+$('playBtn').addEventListener('click', () => {
+  if(playing){ stopPlay(); return; }
+  ensureAudio();
+  songGain = audio.createGain();
+  songGain.gain.value = 1;
+  songGain.connect(audio.destination);
+  playing = true; col = 0;
+  $('playBtn').textContent = '⏹ とめる';
+  step();
+});
+
+/* ===== settings ===== */
+$('scaleSel').addEventListener('change', e => {
+  scaleIdx = +e.target.value;
+  build();                                 // 音は変わるが、マスの配置はそのまま
+  hashDirty = true;
+});
+$('meterSel').addEventListener('change', e => {
+  stopPlay();
+  meter = +e.target.value;
+  page = 0;
+  build();
+  hashDirty = true;
+});
+$('barsSel').addEventListener('change', e => {
+  stopPlay();
+  bars = +e.target.value;
+  page = 0;
+  build();
+  hashDirty = true;
+});
+$('clearBtn').addEventListener('click', () => {
+  const any = state.some(row => row.some(v => v));
+  if(any && !confirm('ぜんぶ けしても いい?')) return;
+  for(let r = 0; r < ROWS; r++)
+    for(let c = 0; c < MAX_COLS; c++){ state[r][c] = false; }
+  build();
+  hashDirty = true;
+});
+$('demoBtn').addEventListener('click', () => {
+  for(let r = 0; r < ROWS; r++)
+    for(let c = 0; c < MAX_COLS; c++) state[r][c] = false;
+  // 旋律(行番号ベースなのでどの音階でも成立)
+  const mel = [[7,0],[5,1],[4,2],[5,3],[7,4],[5,5],[4,6],[2,7],
+               [3,8],[4,9],[5,10],[4,11],[7,12],[7,14]];
+  mel.forEach(([r,c]) => { if(c < cols) state[r][c] = true; });
+  // たいこ: 小節あたま / て: 各拍(まがりなりにも全小節に伴奏が入る)
+  for(let c = 0; c < cols; c += meter * 2) state[8][c] = true;
+  for(let c = 0; c < cols; c += 2) state[9][c] = true;
+  page = 0;
+  build();
+  hashDirty = true;
+});
+
+/* ===== save / load via URL ===== */
+let hashDirty = false;
+function encode(){
+  let hex = '';
+  for(let r = 0; r < ROWS; r++){
+    // 64マスを16マスずつ4かたまりで16進数化(32bit演算の範囲に収める)
+    for(let chunk = 0; chunk < 4; chunk++){
+      let bits = 0;
+      for(let i = 0; i < 16; i++){
+        if(state[r][chunk * 16 + i]) bits |= (1 << i);
+      }
+      hex += bits.toString(16).padStart(4, '0');
+    }
+  }
+  return 'v2.' + scaleIdx + '.' + meter + '.' + bars + '.' + (+$('tempo').value) + '.' + hex;
+}
+function applyHeader(tp){
+  $('scaleSel').value = scaleIdx;
+  $('meterSel').value = meter;
+  $('barsSel').value = bars;
+  $('tempo').value = Math.min(Math.max(tp, 70), 180);
+}
+function decode(code){
+  const p = code.split('.');
+  // 旧形式(v1: 2小節固定)も読み込める
+  if(p[0] === 'v1' && p.length === 5){
+    const s = +p[1], m = +p[2], tp = +p[3], hex = p[4];
+    if(!(s >= 0 && s < SCALES.length) || ![2,3,4].includes(m) || hex.length !== ROWS * 4) return false;
+    scaleIdx = s; meter = m; bars = 2;
+    applyHeader(tp);
+    for(let r = 0; r < ROWS; r++){
+      const bits = parseInt(hex.slice(r * 4, r * 4 + 4), 16);
+      for(let c = 0; c < MAX_COLS; c++) state[r][c] = c < 16 && !!(bits & (1 << c));
+    }
+    page = 0; build();
+    return true;
+  }
+  if(p[0] !== 'v2' || p.length !== 6) return false;
+  const s = +p[1], m = +p[2], bb = +p[3], tp = +p[4], hex = p[5];
+  if(!(s >= 0 && s < SCALES.length) || ![2,3,4].includes(m) || ![2,4,8].includes(bb)
+     || hex.length !== ROWS * 16) return false;
+  scaleIdx = s; meter = m; bars = bb;
+  applyHeader(tp);
+  for(let r = 0; r < ROWS; r++){
+    for(let chunk = 0; chunk < 4; chunk++){
+      const bits = parseInt(hex.slice(r * 16 + chunk * 4, r * 16 + chunk * 4 + 4), 16);
+      for(let i = 0; i < 16; i++) state[r][chunk * 16 + i] = !!(bits & (1 << i));
+    }
+  }
+  page = 0; build();
+  return true;
+}
+setInterval(() => {
+  if(!hashDirty) return;
+  hashDirty = false;
+  history.replaceState(null, '', '#' + encode());
+}, 800);
+
+$('shareBtn').addEventListener('click', async () => {
+  const url = location.origin + location.pathname + '#' + encode();
+  try{
+    await navigator.clipboard.writeText(url);
+    toast('さくひんリンクを コピーしたよ! 📋');
+  }catch(e){
+    prompt('この リンクを コピーしてね', url);
+  }
+});
+$('loadBtn').addEventListener('click', () => {
+  const v = prompt('さくひんリンク(または #からのコード)を はりつけてね');
+  if(!v) return;
+  const code = v.includes('#') ? v.split('#')[1] : v;
+  stopPlay();
+  if(decode(code.trim())) toast('さくひんを よみこんだよ! ▶ でならしてみよう');
+  else toast('よみこめなかった… リンクを たしかめてね');
+});
+
+let toastTimer;
+function toast(text){
+  const t = $('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ===== init ===== */
+build();
+if(location.hash.length > 1){
+  if(decode(location.hash.slice(1))) toast('さくひんを ひらいたよ! ▶ でならしてみよう');
+}
+})();
+</script>
+</body>
+</html>

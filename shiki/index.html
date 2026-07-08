@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>しきしゃ たいけん｜けいてぃの音楽ツールズ</title>
+<link rel="canonical" href="https://ktteacher.net/tools/shiki/">
+<meta name="description" content="画面をなぞって指揮をすると、その速さで曲が進む音楽ツール。ゆっくり振ればゆっくり、速く振れば速く。4拍子のデモ曲つき、Flatの楽譜（MusicXML）も読み込めます。登録なしの無料ツール。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="しきしゃ たいけん｜なぞると曲が進む指揮ツール">
+<meta property="og:description" content="画面をなぞって指揮すると、その速さで曲が進む。4拍子のデモ曲つき、Flatの楽譜も読み込める無料ツール。">
+<meta property="og:url" content="https://ktteacher.net/tools/shiki/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="しきしゃ たいけん｜なぞると曲が進む指揮ツール">
+<meta name="twitter:description" content="なぞる速さで曲が進む指揮ツール。4拍子のデモ曲つき、Flatの楽譜も読み込める。">
+<meta name="twitter:image" content="https://ktteacher.net/ogp.png">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --coral:#FF6B6B; --teal:#00B8A9; --amber:#FF9F1C; --indigo:#5F5CE0;
+  --grape:#9B5DE5; --ink:#2B2B33; --sub:#6b6b76; --mist:#F5F6F8; --paper:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Zen Maru Gothic',sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,#FFF6F2 0%,#F1F3FF 100%);
+  display:flex;flex-direction:column;overflow:hidden;
+  -webkit-font-smoothing:antialiased;user-select:none;touch-action:none;
+}
+header{padding:10px 16px 6px;text-align:center;flex-shrink:0}
+header h1{font-size:19px;font-weight:900;letter-spacing:.04em}
+header .lead{font-size:12px;color:var(--sub);font-weight:500;margin-top:1px}
+.bar{
+  display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+  padding:6px 12px;flex-shrink:0;
+}
+.song-btn{
+  font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;
+  border:2px solid var(--ink);background:#fff;color:var(--ink);
+  padding:7px 14px;border-radius:999px;transition:transform .15s,background .15s,color .15s;
+}
+.song-btn.active{background:var(--coral);border-color:var(--coral);color:#fff}
+.song-btn:active{transform:scale(.95)}
+.load-btn{
+  font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;
+  border:2px dashed var(--indigo);background:#fff;color:var(--indigo);
+  padding:7px 12px;border-radius:999px;
+}
+#stageWrap{flex:1;position:relative;margin:2px 10px 6px;min-height:0}
+#stage{
+  width:100%;height:100%;display:block;background:#fff;border-radius:22px;
+  box-shadow:0 12px 30px -18px rgba(0,0,0,.3);touch-action:none;
+}
+.hud{
+  position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;
+  gap:10px;pointer-events:none;
+}
+.beatdot{
+  width:34px;height:34px;border-radius:50%;background:var(--mist);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;color:#bcbcc6;
+  transition:transform .08s,background .08s,color .08s;
+}
+.beatdot.on{background:var(--amber);color:#fff;transform:scale(1.25)}
+.beatdot.downbeat.on{background:var(--coral)}
+.centerMsg{
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+  text-align:center;color:var(--sub);font-weight:700;font-size:15px;
+  pointer-events:none;line-height:1.7;
+}
+.centerMsg .big{font-size:20px;color:var(--ink);display:block;margin-bottom:4px}
+.foot{
+  display:flex;justify-content:center;align-items:center;gap:14px;
+  padding:4px 12px 10px;flex-shrink:0;font-size:12.5px;color:var(--sub);font-weight:700;
+}
+.foot button{
+  font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;
+  border:2px solid var(--sub);background:#fff;color:var(--sub);
+  padding:6px 14px;border-radius:999px;
+}
+.tempo-badge{background:var(--mist);padding:5px 12px;border-radius:999px}
+a.home{
+  position:absolute;left:14px;top:12px;font-size:12px;color:var(--sub);
+  text-decoration:none;font-weight:700;z-index:5;
+}
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+<a class="home" href="../">← ツールズ</a>
+<header>
+  <h1>🎼 しきしゃ たいけん</h1>
+  <div class="lead">①から じゅんばんに、ひかる ●を さわってね。さわる はやさで きょくが すすむよ</div>
+</header>
+
+<div class="bar" id="songBar">
+  <button class="song-btn active" data-song="kira">⭐ きらきらぼし<span style="font-size:11px">（4ぷし）</span></button>
+  <button class="load-btn" id="loadBtn">＋ Flatのがくふ</button>
+  <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl" style="display:none">
+</div>
+
+<div id="stageWrap">
+  <canvas id="stage"></canvas>
+  <div class="hud" id="hud"></div>
+  <div class="centerMsg" id="centerMsg"><span class="big">さあ、しきしゃさん！</span>「スタート」を おして、①へ ふりおろそう</div>
+</div>
+
+<div class="foot">
+  <span class="tempo-badge" id="tempoBadge">♩ = —</span>
+  <button id="resetBtn">はじめから</button>
+  <span id="progress">0 / 0 しょうせつ</span>
+</div>
+
+<script>
+/* ===================== デモ曲データ ===================== */
+/* note: {t:開始拍, d:長さ拍, m:MIDI} */
+const SONGS = {
+  kira: { name:'きらきらぼし', beatsPerBar:4, bpm:80, notes:[
+    {t:0,d:1,m:60},{t:1,d:1,m:60},{t:2,d:1,m:67},{t:3,d:1,m:67},
+    {t:4,d:1,m:69},{t:5,d:1,m:69},{t:6,d:1,m:67},
+    {t:8,d:1,m:65},{t:9,d:1,m:65},{t:10,d:1,m:64},{t:11,d:1,m:64},
+    {t:12,d:1,m:62},{t:13,d:1,m:62},{t:14,d:1,m:60},
+    {t:16,d:1,m:67},{t:17,d:1,m:67},{t:18,d:1,m:65},{t:19,d:1,m:65},
+    {t:20,d:1,m:64},{t:21,d:1,m:64},{t:22,d:1,m:62},
+    {t:24,d:1,m:67},{t:25,d:1,m:67},{t:26,d:1,m:65},{t:27,d:1,m:65},
+    {t:28,d:1,m:64},{t:29,d:1,m:64},{t:30,d:1,m:62},
+    {t:32,d:1,m:60},{t:33,d:1,m:60},{t:34,d:1,m:67},{t:35,d:1,m:67},
+    {t:36,d:1,m:69},{t:37,d:1,m:69},{t:38,d:1,m:67},
+    {t:40,d:1,m:65},{t:41,d:1,m:65},{t:42,d:1,m:64},{t:43,d:1,m:64},
+    {t:44,d:1,m:62},{t:45,d:1,m:62},{t:46,d:1,m:60},
+  ]},
+};
+
+/* ===================== MusicXML 読み込み ===================== */
+const $ = id => document.getElementById(id);
+$('loadBtn').addEventListener('click', ()=> $('fileInput').click());
+$('fileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    let text;
+    if(/\.mxl$/i.test(file.name)){
+      // mxl は zip。簡易対応：解凍ライブラリなしのため、非対応を案内
+      alert('Flatからは「MusicXML（.xml / .musicxml）」で書き出すと読み込めます');
+      return;
+    } else {
+      text = await file.text();
+    }
+    const song = parseMusicXML(text, file.name.replace(/\.(musicxml|xml)$/i,''));
+    if(!song.notes.length){ alert('音がみつかりませんでした'); return; }
+    if(song.beatsPerBar !== 4){
+      alert('この楽譜は '+song.beatsPerBar+' 拍子みたい。いまは 4拍子 のきょくだけ たいけんできるよ');
+      return;
+    }
+    SONGS.loaded = song;
+    // ボタンを追加/更新
+    let b = document.querySelector('[data-song="loaded"]');
+    if(!b){
+      b = document.createElement('button');
+      b.className='song-btn'; b.dataset.song='loaded';
+      $('songBar').insertBefore(b, $('loadBtn'));
+      b.addEventListener('click', ()=> selectSong('loaded'));
+    }
+    b.innerHTML = '🎵 '+song.name+'<span style="font-size:11px">（'+song.beatsPerBar+'ぷし）</span>';
+    selectSong('loaded');
+  }catch(err){
+    alert('よみこめませんでした。FlatからMusicXML（.xml）で書き出してね');
+  }
+});
+
+function parseMusicXML(text, fallbackName){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('parse error');
+  let name = doc.querySelector('work work-title')?.textContent
+          || doc.querySelector('movement-title')?.textContent
+          || fallbackName || 'よみこんだ きょく';
+  name = name.trim().slice(0, 16);
+  let beatsPerBar = 4;
+  const beatsEl = doc.querySelector('time beats');
+  const beatType = doc.querySelector('time beat-type');
+  if(beatsEl && beatType){
+    beatsPerBar = Math.round((parseInt(beatsEl.textContent)||4) * 4 / (parseInt(beatType.textContent)||4));
+  }
+  let bpm = 100;
+  const pm = doc.querySelector('metronome per-minute');
+  if(pm) bpm = parseFloat(pm.textContent)||100;
+  const part = doc.querySelector('part');
+  if(!part) throw new Error('no part');
+  const STEP = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+
+  // --- 小節ごとに音符を集めつつ、リピート/1番2番かっこの情報も読む ---
+  const measEls = [...part.querySelectorAll(':scope > measure')];
+  const measData = [];   // 各小節: {notes:[{tRel,d,m}], len, fwd,bwd,ending}
+  let divisions = 1;
+  for(const meas of measEls){
+    let cursor = 0, mainVoice = null;
+    const mnotes = [];
+    let fwd=false, bwd=0, endStart=null, endStop=false, maxLen=0;
+    for(const el of meas.children){
+      const tag = el.tagName;
+      if(tag === 'attributes'){
+        const d = el.querySelector('divisions');
+        if(d) divisions = parseInt(d.textContent) || divisions;
+      }
+      else if(tag === 'backup'){ cursor -= (parseInt(el.querySelector('duration')?.textContent)||0)/divisions; }
+      else if(tag === 'forward'){ cursor += (parseInt(el.querySelector('duration')?.textContent)||0)/divisions; }
+      else if(tag === 'barline'){
+        const rep = el.querySelector('repeat');
+        if(rep){
+          if(rep.getAttribute('direction')==='forward') fwd=true;
+          if(rep.getAttribute('direction')==='backward') bwd=parseInt(rep.getAttribute('times'))||2;
+        }
+        const end = el.querySelector('ending');
+        if(end){
+          const ty=end.getAttribute('type');
+          if(ty==='start') endStart=(end.getAttribute('number')||'').split(/[,\s]+/).map(Number).filter(x=>x>0);
+          else endStop=true;
+        }
+      }
+      else if(tag === 'note'){
+        if(el.querySelector('grace')) continue;
+        const dur = (parseInt(el.querySelector('duration')?.textContent)||0)/divisions;
+        const isChord = !!el.querySelector('chord');
+        const voice = el.querySelector('voice')?.textContent || '1';
+        if(mainVoice === null) mainVoice = voice;
+        const pitch = el.querySelector('pitch');
+        if(voice === mainVoice && !isChord && pitch){
+          const step = pitch.querySelector('step')?.textContent || 'C';
+          const oct  = parseInt(pitch.querySelector('octave')?.textContent) || 4;
+          const alt  = parseInt(pitch.querySelector('alter')?.textContent) || 0;
+          const midi = (oct+1)*12 + (STEP[step] ?? 0) + alt;
+          const tieStop = [...el.querySelectorAll('tie')].some(t => t.getAttribute('type')==='stop');
+          const prev = mnotes[mnotes.length-1];
+          if(tieStop && prev && prev.m===midi && Math.abs(prev.tRel + prev.d - cursor) < 1e-6){
+            prev.d += dur;
+          } else {
+            mnotes.push({tRel: cursor, d: dur, m: midi});
+          }
+        }
+        if(!isChord) cursor += dur;
+      }
+      if(cursor > maxLen) maxLen = cursor;
+    }
+    measData.push({notes:mnotes, len:maxLen, fwd,bwd,endStart,endStop});
+  }
+  // ending(かっこ)は start〜stop の間の小節に適用
+  let activeEnding=null;
+  for(const md of measData){ if(md.endStart) activeEnding=md.endStart; md.ending=activeEnding; if(md.endStop) activeEnding=null; }
+
+  // --- リピート展開：演奏順の小節インデックス列を作る ---
+  function expandOrder(){
+    const order=[]; let i=0, start=0, pass=1, guard=0;
+    while(i<measData.length && guard++<5000){
+      const md=measData[i];
+      if(md.fwd) start=i;
+      if(md.ending && !md.ending.includes(pass)){ i++; continue; }
+      order.push(i);
+      if(md.bwd && pass<md.bwd){ pass++; i=start; continue; }
+      if(md.bwd){ pass=1; start=i+1; }
+      else if(md.ending){ const nx=measData[i+1]; if(!nx || !nx.ending){ pass=1; start=i+1; } }
+      i++;
+    }
+    return order;
+  }
+  const order = expandOrder();
+
+  // --- 展開順に音符を並べ、各小節の長さぶん時間をずらす ---
+  const notes = [];
+  let tBase = 0;
+  for(const idx of order){
+    const md = measData[idx];
+    for(const n of md.notes) notes.push({t: tBase + n.tRel, d: n.d, m: n.m});
+    tBase += (md.len>0 ? md.len : beatsPerBar);
+  }
+    notes.sort((a,b)=>a.t-b.t);
+  return { name, bpm, beatsPerBar, notes };
+}
+
+/* ===================== オーディオ ===================== */
+let audio=null, master=null;
+function ensureAudio(){
+  if(!audio){
+    audio = new (window.AudioContext||window.webkitAudioContext)();
+    master = audio.createGain(); master.gain.value=0.8; master.connect(audio.destination);
+  }
+}
+const mf = m => 440*Math.pow(2,(m-69)/12);
+function playNote(midi, durSec, offset){
+  ensureAudio();
+  const t = audio.currentTime + (offset||0);
+  const len = Math.max(0.18, Math.min(durSec, 3.5));
+  [0,7].forEach((det,i)=>{  // 軽い重ねで柔らかく
+    const o=audio.createOscillator(), g=audio.createGain();
+    o.type='triangle'; o.frequency.value=mf(midi); o.detune.value=det;
+    o.connect(g).connect(master);
+    const peak=i===0?0.32:0.12;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(peak,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+    o.start(t); o.stop(t+len+0.05);
+  });
+}
+function clickSound(strong){
+  ensureAudio();
+  const t=audio.currentTime;
+  const o=audio.createOscillator(), g=audio.createGain();
+  o.type='square'; o.frequency.value=strong?900:600;
+  o.connect(g).connect(master);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(strong?0.12:0.06,t+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
+  o.start(t); o.stop(t+0.08);
+}
+
+/* ===================== 状態 ===================== */
+let song = SONGS.kira;
+let beatsPerBar = song.beatsPerBar;
+let totalBeats = 0;
+let lastNoteBeat = 0;    // 最後の音符が始まる拍（ここを鳴らしたら曲おわり）
+let beatIdx = 0;         // 次に鳴らす拍（0始まり）
+let playing = false;
+let lastBeatTime = 0;    // 直前に拍を刻んだ時刻(ms)
+let curInterval = 600;   // 拍間隔(ms) 推定
+let armed = false;       // スタート地点を通過して「構え」た状態か
+
+function computeTotalBeats(s){
+  let mx=0; s.notes.forEach(n=> mx=Math.max(mx, n.t+n.d));
+  return Math.ceil(mx);
+}
+
+function selectSong(key){
+  song = SONGS[key];
+  beatsPerBar = song.beatsPerBar;
+  totalBeats = computeTotalBeats(song);
+  { const _ln = song.notes[song.notes.length-1]; lastNoteBeat = _ln ? Math.ceil(_ln.t + _ln.d) - 1 : 0; }
+  document.querySelectorAll('.song-btn').forEach(b=>b.classList.toggle('active', b.dataset.song===key));
+  buildHud();
+  resetPlay();
+  drawGuide();
+}
+document.querySelectorAll('.song-btn[data-song]').forEach(b=>{
+  b.addEventListener('click', ()=> selectSong(b.dataset.song));
+});
+
+/* ===================== 拍表示（HUD） ===================== */
+function buildHud(){
+  const hud=$('hud'); hud.innerHTML='';
+  for(let i=0;i<beatsPerBar;i++){
+    const d=document.createElement('div');
+    d.className='beatdot'+(i===0?' downbeat':'');
+    d.textContent=i+1;
+    hud.appendChild(d);
+  }
+}
+function lightBeat(posInBar){
+  const dots=document.querySelectorAll('.beatdot');
+  dots.forEach((d,i)=> d.classList.toggle('on', i===posInBar));
+}
+
+/* ===================== 進行 ===================== */
+function resetPlay(){
+  beatIdx=0; playing=false; lastBeatTime=0; armed=false;
+  $('progress').textContent = '0 / '+Math.ceil(totalBeats/beatsPerBar)+' しょうせつ';
+  $('tempoBadge').textContent='♩ = —';
+  $('centerMsg').style.display='';
+  document.querySelectorAll('.beatdot').forEach(d=>d.classList.remove('on'));
+}
+$('resetBtn').addEventListener('click', resetPlay);
+
+function fireBeat(){
+  const now = performance.now();
+  if(lastBeatTime){
+    const dt = now - lastBeatTime;
+    if(dt < 120) return;               // 速すぎる誤検出を無視
+    curInterval = curInterval*0.5 + dt*0.5;  // なめらかに追従
+    const bpm = Math.round(60000/curInterval);
+    $('tempoBadge').textContent = '♩ = '+Math.min(220,Math.max(30,bpm));
+  }
+  lastBeatTime = now;
+
+  if(beatIdx===0){ $('centerMsg').style.display='none'; playing=true; }
+
+  const posInBar = beatIdx % beatsPerBar;
+  lightBeat(posInBar);
+  clickSound(posInBar===0);
+
+  // この拍[beatIdx, beatIdx+1)に入る音符を、拍内の位置に応じて鳴らす（8分音符も再現）
+  const durSec = curInterval/1000;
+  song.notes.forEach(n=>{
+    if(n.t >= beatIdx && n.t < beatIdx+1){
+      const off = (n.t - beatIdx) * durSec;   // 拍内オフセット（秒）
+      // 最後の音符は、残りの拍ぶんしっかり伸ばして終止感を出す
+      const isFinal = (n === song.notes[song.notes.length-1]);
+      const lenBeats = isFinal ? Math.max(n.d, (lastNoteBeat - beatIdx + 1)) : n.d;
+      playNote(n.m, lenBeats*durSec*0.98, off);
+    }
+  });
+
+  const wasLast = beatIdx >= lastNoteBeat;   // 最後の音符を今鳴らしたか
+  beatIdx++;
+  const bar = Math.floor(beatIdx/beatsPerBar);
+  $('progress').textContent = Math.min(bar,Math.ceil(totalBeats/beatsPerBar))+' / '+Math.ceil(totalBeats/beatsPerBar)+' しょうせつ';
+
+  if(wasLast){
+    playing=false;
+    $('centerMsg').innerHTML='<span class="big">🎉 えんそう かんりょう！</span>もういちど ふって、はじめから';
+    $('centerMsg').style.display='';
+    beatIdx=0; lastBeatTime=0;
+    setTimeout(()=>document.querySelectorAll('.beatdot').forEach(d=>d.classList.remove('on')),400);
+  }
+}
+
+/* ===================== 指揮ジェスチャー（Y谷検出） ===================== */
+const stage=$('stage');
+let ctx=stage.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  const r=stage.getBoundingClientRect();
+  W=r.width; H=r.height;
+  stage.width=W*DPR; stage.height=H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  drawGuide();
+}
+window.addEventListener('resize', resize);
+
+let pointerX=0, pointerY=0, showPointer=false, tracking=false;
+let curPts=[];  // 現在の打点配列（checkHitで参照）
+
+stage.addEventListener('pointerdown', async e=>{
+  ensureAudio();
+  if(audio.state==='suspended'){ try{ await audio.resume(); }catch(_){} }
+  tracking=true; showPointer=true;
+  pointerX=e.offsetX; pointerY=e.offsetY;
+  stage.setPointerCapture(e.pointerId);
+  checkHit(e.offsetX, e.offsetY);
+});
+stage.addEventListener('pointermove', e=>{
+  if(!tracking) return;
+  pointerX=e.offsetX; pointerY=e.offsetY;
+  checkHit(e.offsetX, e.offsetY);
+});
+function endTrack(){ tracking=false; showPointer=false; }
+stage.addEventListener('pointerup', endTrack);
+stage.addEventListener('pointercancel', endTrack);
+stage.addEventListener('pointerleave', ()=>{ if(tracking) endTrack(); });
+
+// 「次に触るべき打点」に指が入ったら1拍
+function checkHit(x,y){
+  const R = Math.min(W,H)*0.11;
+  // 演奏前：スタート地点（上）に触れたら「構え」
+  if(!playing && beatIdx===0){
+    const sp = guidePath().path[0];
+    if(Math.hypot(x-sp.x, y-sp.y) < R*1.25){ armed = true; }
+  }
+  const posInBar = beatIdx % beatsPerBar;
+  const tp = curPts[posInBar];
+  if(!tp) return;
+  // 1拍目は、スタートを通過して構えてから（振り下ろしで）鳴る
+  if(beatIdx===0 && !armed) return;
+  if(Math.hypot(x-tp.x, y-tp.y) < R){ fireBeat(); }
+}
+
+/* ===================== ガイド描画（打点方式） ===================== */
+function guidePath(){
+  // 各拍の「打点」(pts)と軌道(path)。ptsに触れると1拍。
+  const cx=W/2, top=H*0.18, bot=H*0.74, dx=W*0.26;
+  // 4拍子（画像のジグザグ形）：始点(上)→1(中央下)→2(左下)→3(中央下=1と同じ)→4(右下)→始点へ
+  return { pts:[{x:cx,y:bot,n:1},{x:cx-dx,y:bot,n:2},{x:cx,y:bot,n:3},{x:cx+dx,y:bot,n:4}],
+           path:[{x:cx,y:top},{x:cx,y:bot},{x:cx-dx*0.85,y:top+H*0.12},{x:cx-dx,y:bot},{x:cx-dx*0.1,y:top+H*0.10},{x:cx,y:bot},{x:cx+dx*0.85,y:top+H*0.12},{x:cx+dx,y:bot},{x:cx,y:top}] };
+}
+function drawGuide(){
+  if(!W) return;
+  ctx.clearRect(0,0,W,H);
+  const g=guidePath();
+  const pts=g.pts;
+  curPts=pts;
+  const posInBar = beatIdx % beatsPerBar;  // 次に触る打点
+  // 軌道(path)を点線で描く
+  ctx.strokeStyle='rgba(95,92,224,0.18)';
+  ctx.lineWidth=Math.max(3,H*0.008); ctx.setLineDash([6,10]); ctx.lineCap='round';
+  ctx.beginPath();
+  g.path.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.setLineDash([]);
+  // スタート表示（上の真ん中）：ラベルは常に、●は打点と重ならないときだけ
+  const sp = g.path[0];
+  const R0chk = Math.max(24,H*0.062);
+  const spOverlap = pts.some(p => Math.hypot(p.x-sp.x, p.y-sp.y) < R0chk*1.1);
+  // 演奏前でまだ構えていないときは、スタート地点を緑リングで「ここを押してね」
+  if(!playing && beatIdx===0 && !armed){
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, Math.max(16,H*0.045), 0, 7);
+    ctx.strokeStyle='rgba(0,184,169,0.9)'; ctx.lineWidth=Math.max(4,H*0.011); ctx.stroke();
+  }
+  if(!spOverlap){
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, Math.max(8,H*0.02), 0, 7);
+    ctx.fillStyle='rgba(43,43,51,0.75)'; ctx.fill();
+  }
+  ctx.fillStyle='rgba(43,43,51,0.6)';
+  ctx.font='700 '+Math.max(12,H*0.032)+'px "Zen Maru Gothic",sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  const dotR = spOverlap ? R0chk : Math.max(8,H*0.02);
+  const labelY = sp.y - dotR - Math.max(10,H*0.028);
+  ctx.fillText('スタート', sp.x, labelY);
+  // 打点
+  const R0=Math.max(24,H*0.062);
+  // 同じ位置の打点（4拍子の1と3など）は1つの●にまとめて「1・3」と表示
+  const groups=[];
+  pts.forEach((p,i)=>{
+    const g=groups.find(g=> Math.hypot(g.x-p.x,g.y-p.y)<2);
+    if(g){ g.idx.push(i); g.ns.push(p.n); }
+    else groups.push({x:p.x,y:p.y,idx:[i],ns:[p.n]});
+  });
+  groups.forEach(g=>{
+    const isNext = g.idx.includes(posInBar);
+    const hasOne = g.ns.includes(1);
+    const r = isNext ? R0*1.18 : R0;
+    if(isNext){  // 次に触る打点を緑リングで強調
+      ctx.beginPath(); ctx.arc(g.x,g.y,r+Math.max(7,H*0.02),0,7);
+      ctx.strokeStyle='rgba(0,184,169,0.9)'; ctx.lineWidth=Math.max(4,H*0.011); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(g.x,g.y,r,0,7);
+    ctx.fillStyle = hasOne ? 'rgba(255,107,107,'+(isNext?1:0.9)+')' : 'rgba(255,159,28,'+(isNext?1:0.9)+')';
+    ctx.fill();
+    const label = g.ns.join('・');
+    const fs = g.ns.length>1 ? Math.max(13,H*0.042) : Math.max(17,H*0.058);
+    ctx.fillStyle='#fff'; ctx.font='900 '+fs+'px "Zen Maru Gothic",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, g.x, g.y+1);
+  });
+  // 指先
+  if(showPointer){
+    ctx.beginPath(); ctx.arc(pointerX,pointerY,Math.max(9,H*0.026),0,7);
+    ctx.fillStyle='rgba(0,184,169,0.85)'; ctx.fill();
+  }
+}
+function loop(){ drawGuide(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+/* ===================== 初期化 ===================== */
+selectSong('kira');
+setTimeout(resize, 60);
+window.addEventListener('load', resize);
+</script>
+</body>
+</html>

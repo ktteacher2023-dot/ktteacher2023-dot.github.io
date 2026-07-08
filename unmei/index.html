@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>だ・だ・だ・だーん で「運命」</title>
+<link rel="canonical" href="https://ktteacher.net/tools/unmei/">
+<meta name="description" content="ベートーヴェン交響曲第5番「運命」を、自分のタップで鳴らして強弱まで指揮。ただ聴くだけの鑑賞が体験に変わる、登録なしで使える無料の音楽ツール。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="だ・だ・だ・だーんで「運命」｜運命を指揮する鑑賞ツール">
+<meta property="og:description" content="ベートーヴェン交響曲第5番「運命」を、自分のタップで鳴らして強弱まで指揮。ただ聴くだけの鑑賞が体験に変わる、登録なしで使える無料の音楽ツール。">
+<meta property="og:url" content="https://ktteacher.net/tools/unmei/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="だ・だ・だ・だーんで「運命」｜運命を指揮する鑑賞ツール">
+<meta name="twitter:description" content="ベートーヴェン交響曲第5番「運命」を、自分のタップで鳴らして強弱まで指揮。ただ聴くだけの鑑賞が体験に変わる、登録なしで使える無料の音楽ツール。">
+<meta name="twitter:image" content="https://ktteacher.net/ogp.png">
+<style>
+  :root{
+    --bg:#F5F7FA;
+    --card:#FFFFFF;
+    --ink:#243352;
+    --sub:#5B6B8C;
+    --line:#D8DFEC;
+    --accent:#E8542F;   /* だーん・録音 */
+    --hi:#FFC838;       /* つぎの音・ハイライト */
+    --soft:#EDF1F8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic Medium","Yu Gothic",sans-serif;
+    display:flex;flex-direction:column;
+  }
+
+  /* ---------- ヘッダー ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 18px;flex-wrap:wrap;
+    background:var(--card);border-bottom:2px solid var(--line);
+  }
+  .title .main{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:clamp(19px,3vw,28px);font-weight:700;letter-spacing:.04em;
+  }
+  .title .sub{
+    font-size:clamp(11px,1.5vw,14px);color:var(--sub);display:block;margin-top:2px;
+  }
+  .dynMeter{
+    background:var(--soft);border:2px solid var(--line);border-radius:14px;
+    padding:6px 18px;min-width:130px;text-align:center;
+  }
+  .dynMeter .label{font-size:11px;color:var(--sub);letter-spacing:.15em;font-weight:600;}
+  .dynMeter .value{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-size:clamp(22px,3vw,30px);font-weight:700;line-height:1.15;color:var(--ink);
+  }
+
+  /* ---------- モチーフ表示 ---------- */
+  #motif{
+    display:flex;flex-direction:column;gap:8px;align-items:center;
+    padding:12px 8px 10px;background:var(--card);
+    border-bottom:2px solid var(--line);
+  }
+  .phrase{display:flex;gap:clamp(10px,2.2vw,20px);align-items:center;}
+  .note{
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(15px,2.5vw,22px);font-weight:700;letter-spacing:.05em;
+    color:var(--sub);background:var(--card);
+    border:3px solid var(--line);border-radius:999px;
+    width:clamp(52px,9vw,78px);height:clamp(52px,9vw,78px);
+    transition:transform .1s, background .15s, color .15s, border-color .15s, box-shadow .15s;
+    user-select:none;
+  }
+  .note.long{width:clamp(104px,19vw,180px);}
+  .note.next{
+    border-color:var(--hi);background:var(--hi);color:var(--ink);
+    box-shadow:0 3px 0 #d9a51f;
+    animation:breathe 1.5s ease-in-out infinite;
+  }
+  .note.done{background:var(--soft);color:#A6B1C9;border-color:var(--soft);}
+  .note.active{
+    background:var(--accent);color:#fff;border-color:var(--accent);
+    transform:scale(1.12);box-shadow:0 0 0 6px rgba(232,84,47,.22);
+  }
+  @keyframes breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+
+  /* ---------- タップステージ ---------- */
+  #stageWrap{position:relative;flex:1;min-height:0;margin:10px 12px;}
+  #stageCard{
+    position:absolute;inset:0;border-radius:20px;overflow:hidden;
+    background:
+      linear-gradient(180deg,
+        rgba(232,84,47,.16),
+        rgba(255,200,56,.13) 45%,
+        rgba(36,51,82,.05));
+    border:3px dashed var(--line);
+  }
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer;}
+  .volLabel{
+    position:absolute;left:14px;pointer-events:none;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    font-weight:700;color:var(--ink);
+    display:flex;align-items:center;gap:8px;
+  }
+  .volLabel .mark{font-size:clamp(22px,3.4vw,32px);font-style:italic;}
+  .volLabel .word{font-size:clamp(11px,1.6vw,14px);color:var(--sub);font-family:inherit;}
+  .volLabel.top{top:12px;}
+  .volLabel.bottom{bottom:12px;}
+  #hint{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    text-align:center;color:var(--ink);pointer-events:none;
+    background:rgba(255,255,255,.85);border-radius:16px;padding:16px 26px;
+    font-size:clamp(14px,2.1vw,18px);line-height:2;transition:opacity .4s;
+    box-shadow:0 2px 12px rgba(36,51,82,.08);
+  }
+  #hint strong{color:var(--accent);font-size:1.15em;}
+  #banner{
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;border-radius:999px;
+    padding:8px 24px;font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.06em;
+    opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;
+    box-shadow:0 3px 10px rgba(36,51,82,.25);
+  }
+  #banner.show{opacity:1;}
+
+  /* ---------- 下部コントロール ---------- */
+  footer{
+    display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;
+    padding:10px 12px;background:var(--card);border-top:2px solid var(--line);
+  }
+  .grp{
+    display:flex;gap:8px;align-items:center;
+    background:var(--soft);border-radius:16px;padding:6px 10px;
+  }
+  .grp .glabel{font-size:12px;color:var(--sub);font-weight:700;padding:0 4px;letter-spacing:.08em;}
+  footer button{
+    font-family:inherit;font-size:clamp(13px,1.8vw,16px);font-weight:700;letter-spacing:.04em;
+    border:2px solid var(--ink);border-radius:14px;
+    padding:10px 18px;min-height:44px;
+    background:var(--card);color:var(--ink);cursor:pointer;
+    box-shadow:0 2px 0 var(--line);
+    transition:background .15s,color .15s,border-color .15s,transform .05s;
+  }
+  footer button:active{transform:translateY(1px);box-shadow:none;}
+  footer button:disabled{opacity:.35;cursor:default;border-color:var(--line);box-shadow:none;}
+  footer button.rec.armed{background:var(--accent);border-color:var(--accent);color:#fff;}
+  footer button.play.has{background:var(--hi);border-color:var(--hi);color:var(--ink);}
+  @media (prefers-reduced-motion: reduce){ .note.next{animation:none;} }
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }        /* スマホではアイコンだけ（省スペース） */
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+
+<header>
+  <div class="title">
+    <span class="main">だ・だ・だ・だーん で「運命」</span>
+    <span class="sub">ベートーヴェン／交響曲第5番　タップ＝「だ」　押しっぱなし＝「だーん」</span>
+  </div>
+  <div class="dynMeter">
+    <div class="label">つよさ</div>
+    <div class="value" id="dynValue">―</div>
+  </div>
+</header>
+
+<div id="motif"></div>
+
+<div id="stageWrap">
+  <div id="stageCard"></div>
+  <canvas id="stage"></canvas>
+  <div class="volLabel top"><span class="mark">f</span><span class="word">上のほう＝つよい音</span></div>
+  <div class="volLabel bottom"><span class="mark">p</span><span class="word">下のほう＝よわい音</span></div>
+  <div id="hint">
+    ここをタップして「運命」をえんそうしよう<br>
+    <strong>タン・タン・タン・ぎゅーっ</strong><br>
+    「だーん」のあいだに指を上下にうごかすと、音が大きく・小さくなるよ
+  </div>
+  <div id="banner"></div>
+</div>
+
+<footer>
+  <div class="grp">
+    <span class="glabel">きろく</span>
+    <button class="rec" id="recA">● A</button>
+    <button class="rec" id="recB">● B</button>
+  </div>
+  <div class="grp">
+    <span class="glabel">きく</span>
+    <button class="play" id="playA" disabled>▶ 演奏A</button>
+    <button class="play" id="playB" disabled>▶ 演奏B</button>
+  </div>
+  <button id="resetBtn">はじめから</button>
+</footer>
+
+<script>
+(() => {
+  /* ============ モチーフ（冒頭のみ） ============ */
+  const NOTES = [
+    {label:'だ',    midi:[67],         hold:false},
+    {label:'だ',    midi:[67],         hold:false},
+    {label:'だ',    midi:[67],         hold:false},
+    {label:'だーん', midi:[63,55,48],  hold:true},
+    {label:'だ',    midi:[65],         hold:false},
+    {label:'だ',    midi:[65],         hold:false},
+    {label:'だ',    midi:[65],         hold:false},
+    {label:'だーん', midi:[62,55,43],  hold:true},
+  ];
+  const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  /* ============ モチーフ表示 ============ */
+  const motifEl = document.getElementById('motif');
+  const noteEls = [];
+  [[0,4],[4,8]].forEach(([a,b]) => {
+    const row = document.createElement('div');
+    row.className = 'phrase';
+    for (let i = a; i < b; i++){
+      const d = document.createElement('div');
+      d.className = 'note' + (NOTES[i].hold ? ' long' : '');
+      d.textContent = NOTES[i].label;
+      row.appendChild(d);
+      noteEls.push(d);
+    }
+    motifEl.appendChild(row);
+  });
+
+  function updateMotif(){
+    noteEls.forEach((el, i) => {
+      el.classList.toggle('done', i < idx && i !== holdIdx);
+      el.classList.toggle('next', i === idx);
+      if (i !== holdIdx) el.classList.remove('active');
+    });
+  }
+  function flashNote(i, on){
+    if (!noteEls[i]) return;
+    noteEls[i].classList.toggle('active', on);
+    if (on) noteEls[i].classList.remove('next');
+  }
+
+  /* ============ オーディオ ============ */
+  let ctx = null, master = null, filter = null;
+
+  function initAudio(){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -8; comp.ratio.value = 3;  // 強弱の差を潰さないよう軽めに
+    filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 2400; filter.Q.value = 0.6;
+    master = ctx.createGain(); master.gain.value = 0.9;
+    master.connect(filter).connect(comp).connect(ctx.destination);
+  }
+
+  /* 強弱→音量・音色の変換（②きづく：pp と ff の差が耳ではっきりわかるように）
+     人の耳は音量を対数で感じるため、指数カーブで約20dBの幅をつける */
+  const ampOf = d => 0.028 * Math.pow(15, d);            // pp≈0.03 → ff≈0.36
+  const filterHz = d => 420 + Math.pow(d, 1.5) * 6200;   // よわい=こもった音、つよい=明るい音
+
+  function playShort(midis, dyn, t){
+    filter.frequency.setTargetAtTime(filterHz(dyn), t, 0.05);
+    midis.forEach(m => {
+      [-5, 5].forEach(dt => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = midiHz(m); o.detune.value = dt;
+        o.connect(g).connect(master);
+        const peak = ampOf(dyn) * (m < 55 ? 1.3 : 1);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(peak, t + (0.034 - dyn * 0.026));
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+        o.start(t); o.stop(t + 0.3);
+      });
+    });
+  }
+
+  function playHold(midis, dyn, t){
+    filter.frequency.setTargetAtTime(filterHz(dyn), t, 0.05);
+    const parts = [];
+    midis.forEach(m => {
+      [-6, 6].forEach(dt => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = midiHz(m); o.detune.value = dt;
+        o.connect(g).connect(master);
+        o.start(t);
+        parts.push({o, g, m});
+      });
+    });
+    const peakOf = (m, v) => ampOf(v) * 0.92 * (m < 55 ? 1.3 : 1);
+    parts.forEach(({g, m}) => {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(peakOf(m, dyn), t + 0.03);
+    });
+    return {
+      setDyn(v, rt){
+        parts.forEach(({g, m}) => g.gain.setTargetAtTime(peakOf(m, v), rt, 0.09));
+        filter.frequency.setTargetAtTime(filterHz(v), rt, 0.12);
+      },
+      release(rt){
+        parts.forEach(({o, g}) => {
+          g.gain.cancelScheduledValues(rt);
+          g.gain.setTargetAtTime(0.0001, rt, 0.12);
+          o.stop(rt + 0.8);
+        });
+      }
+    };
+  }
+
+  /* ============ 演奏の状態 ============ */
+  let idx = 0;
+  let holdVoice = null, holdIdx = -1;
+  let recSlot = null, recEvents = [], recStart = 0;
+  const takes = {A: null, B: null};
+  let playbackTimers = [], isPlayback = false;
+  let lastEnvSample = 0;
+
+  const hint = document.getElementById('hint');
+  const banner = document.getElementById('banner');
+  const dynValue = document.getElementById('dynValue');
+  const dynMark = v => v<0.12?'pp':v<0.28?'p':v<0.45?'mp':v<0.62?'mf':v<0.82?'f':'ff';
+
+  function showDyn(v){
+    const mark = dynMark(v);
+    dynValue.textContent = mark;
+    dynValue.style.fontSize = Math.round(18 + v * 20) + 'px';  // pp=小さく ff=大きく
+    dynValue.style.color = (mark === 'f' || mark === 'ff') ? 'var(--accent)' : 'var(--ink)';
+  }
+  function showBanner(msg, ms){
+    banner.textContent = msg;
+    banner.classList.add('show');
+    if (ms) setTimeout(() => banner.classList.remove('show'), ms);
+  }
+  function resetSeq(){
+    if (holdVoice && ctx){ holdVoice.release(ctx.currentTime); holdVoice = null; }
+    idx = 0; holdIdx = -1;
+    updateMotif();
+  }
+
+  /* ============ タップ入力 ============ */
+  const stage = document.getElementById('stage');
+  const g2d = stage.getContext('2d');
+  let W = 0, H = 0;
+
+  /* --- 光の粒（パーティクル）--- */
+  let particles = [];
+  let holdPoint = null;   // 「だーん」中の指の位置と強さ
+  let flash = 0;          // タップした瞬間、画面全体がふわっと光る
+
+  function spawnBurst(x, y, dyn){
+    const n = Math.round(5 + Math.pow(dyn, 1.6) * 55);
+    for (let i = 0; i < n; i++){
+      const ang = Math.random() * Math.PI * 2;
+      const sp = (1.5 + Math.random() * 4) * (0.35 + dyn * 2.3);
+      particles.push({
+        x, y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - dyn * 1.2,
+        life: 1,
+        decay: 0.015 + Math.random() * 0.02,
+        size: (2 + Math.random() * 4) * (0.45 + dyn * 1.5),
+        hue: 38 - dyn * 22 + Math.random() * 8,   // よわい=黄 → つよい=赤
+        note: Math.random() < 0.18                 // ときどき音符が飛ぶ
+      });
+    }
+    flash = Math.min(0.55, 0.015 + dyn * dyn * 0.6);
+  }
+
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    stage.width = W * dpr; stage.height = H * dpr;
+    g2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  const dynFromY = y => Math.min(1, Math.max(0.05, 1 - y / H));
+  let activePointer = null;
+
+  stage.addEventListener('pointerdown', async e => {
+    if (isPlayback || activePointer !== null) return;
+    const pid = e.pointerId, ox = e.offsetX, oy = e.offsetY;
+    if (!ctx) initAudio();
+    // 音の装置が眠っている時は、1拍目を鳴らす前に必ず起こしきる（1拍目が無音で進むのを防ぐ）
+    if (ctx.state === 'suspended'){ try { await ctx.resume(); } catch(_){} }
+    hint.style.opacity = 0;
+    activePointer = pid;
+    stage.setPointerCapture(pid);
+
+    const dyn = dynFromY(oy);
+    showDyn(dyn);
+
+    const note = NOTES[idx];
+    const t = ctx.currentTime;
+
+    if (recSlot && idx === 0){ recStart = performance.now(); recEvents = []; }
+    const ev = recSlot ? {dt: (performance.now() - recStart) / 1000, i: idx, dyn} : null;
+    if (ev) recEvents.push(ev);
+
+    if (note.hold){
+      holdVoice = playHold(note.midi, dyn, t);
+      holdIdx = idx;
+      flashNote(idx, true);
+      if (ev){ ev.pressAt = performance.now(); ev.env = []; }
+    } else {
+      playShort(note.midi, dyn, t);
+      const i = idx;
+      flashNote(i, true);
+      setTimeout(() => flashNote(i, false), 180);
+    }
+
+    spawnBurst(ox, oy, dyn);
+    if (note.hold) holdPoint = {x: ox, y: oy, dyn};
+
+    idx++;
+    if (!note.hold){
+      if (idx >= NOTES.length) finishPass();
+      else updateMotif();
+    }
+  });
+
+  // 押したまま上下 → 鳴っている「だーん」の強弱をリアルタイムに変える
+  stage.addEventListener('pointermove', e => {
+    if (e.pointerId !== activePointer || !holdVoice) return;
+    const dyn = dynFromY(e.offsetY);
+    holdVoice.setDyn(dyn, ctx.currentTime);
+    showDyn(dyn);
+
+    holdPoint = {x: e.offsetX, y: e.offsetY, dyn};
+    const now = performance.now();
+    if (now - lastEnvSample > 60){
+      if (recSlot){
+        const ev = recEvents[recEvents.length - 1];
+        if (ev && ev.pressAt) ev.env.push({dt: (now - ev.pressAt) / 1000, dyn});
+      }
+      lastEnvSample = now;
+    }
+  });
+
+  stage.addEventListener('pointerup', e => {
+    if (e.pointerId !== activePointer) return;
+    activePointer = null;
+    if (holdVoice){
+      holdVoice.release(ctx.currentTime);
+      holdVoice = null;
+      if (holdPoint) spawnBurst(holdPoint.x, holdPoint.y, holdPoint.dyn * 0.7);
+      holdPoint = null;
+      flashNote(holdIdx, false);
+      if (recSlot){
+        const ev = recEvents[recEvents.length - 1];
+        if (ev && ev.pressAt) ev.holdDur = (performance.now() - ev.pressAt) / 1000;
+      }
+      holdIdx = -1;
+      if (idx >= NOTES.length) finishPass();
+      else updateMotif();
+    }
+  });
+  stage.addEventListener('pointercancel', () => {
+    activePointer = null;
+    if (holdVoice && ctx){ holdVoice.release(ctx.currentTime); holdVoice = null; holdPoint = null; flashNote(holdIdx, false); }
+  });
+
+  function finishPass(){
+    if (recSlot){
+      takes[recSlot] = recEvents.slice();
+      const btn = document.getElementById('play' + recSlot);
+      btn.disabled = false;
+      btn.classList.add('has');
+      document.getElementById('rec' + recSlot).classList.remove('armed');
+      showBanner(`✓ 演奏${recSlot}にきろくしました！`, 2200);
+      recSlot = null;
+    } else {
+      showBanner('✨ すばらしい演奏！', 1600);
+    }
+    setTimeout(resetSeq, 300);
+  }
+
+  /* ============ 再生（聴き比べ・クレッシェンドも再現） ============ */
+  function playback(slot){
+    const take = takes[slot];
+    if (!take || isPlayback) return;
+    if (!ctx) initAudio();
+    ctx.resume();
+    isPlayback = true;
+    resetSeq();
+    showBanner(`▶ 演奏${slot} をさいせい中…`);
+    const t0 = ctx.currentTime + 0.25;
+    let endMs = 0;
+
+    take.forEach(ev => {
+      const note = NOTES[ev.i];
+      const t = t0 + ev.dt;
+      if (note.hold){
+        const dur = Math.max(0.3, ev.holdDur || 0.8);
+        const v = playHold(note.midi, ev.dyn, t);
+        (ev.env || []).forEach(s => {
+          playbackTimers.push(setTimeout(
+            () => v.setDyn(s.dyn, ctx.currentTime),
+            (ev.dt + s.dt) * 1000 + 250));
+        });
+        playbackTimers.push(setTimeout(() => v.release(ctx.currentTime), (ev.dt + dur) * 1000 + 250));
+        endMs = Math.max(endMs, (ev.dt + dur) * 1000);
+      } else {
+        playShort(note.midi, ev.dyn, t);
+        endMs = Math.max(endMs, ev.dt * 1000 + 300);
+      }
+      playbackTimers.push(setTimeout(() => {
+        flashNote(ev.i, true);
+        const off = note.hold ? Math.max(300, (ev.holdDur || 0.8) * 1000) : 180;
+        playbackTimers.push(setTimeout(() => flashNote(ev.i, false), off));
+        showDyn(ev.dyn);
+      }, (ev.dt + 0.25) * 1000));
+    });
+
+    playbackTimers.push(setTimeout(() => {
+      isPlayback = false;
+      banner.classList.remove('show');
+      resetSeq();
+    }, endMs + 900));
+  }
+
+  /* ============ 描画 ============ */
+  function draw(){
+    g2d.clearRect(0, 0, W, H);
+
+    // タップの瞬間、画面全体がふわっと光る（強いほど明るく）
+    if (flash > 0.005){
+      g2d.fillStyle = `rgba(255,200,56,${(flash * 0.5).toFixed(3)})`;
+      g2d.fillRect(0, 0, W, H);
+      flash *= 0.88;
+    }
+
+    // 「だーん」のオーラ：指のまわりで光が脈打つ。強弱でオーラが育つ
+    if (holdVoice && holdPoint){
+      const d = holdPoint.dyn;
+      const base = 24 + d * 220;
+      const pulse = base * (1 + Math.sin(performance.now() / 110) * 0.06);
+      const grad = g2d.createRadialGradient(
+        holdPoint.x, holdPoint.y, 5, holdPoint.x, holdPoint.y, pulse);
+      grad.addColorStop(0, `rgba(232,84,47,${(0.16 + d * 0.44).toFixed(3)})`);
+      grad.addColorStop(0.6, `rgba(255,200,56,${(0.08 + d * 0.28).toFixed(3)})`);
+      grad.addColorStop(1, 'rgba(255,200,56,0)');
+      g2d.fillStyle = grad;
+      g2d.beginPath();
+      g2d.arc(holdPoint.x, holdPoint.y, pulse, 0, Math.PI * 2);
+      g2d.fill();
+      // 鳴っている間、光の粒がわきつづける
+      if (Math.random() < 0.45 + d * 0.5){
+        const ang = Math.random() * Math.PI * 2;
+        particles.push({
+          x: holdPoint.x + Math.cos(ang) * base * 0.4,
+          y: holdPoint.y + Math.sin(ang) * base * 0.4,
+          vx: Math.cos(ang) * 0.6,
+          vy: -0.8 - d * 1.5,
+          life: 1, decay: 0.012 + Math.random() * 0.015,
+          size: (2 + Math.random() * 3) * (0.7 + d),
+          hue: 30 - d * 15 + Math.random() * 10,
+          note: Math.random() < 0.15
+        });
+      }
+    }
+
+    // 光の粒
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.97; p.vy = p.vy * 0.97 + 0.035;  // ふわりと落ちる
+      p.life -= p.decay;
+      if (p.life <= 0){ particles.splice(i, 1); continue; }
+      const a = Math.max(0, p.life);
+      if (p.note){
+        g2d.fillStyle = `hsla(${p.hue},85%,45%,${a.toFixed(3)})`;
+        g2d.font = `${Math.round(10 + p.size * 2.4)}px serif`;
+        g2d.fillText('♪', p.x, p.y);
+      } else {
+        g2d.fillStyle = `hsla(${p.hue},90%,52%,${a.toFixed(3)})`;
+        g2d.beginPath();
+        g2d.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
+        g2d.fill();
+      }
+    }
+    if (particles.length > 400) particles.splice(0, particles.length - 400);
+    requestAnimationFrame(draw);
+  }
+
+  /* ============ ボタン ============ */
+  function armRec(slot){
+    if (isPlayback) return;
+    resetSeq();
+    recSlot = (recSlot === slot) ? null : slot;
+    document.getElementById('recA').classList.toggle('armed', recSlot === 'A');
+    document.getElementById('recB').classList.toggle('armed', recSlot === 'B');
+    if (recSlot) showBanner(`● 演奏${recSlot} をきろく中 ― さいしょからどうぞ`);
+    else banner.classList.remove('show');
+  }
+  document.getElementById('recA').addEventListener('click', () => armRec('A'));
+  document.getElementById('recB').addEventListener('click', () => armRec('B'));
+  document.getElementById('playA').addEventListener('click', () => playback('A'));
+  document.getElementById('playB').addEventListener('click', () => playback('B'));
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    playbackTimers.forEach(clearTimeout); playbackTimers = [];
+    isPlayback = false;
+    banner.classList.remove('show');
+    resetSeq();
+  });
+
+  updateMotif();
+  resize();
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

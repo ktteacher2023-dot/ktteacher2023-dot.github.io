@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>おんぷタワー 🎵 おんぷの ばしょを おぼえよう</title>
+<meta name="description" content="五線譜のどこがド・レ・ミ…？音を聴いて、光る音符をタッチしながら楽しく覚える、音符読みの練習ツール。ト音記号・ヘ音記号対応。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2F7FA; --ink:#233A46; --sub:#6E8A98; --line:#D5E2E8;
+    --do:#FF6B5E; --re:#FF9E43; --mi:#FFC53D; --fa:#3FB98A; --so:#3E9BD0; --la:#7B6FE0; --si:#E066B0;
+    --gold:#FFC53D; --good:#3FB98A; --card:#FFFFFF; --accent:#3E9BD0; --accent-d:#2E7FB0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif;
+    background:var(--bg); color:var(--ink); font-weight:700;
+    display:flex; flex-direction:column; overflow-x:hidden;
+  }
+  button{font-family:inherit;font-weight:800;cursor:pointer;border:none}
+  .hidden{display:none!important}
+
+  /* ===== ヘッダー ===== */
+  header{
+    display:flex; align-items:center; gap:10px; padding:12px 16px 8px;
+    max-width:900px; margin:0 auto; width:100%; flex-wrap:wrap;
+  }
+  .logo{font-size:clamp(20px,4vw,26px);font-weight:900;letter-spacing:.02em}
+  .logo .t{color:var(--accent)}
+  .tagline{font-size:12px;color:var(--sub);flex:1;min-width:120px}
+  .hbtn{
+    font-size:13px;padding:7px 12px;border-radius:10px;background:#fff;
+    border:2px solid var(--line);color:var(--sub);
+  }
+  .hbtn:hover{background:#EAF2F6}
+
+  /* ===== モード選択 ===== */
+  #modeBar{
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+    padding:6px 16px 10px;max-width:900px;margin:0 auto;width:100%;
+  }
+  .seg{display:inline-flex;background:#E7EFF3;border-radius:12px;padding:4px;gap:2px}
+  .seg button{
+    font-size:13px;padding:8px 14px;border-radius:9px;background:transparent;color:var(--sub);
+  }
+  .seg button.on{background:#fff;color:var(--accent);box-shadow:0 2px 6px -2px rgba(0,0,0,.2)}
+
+  /* ===== メイン ===== */
+  main{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px 16px 20px;width:100%}
+  .stage{
+    background:var(--card);border-radius:24px;max-width:820px;width:100%;
+    box-shadow:0 12px 30px -18px rgba(35,58,70,.4);padding:20px 20px 16px;
+  }
+
+  /* 問い */
+  .quiz{text-align:center;min-height:56px;display:flex;flex-direction:column;justify-content:center;margin-bottom:8px}
+  .quiz .q-sub{font-size:13px;color:var(--sub)}
+  .quiz .q-main{font-size:clamp(22px,5vw,30px);font-weight:900}
+  .quiz .q-main b{color:var(--accent)}
+
+  /* 五線譜 */
+  #staffWrap{position:relative;width:100%;overflow:visible}
+  svg#staff{display:block;width:100%;height:auto;touch-action:manipulation}
+  .noteBtn{cursor:pointer}
+  .noteBtn .hit{fill:transparent}
+  .noteBtn:hover .hit{fill:rgba(62,155,208,.10)}
+  .noteBtn:active .hit{fill:rgba(62,155,208,.20)}
+
+  /* こたえボタン(名前あてモード) */
+  #nameChoices{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .choice{
+    font-size:20px;font-weight:900;padding:12px 20px;border-radius:14px;min-width:60px;
+    background:#fff;border:3px solid var(--line);color:var(--ink);transition:transform .1s;
+  }
+  .choice:hover{transform:translateY(-2px)}
+  .choice.ok{background:var(--good);border-color:var(--good);color:#fff}
+  .choice.ng{background:#FFE3E0;border-color:var(--do);color:var(--do)}
+
+  /* フィードバック */
+  #feedback{text-align:center;min-height:34px;margin-top:10px;font-size:20px;font-weight:900}
+  #feedback.good{color:var(--good)}
+  #feedback.bad{color:var(--do)}
+
+  /* レベルバー */
+  .levelbar{display:flex;align-items:center;gap:14px;margin-top:6px;padding:0 4px}
+  .lv-badge{background:var(--accent);color:#fff;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:800;white-space:nowrap}
+  .lv-badge b{font-size:20px;margin-left:2px}
+  .tower-wrap{flex:1;min-width:0}
+  .tower-track{position:relative;height:16px;background:#E7EFF3;border-radius:999px;overflow:hidden}
+  .tower-fill{height:100%;width:0;background:linear-gradient(90deg,var(--mi),var(--fa),var(--so));border-radius:999px;transition:width .4s cubic-bezier(.3,1.4,.5,1)}
+  .tower-goal{position:absolute;top:-3px;right:0;font-size:14px}
+  .tower-label{font-size:11px;color:var(--sub);text-align:center;margin-top:3px;font-weight:700}
+  .lv-name{font-size:12px;color:var(--sub);background:#EAF2F6;padding:6px 10px;border-radius:9px;white-space:nowrap}
+
+  /* レベルアップ演出 */
+  #levelup{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  #levelup .card{background:#fff;border-radius:24px;padding:30px 40px;text-align:center;box-shadow:0 20px 50px -15px rgba(0,0,0,.4);transform:scale(0);opacity:0}
+  #levelup.show .card{animation:luPop 2.2s ease forwards}
+  @keyframes luPop{0%{transform:scale(0) rotate(-8deg);opacity:0}15%{transform:scale(1.1) rotate(3deg);opacity:1}30%{transform:scale(1) rotate(0)}80%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:0}}
+  #levelup .big{font-size:38px;font-weight:900;color:var(--accent)}
+  #levelup .sub{font-size:16px;color:var(--sub);margin-top:6px}
+  #levelup .stars{font-size:30px;margin-top:8px;letter-spacing:4px}
+
+  /* スコアバー */
+  .scorebar{display:flex;gap:16px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .scorebar .item{font-size:14px;color:var(--sub)}
+  .scorebar .item b{font-size:22px;color:var(--ink);font-weight:900}
+  .combo{color:var(--mi)!important}
+
+  /* コントロール */
+  .controls{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .ctl{
+    font-size:15px;padding:12px 20px;border-radius:14px;background:#fff;
+    border:2px solid var(--line);color:var(--sub);
+  }
+  .ctl.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 16px -8px var(--accent)}
+  .ctl:hover{transform:translateY(-2px)}
+
+  /* スパークル */
+  .spark{position:fixed;pointer-events:none;font-size:22px;z-index:60;animation:sparkUp .8s ease-out forwards}
+  @keyframes sparkUp{0%{opacity:1;transform:translateY(0) scale(.6)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
+
+  /* あそびかた */
+  #help{
+    position:fixed;inset:0;background:rgba(35,58,70,.5);z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  #help .box{background:#fff;border-radius:20px;max-width:440px;padding:24px 26px}
+  #help h2{font-size:19px;margin-bottom:10px}
+  #help ol{padding-left:1.3em;font-size:14px;line-height:2;font-weight:700}
+  #help .close{margin-top:14px;width:100%;padding:12px;border-radius:12px;background:var(--accent);color:#fff;font-size:15px}
+
+  /* 先生設定 */
+  #settings{
+    position:fixed;inset:0;background:rgba(35,58,70,.5);z-index:100;
+    display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto;
+  }
+  #settings .box{background:#fff;border-radius:20px;max-width:460px;width:100%;padding:22px 24px}
+  #settings h2{font-size:18px;margin-bottom:6px}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .set-row .label{font-size:14px}
+  .set-row .label small{display:block;color:var(--sub);font-size:11px;font-weight:600}
+  .set-row .seg button{font-size:12px;padding:7px 10px}
+  #settings .close{margin-top:16px;width:100%;padding:12px;border-radius:12px;background:var(--line);color:var(--ink);font-size:15px}
+
+  footer{
+    max-width:900px;margin:0 auto;padding:6px 16px 26px;font-size:11px;color:var(--sub);
+    line-height:1.8;text-align:center;width:100%;
+  }
+  footer a{color:var(--sub)}
+  @media print{ header,#modeBar,.controls,footer{display:none} }
+</style>
+</head>
+<body>
+<!-- ▼ 中心サイト（音楽ツールズ）へ戻る共通ボタン -->
+<a href="https://ktteacher.net/tools/" id="ktHomeBtn" aria-label="音楽ツールズのトップにもどる">
+  <span class="ico" aria-hidden="true">🏠</span><span class="txt">ツール一覧</span>
+</a>
+<style>
+  #ktHomeBtn{
+    position:fixed; top:10px; left:10px; z-index:9999;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px 8px 12px; border-radius:999px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border:2px solid rgba(120,140,150,.25);
+    color:#33474F; font-weight:800; text-decoration:none;
+    font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI",sans-serif;
+    font-size:14px; line-height:1; box-shadow:0 4px 14px -6px rgba(0,0,0,.3);
+    transition:transform .12s, box-shadow .12s;
+  }
+  #ktHomeBtn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.4); }
+  #ktHomeBtn .ico{ font-size:16px; }
+  @media (max-width:520px){
+    #ktHomeBtn .txt{ display:none; }
+    #ktHomeBtn{ padding:9px 11px; }
+  }
+  @media print{ #ktHomeBtn{ display:none !important; } }
+</style>
+<!-- ▲ 共通ボタンここまで -->
+
+
+<header>
+  <div class="logo">おんぷ<span class="t">タワー</span></div>
+  <div class="tagline">おんぷの ばしょを おぼえよう</div>
+  <button class="hbtn" id="helpBtn">❓ あそびかた</button>
+  <button class="hbtn" id="fsBtn">⛶ 全画面</button>
+  <button class="hbtn" id="setBtn">⚙️ せってい</button>
+</header>
+
+<div id="modeBar">
+  <div class="seg" id="modeSeg">
+    <button data-v="find" class="on">🔎 おとをきいて さがす</button>
+    <button data-v="name">🔤 なまえを あてる</button>
+  </div>
+</div>
+
+<main>
+  <div class="stage">
+    <div class="quiz" id="quiz"><div class="q-main">▶ スタートを おしてね</div></div>
+
+    <div id="staffWrap">
+      <svg id="staff" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" aria-label="五線譜"></svg>
+    </div>
+
+    <div id="nameChoices" class="hidden"></div>
+
+    <div id="feedback"></div>
+
+    <div class="levelbar">
+      <div class="lv-badge">Lv<b id="lvN">1</b></div>
+      <div class="tower-wrap">
+        <div class="tower-track"><div class="tower-fill" id="towerFill"></div><div class="tower-goal" id="towerGoal"></div></div>
+        <div class="tower-label"><span id="towerNow">0</span> / <span id="towerGoalN">5</span> つみあげ</div>
+      </div>
+      <div class="lv-name" id="lvName">ドレミファソ</div>
+    </div>
+
+    <div class="scorebar">
+      <div class="item">れんぞく <b id="comboN" class="combo">0</b></div>
+      <div class="item">さいこう <b id="bestN" class="combo">0</b></div>
+      <div class="item">スコア <b id="scoreN">0</b></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctl primary" id="startBtn">▶ スタート</button>
+      <button class="ctl" id="replayBtn">🔊 もういちどきく</button>
+      <button class="ctl" id="resetBtn">↺ さいしょから</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  🔒 音はこの端末の中だけで鳴らしています ｜
+  © けいてぃの音楽ツールズ ｜
+  <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a>
+</footer>
+
+<!-- レベルアップ演出 -->
+<div id="levelup"><div class="card"><div class="big" id="luBig">Lv2</div><div class="sub" id="luSub">レベルアップ！</div><div class="stars" id="luStars">⭐⭐⭐</div></div></div>
+
+<!-- あそびかた -->
+<div id="help" class="hidden">
+  <div class="box">
+    <h2>🎵 あそびかた</h2>
+    <ol>
+      <li><b>おとをきいて さがす</b>：音が鳴るよ。同じ高さの音符を五線からタッチ！</li>
+      <li><b>なまえを あてる</b>：出てきた音符は「ドレミ」のどれ？ボタンでこたえよう。</li>
+      <li>正解するたびに<b>タワーがのびる</b>🗼 いっぱいになったら<b>レベルアップ</b>！</li>
+      <li>Lv1からLv10まで。だんだんヒントが消えて、音がふえていくよ。</li>
+    </ol>
+    <button class="close" id="helpClose">とじる</button>
+  </div>
+</div>
+
+<!-- 先生せってい -->
+<div id="settings" class="hidden">
+  <div class="box">
+    <h2>⚙️ せってい</h2>
+    <p style="font-size:12px;color:var(--sub);margin-bottom:6px">授業に合わせて調整できます</p>
+
+    <div class="set-row">
+      <div class="label">おんぷきごう<small>ト音記号／ヘ音記号</small></div>
+      <div class="seg" id="clefSeg">
+        <button data-v="treble" class="on">ト音</button>
+        <button data-v="bass">ヘ音</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="label">レベル<small>1〜10。とちゅうから始められます</small></div>
+      <select id="levelSelect" style="font-family:inherit;font-weight:800;font-size:15px;padding:8px 12px;border-radius:10px;border:2px solid var(--line);color:var(--ink)"></select>
+    </div>
+
+    <div class="set-row">
+      <div class="label">おとをならす<small>音あて時に音を鳴らす</small></div>
+      <div class="seg" id="soundSeg">
+        <button data-v="on" class="on">ならす</button>
+        <button data-v="off">ならさない</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="label">ドレミの ふりがな<small>音符のそばに名前を出す（覚えはじめ向け）</small></div>
+      <div class="seg" id="labelSeg">
+        <button data-v="off" class="on">ヒントなし</button>
+        <button data-v="on">なまえを出す</button>
+      </div>
+    </div>
+
+    <button class="close" id="setClose">とじる</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+
+/* ============ レベル定義 ============
+   クリアに必要な積み上げ数・出題範囲・ヒントを段階的に。
+   dias は「その回に出す音の候補(dia番号)」、goal は必要正解数。 */
+const LEVELS = [
+  {lv:1,  name:'ドとソ',        dias:[0,4],                 goal:5,  hint:true,  color:true},
+  {lv:2,  name:'ドレミ',        dias:[0,1,2],               goal:6,  hint:true,  color:true},
+  {lv:3,  name:'ドレミファソ',  dias:[0,1,2,3,4],           goal:7,  hint:true,  color:true},
+  {lv:4,  name:'ドレミファソ(ヒントなし)', dias:[0,1,2,3,4], goal:8,  hint:false, color:true},
+  {lv:5,  name:'ラシもいくよ',  dias:[0,1,2,3,4,5,6],       goal:8,  hint:false, color:true},
+  {lv:6,  name:'たかいドまで',  dias:[0,1,2,3,4,5,6,7],     goal:9,  hint:false, color:false},
+  {lv:7,  name:'ひくい音も',    dias:[-2,-1,0,1,2,3,4,5,6,7], goal:9, hint:false, color:false},
+  {lv:8,  name:'せんの外も',    dias:[-3,-2,-1,0,1,2,3,4,5,6,7,8], goal:10, hint:false, color:false},
+  {lv:9,  name:'ひろいせかい',  dias:[-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9], goal:11, hint:false, color:false},
+  {lv:10, name:'おんぷマスター', dias:[-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10], goal:12, hint:false, color:false},
+];
+// ヘ音記号は全体を下にずらす（中央ドC4=dia0基準を、ヘ音の見やすい高さへ）
+const BASS_SHIFT = -7;
+
+/* ============ 状態 ============ */
+const state = {
+  mode:'find',        // find | name
+  clef:'treble',      // treble | bass
+  range:'doremi',     // doremi | octave | wide
+  sound:'on',
+  label:'off',
+  score:0, combo:0, best:0,
+  level:1,            // 現在のレベル(1-10)
+  tower:0,            // 現在のレベルで積んだ数
+  current:null,       // 現在の問題の音
+  locked:false,       // 回答受付中フラグ
+  playing:false,
+};
+try{ const sv=JSON.parse(localStorage.getItem('onputower')||'null');
+  if(sv) Object.assign(state, sv, {score:0,combo:0,best:0,tower:0,current:null,locked:false,playing:false}); }catch(e){}
+if(!state.level||state.level<1) state.level=1;
+function save(){ try{ localStorage.setItem('onputower', JSON.stringify(
+  {clef:state.clef,sound:state.sound,label:state.label,level:state.level})); }catch(e){} }
+
+/* ============ 音名データ ============
+   diatonic step number: C4=0 起点で 白鍵を数えた通し番号
+   midi と かなを対応づける */
+const KANA=['ド','レ','ミ','ファ','ソ','ラ','シ'];
+const KANA_COLOR=['var(--do)','var(--re)','var(--mi)','var(--fa)','var(--so)','var(--la)','var(--si)'];
+function colorOf(dia){ return KANA_COLOR[((dia%7)+7)%7]; }
+const STEP_SEMI=[0,2,4,5,7,9,11];
+function midiOf(dia){ // dia: C4を0とした白鍵通し番号
+  const oct=Math.floor(dia/7), idx=((dia%7)+7)%7;
+  return 60 + oct*12 + STEP_SEMI[idx];
+}
+function kanaOf(dia){ return KANA[((dia%7)+7)%7]; }
+
+/* 五線譜の描画パラメータ */
+const STAFF = {
+  x0:90, x1:660, top:90, gap:22,   // gap = 線と線の間隔（=半音2つ=1ダイア）の半分ではなく1本間隔
+};
+// 五線は5本。ト音記号では下からE4,G4,B4,D5,F5（線）。
+// dia番号→y座標を、記号ごとに定義する。
+// ト音記号：第1線(下)=E4(dia2), 各線・間で dia が1ずつ上がると y が gap/2 上がる
+function yOfDia(dia){
+  // 基準線 dia と そのyを記号ごとに設定
+  let refDia, refY;
+  const step = STAFF.gap/2; // dia1つ分の縦移動
+  if(state.clef==='treble'){ refDia=2; refY=STAFF.top+STAFF.gap*4; } // E4を最下線に
+  else { refDia=-10; refY=STAFF.top+STAFF.gap*4; } // ヘ音記号：G2(dia-10)を最下線に
+  return refY - (dia-refDia)*step;
+}
+
+/* 現在のレベル設定を取得 */
+function curLevel(){ return LEVELS[Math.min(state.level,LEVELS.length)-1]; }
+
+/* 出題範囲（dia番号の配列）をレベルから作る。ヘ音記号のときは下にずらす */
+function poolDias(){
+  const base=curLevel().dias;
+  const shift = state.clef==='bass' ? BASS_SHIFT : 0;
+  return base.map(d=>d+shift);
+}
+
+/* ============ Web Audio ============ */
+let actx=null;
+function audio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; } } return actx; }
+function playMidi(midi, dur=0.7){
+  const c=audio(); if(!c) return;
+  if(c.state==='suspended') c.resume();
+  const f=440*Math.pow(2,(midi-69)/12);
+  const t=c.currentTime;
+  const o=c.createOscillator(), g=c.createGain();
+  o.type='triangle'; o.frequency.value=f;
+  o.connect(g); g.connect(c.destination);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(.28,t+.02);
+  g.gain.setValueAtTime(.28,t+dur*.6);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.start(t); o.stop(t+dur+.05);
+}
+// 正解音・不正解音
+function chime(ok){
+  const c=audio(); if(!c) return;
+  if(ok){ [0,4,7].forEach((s,i)=>setTimeout(()=>playMidi(72+s,.25),i*70)); }
+  else { playMidi(58,.2); }
+}
+
+/* ============ 五線譜を描く ============ */
+function drawStaff(){
+  const svg=$('staff'); svg.innerHTML='';
+  const {x0,x1,top,gap}=STAFF;
+  // 5本線
+  for(let i=0;i<5;i++){
+    const y=top+gap*i;
+    const l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',x0-40); l.setAttribute('x2',x1+20);
+    l.setAttribute('y1',y); l.setAttribute('y2',y);
+    l.setAttribute('stroke','#B9CBD4'); l.setAttribute('stroke-width','2');
+    svg.appendChild(l);
+  }
+  // 記号（簡易）
+  const clef=document.createElementNS(NS,'text');
+  clef.setAttribute('x',x0-34); clef.setAttribute('y',top+gap*4+6);
+  clef.setAttribute('font-size','88'); clef.setAttribute('fill','#233A46');
+  clef.setAttribute('font-family','serif');
+  clef.textContent = state.clef==='treble'? '\uD834\uDD1E' : '\uD834\uDD22'; // 𝄞 / 𝄢
+  svg.appendChild(clef);
+}
+
+/* 音符を1つ描く（加線つき） */
+function drawNote(dia, opt={}){
+  const svg=$('staff');
+  const {gap}=STAFF;
+  const cx = opt.cx || 380;
+  const cy = yOfDia(dia);
+  const g=document.createElementNS(NS,'g');
+  g.setAttribute('class','noteBtn');
+  // 指で押しやすい透明の当たり判定（符頭を中心に大きめ）
+  const hit=document.createElementNS(NS,'circle');
+  hit.setAttribute('class','hit');
+  hit.setAttribute('cx',cx); hit.setAttribute('cy',cy); hit.setAttribute('r',24);
+  g.appendChild(hit);
+
+  // 加線（五線の外）
+  const topLineY=STAFF.top, botLineY=STAFF.top+gap*4;
+  const step=gap/2;
+  // 上の加線
+  for(let y=botLineY+gap; y<=cy+0.1; y+=gap){ /* 下方向 */
+    if(y>botLineY){ addLedger(g,cx,y); }
+  }
+  for(let y=topLineY-gap; y>=cy-0.1; y-=gap){ /* 上方向 */
+    if(y<topLineY){ addLedger(g,cx,y); }
+  }
+  // 加線がまたぐ位置（間にある音符）にも、直近の加線を引く必要がある場合の補正
+  // → 上記ループで線位置(gap刻み)はカバー。間の音符は最寄り線までを引く
+  fixLedgerForSpace(g,cx,cy,topLineY,botLineY,gap);
+
+  // 符頭
+  const head=document.createElementNS(NS,'ellipse');
+  head.setAttribute('class','head');
+  head.setAttribute('cx',cx); head.setAttribute('cy',cy);
+  head.setAttribute('rx',13); head.setAttribute('ry',10);
+  head.setAttribute('transform',`rotate(-18 ${cx} ${cy})`);
+  head.setAttribute('fill', opt.color||'#233A46');
+  g.appendChild(head);
+  // 符幹
+  const stem=document.createElementNS(NS,'line');
+  const up = cy > STAFF.top+gap*2;
+  if(up){ stem.setAttribute('x1',cx+12); stem.setAttribute('x2',cx+12); stem.setAttribute('y1',cy-2); stem.setAttribute('y2',cy-58); }
+  else { stem.setAttribute('x1',cx-12); stem.setAttribute('x2',cx-12); stem.setAttribute('y1',cy+2); stem.setAttribute('y2',cy+58); }
+  stem.setAttribute('stroke',opt.color||'#233A46'); stem.setAttribute('stroke-width','4'); stem.setAttribute('stroke-linecap','round');
+  g.appendChild(stem);
+
+  if(opt.showName){
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',cx); t.setAttribute('y',cy+ (up? 34:  -30));
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','18');
+    t.setAttribute('font-weight','800'); t.setAttribute('fill',opt.color||'#233A46');
+    t.textContent=kanaOf(dia);
+    g.appendChild(t);
+  }
+  svg.appendChild(g);
+  return {g, head, cx, cy};
+}
+function addLedger(g,cx,y){
+  const l=document.createElementNS(NS,'line');
+  l.setAttribute('x1',cx-20); l.setAttribute('x2',cx+20);
+  l.setAttribute('y1',y); l.setAttribute('y2',y);
+  l.setAttribute('stroke','#B9CBD4'); l.setAttribute('stroke-width','2');
+  g.insertBefore(l, g.firstChild);
+}
+function fixLedgerForSpace(g,cx,cy,topLineY,botLineY,gap){
+  // 音符が「間」にあって五線の外に出ている場合、最寄りの加線位置を引く
+  const step=gap/2;
+  if(cy > botLineY+step*0.5){
+    for(let y=botLineY+gap; y<cy; y+=gap) addLedger(g,cx,y);
+  }
+  if(cy < topLineY-step*0.5){
+    for(let y=topLineY-gap; y>cy; y-=gap) addLedger(g,cx,y);
+  }
+}
+
+/* ============ 出題 ============ */
+function pickNew(){
+  const pool=poolDias();
+  let d; let guard=0;
+  do{ d=pool[Math.floor(Math.random()*pool.length)]; guard++; }
+  while(state.current!==null && d===state.current && pool.length>1 && guard<20);
+  state.current=d;
+  state.locked=false;
+  render();
+  // 音を鳴らす（さがすモードは必ず／あてるモードは設定次第）
+  if(state.mode==='find' || state.sound==='on'){
+    setTimeout(()=>playMidi(midiOf(d)), 250);
+  }
+}
+
+/* 画面を状態に合わせて描く */
+function render(){
+  drawStaff();
+  $('feedback').textContent=''; $('feedback').className='';
+  $('nameChoices').classList.toggle('hidden', state.mode!=='name');
+
+  if(state.current===null){ return; }
+
+  if(state.mode==='find'){
+    // さがすモード：候補の音符を五線上に全部並べ、タッチで答える
+    $('quiz').innerHTML='<div class="q-sub">きこえた おとと おなじ たかさは どれ？</div><div class="q-main">🔎 <b>音をきいて</b>、おなじ たかさの おんぷを さがそう</div>';
+    const pool=poolDias();
+    const n=pool.length;
+    // 音符は一定間隔で並べ、全体を五線の中央に配置する（少数でも端に散らばらない）
+    const GAP_X=Math.min(84, (STAFF.x1-STAFF.x0-60)/Math.max(n-1,1)); // 隣り合う音符の間隔(上限84px)
+    const totalW=GAP_X*(n-1);
+    const startX=(STAFF.x0+STAFF.x1)/2 - totalW/2;                     // 中央そろえ
+    pool.forEach((d,i)=>{
+      const cx = startX + GAP_X*i;
+      const lv=curLevel();
+      const col = lv.color ? colorOf(d) : '#5B7A88';
+      const draw=drawNote(d, {cx, showName: (state.label==='on'||lv.hint), color:col});
+      draw.g.addEventListener('click', ()=>answerFind(d, draw));
+      draw.g.addEventListener('pointerdown', ()=>{ draw.head.setAttribute('stroke','#3E9BD0'); draw.head.setAttribute('stroke-width','2'); });
+      draw.g.style.cursor='pointer';
+    });
+  } else {
+    // なまえをあてるモード：真ん中に1つ音符、下に選択肢
+    $('quiz').innerHTML='<div class="q-sub">この おんぷの なまえは？</div><div class="q-main">🔤 ドレミで こたえてね</div>';
+    const lv=curLevel();
+    drawNote(state.current, {cx:380, showName:false, color: lv.color? colorOf(state.current):'#233A46'});
+    buildNameChoices();
+  }
+}
+
+function buildNameChoices(){
+  const box=$('nameChoices'); box.innerHTML='';
+  // 選択肢：正解＋近い音を混ぜて最大5つ
+  const correct=kanaOf(state.current);
+  let opts;
+  // このレベルに登場する音名の種類を集める
+  const kinds=[...new Set(curLevel().dias.map(d=>((d%7)+7)%7))];
+  if(kinds.length<=5){
+    // 種類が少なければ全部を選択肢に（ドレミ順）
+    opts = kinds.sort((a,b)=>a-b).map(i=>KANA[i]);
+    if(!opts.includes(correct)) opts.push(correct);
+  } else {
+    // 種類が多いレベルは正解＋近傍から5つ
+    const set=new Set([correct]);
+    let off=1;
+    while(set.size<5 && off<7){ set.add(kanaOf(state.current+off)); set.add(kanaOf(state.current-off)); off++; }
+    opts=[...set].slice(0,5);
+    opts.sort(()=>Math.random()-0.5);
+  }
+  opts.forEach(k=>{
+    const b=document.createElement('button');
+    b.className='choice'; b.textContent=k;
+    b.addEventListener('click',()=>answerName(k,b));
+    box.appendChild(b);
+  });
+}
+
+/* ============ 回答判定 ============ */
+function answerFind(dia, draw){
+  if(state.locked) return;
+  const ok = (dia===state.current);
+  if(ok){
+    state.locked=true;
+    draw.head.setAttribute('fill','var(--good)');
+    handleResult(true, draw.cx, draw.cy);
+  } else {
+    // 間違い：その場を赤く点滅、減点なしで再挑戦OK
+    const oldFill=draw.head.getAttribute('fill');
+    draw.head.setAttribute('fill','var(--do)');
+    setTimeout(()=>draw.head.setAttribute('fill',oldFill),350);
+    state.combo=0; updateScore();
+    flash(false,'もういちど きいてみよう');
+  }
+}
+function answerName(kana, btn){
+  if(state.locked) return;
+  state.locked=true;
+  const ok = (kana===kanaOf(state.current));
+  if(ok){ btn.classList.add('ok'); }
+  else {
+    btn.classList.add('ng');
+    // 正解のボタンを光らせる
+    [...$('nameChoices').children].forEach(b=>{ if(b.textContent===kanaOf(state.current)) b.classList.add('ok'); });
+  }
+  const r=btn.getBoundingClientRect();
+  handleResult(ok, r.left+r.width/2, r.top, true);
+}
+
+function handleResult(ok, x, y, isScreenCoord){
+  if(ok){
+    // コンボでスコア加点（連続ボーナス）
+    state.combo++; state.best=Math.max(state.best,state.combo);
+    state.score += 10 + Math.min(state.combo,10)*2;
+    state.tower++;
+    chime(true);
+    burst(x,y,isScreenCoord);
+    updateScore(); updateLevel();
+    // レベルクリア判定
+    if(state.tower >= curLevel().goal){
+      flash(true, '🏆 タワー かんせい！');
+      setTimeout(levelUp, 800);
+      return;
+    }
+    flash(true, pickPraise());
+    setTimeout(pickNew, 850);
+  } else {
+    state.combo=0; chime(false);
+    flash(false, 'おしい！ こたえは「'+kanaOf(state.current)+'」');
+    updateScore();
+    setTimeout(pickNew, 1500);
+  }
+}
+
+/* レベルアップ */
+function levelUp(){
+  if(state.level < LEVELS.length){
+    state.level++;
+    save();
+    const lu=$('levelup');
+    $('luBig').textContent='Lv'+state.level;
+    $('luSub').textContent=curLevel().name+' に ちょうせん！';
+    $('luStars').textContent='⭐⭐⭐';
+    lu.classList.add('show');
+    // 画面いっぱいにスパークル
+    for(let i=0;i<20;i++){ setTimeout(()=>{
+      const s=document.createElement('div'); s.className='spark';
+      s.textContent=['✨','⭐','🌟','💫','🎉'][i%5];
+      s.style.left=(Math.random()*window.innerWidth)+'px';
+      s.style.top=(window.innerHeight*0.3+Math.random()*window.innerHeight*0.4)+'px';
+      document.body.appendChild(s); setTimeout(()=>s.remove(),820);
+    }, i*60); }
+    if(audio()){ [0,4,7,12].forEach((n,i)=>setTimeout(()=>playMidi(72+n,.3),i*120)); }
+    setTimeout(()=>{ lu.classList.remove('show'); state.tower=0; updateLevel(); pickNew(); }, 2300);
+  }else{
+    // 最終レベルクリア：おめでとう→最初から高難度で継続
+    flash(true,'🎊 おんぷマスター たっせい！すごい！');
+    const lu=$('levelup');
+    $('luBig').textContent='🏆 CLEAR';
+    $('luSub').textContent='ぜんぶ クリア！おめでとう！';
+    $('luStars').textContent='👑';
+    lu.classList.add('show');
+    if(audio()){ [0,4,7,12,16,19].forEach((n,i)=>setTimeout(()=>playMidi(72+n,.3),i*100)); }
+    setTimeout(()=>{ lu.classList.remove('show'); state.tower=0; updateLevel(); pickNew(); }, 2600);
+  }
+}
+const PRAISE=['ピンポン！✨','せいかい！🎉','すごい！','ばっちり！','その ちょうし！','よく きけたね！'];
+function pickPraise(){ return PRAISE[Math.floor(Math.random()*PRAISE.length)]; }
+
+function flash(ok,msg){
+  const f=$('feedback'); f.textContent=msg; f.className=ok?'good':'bad';
+}
+function updateScore(){
+  $('scoreN').textContent=state.score;
+  $('comboN').textContent=state.combo;
+  $('bestN').textContent=state.best;
+}
+function updateLevel(){
+  const lv=curLevel();
+  $('lvN').textContent=state.level;
+  $('lvName').textContent=lv.name;
+  $('towerNow').textContent=state.tower;
+  $('towerGoalN').textContent=lv.goal;
+  const pct=Math.min(100, state.tower/lv.goal*100);
+  $('towerFill').style.width=pct+'%';
+  $('towerGoal').textContent = pct>=100? '🏆':'🎯';
+}
+
+/* スパークル */
+function burst(x,y,isScreen){
+  let sx=x, sy=y;
+  if(!isScreen){ // SVG座標→画面座標
+    try{
+      const svg=$('staff'); const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
+      const m=svg.getScreenCTM();
+      if(m){ const sc=pt.matrixTransform(m); sx=sc.x; sy=sc.y; }
+      else { const r=svg.getBoundingClientRect(); sx=r.left+r.width/2; sy=r.top+r.height/2; }
+    }catch(e){ const r=$('staff').getBoundingClientRect(); sx=r.left+r.width/2; sy=r.top+r.height/2; }
+  }
+  const marks=['✨','⭐','🌟','💫'];
+  for(let i=0;i<6;i++){
+    const s=document.createElement('div');
+    s.className='spark'; s.textContent=marks[i%marks.length];
+    s.style.left=(sx-10+(Math.random()*40-20))+'px';
+    s.style.top=(sy-10)+'px';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),820);
+  }
+}
+
+/* ============ セグメント操作 ============ */
+function seg(id, key, after){
+  document.querySelectorAll('#'+id+' button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      state[key]=b.dataset.v;
+      save(); if(after) after();
+    });
+  });
+}
+seg('modeSeg','mode',()=>{ if(state.current!==null){ state.locked=false; render(); } });
+seg('clefSeg','clef',()=>{ if(state.current!==null) pickNew(); });
+// レベル選択ドロップダウンを構築
+(function(){
+  const sel=$('levelSelect');
+  LEVELS.forEach(l=>{ const o=document.createElement('option'); o.value=l.lv; o.textContent='Lv'+l.lv+'　'+l.name; sel.appendChild(o); });
+  sel.value=state.level;
+  sel.addEventListener('change',()=>{ state.level=Number(sel.value); state.tower=0; save(); updateLevel(); if(state.playing) pickNew(); });
+})();
+seg('soundSeg','sound');
+seg('labelSeg','label',()=>{ if(state.current!==null && state.mode==='find') render(); });
+
+// 起動時：保存済み設定をセグUIに反映
+function syncSeg(){
+  const map={modeSeg:'mode',clefSeg:'clef',soundSeg:'sound',labelSeg:'label'};
+  for(const [id,key] of Object.entries(map)){
+    document.querySelectorAll('#'+id+' button').forEach(b=>{
+      b.classList.toggle('on', b.dataset.v===state[key]);
+    });
+  }
+}
+
+/* ============ ボタン ============ */
+$('startBtn').addEventListener('click',()=>{ audio(); state.playing=true; pickNew(); });
+$('replayBtn').addEventListener('click',()=>{ if(state.current!==null) playMidi(midiOf(state.current)); });
+$('resetBtn').addEventListener('click',()=>{ state.score=0;state.combo=0;state.best=0;state.tower=0;updateScore();updateLevel(); pickNew(); });
+$('helpBtn').addEventListener('click',()=>$('help').classList.remove('hidden'));
+$('helpClose').addEventListener('click',()=>$('help').classList.add('hidden'));
+$('setBtn').addEventListener('click',()=>{ $('levelSelect').value=state.level; $('settings').classList.remove('hidden'); });
+$('setClose').addEventListener('click',()=>$('settings').classList.add('hidden'));
+$('fsBtn').addEventListener('click',()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+});
+document.addEventListener('fullscreenchange',()=>{ $('fsBtn').textContent=document.fullscreenElement?'⛶ もどす':'⛶ 全画面'; });
+
+/* 初期表示 */
+syncSeg(); drawStaff(); updateScore(); updateLevel();
+</script>
+</body>
+</html>
