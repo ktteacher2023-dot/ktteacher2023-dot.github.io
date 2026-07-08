@@ -497,9 +497,12 @@ function render(){
     $('quiz').innerHTML='<div class="q-sub">きこえた おとと おなじ たかさは どれ？</div><div class="q-main">🔎 <b>音をきいて</b>、おなじ たかさの おんぷを さがそう</div>';
     const pool=poolDias();
     const n=pool.length;
-    const spanX = STAFF.x1 - STAFF.x0 - 20;
+    // 音符は一定間隔で並べ、全体を五線の中央に配置する（少数でも端に散らばらない）
+    const GAP_X=Math.min(84, (STAFF.x1-STAFF.x0-60)/Math.max(n-1,1)); // 隣り合う音符の間隔(上限84px)
+    const totalW=GAP_X*(n-1);
+    const startX=(STAFF.x0+STAFF.x1)/2 - totalW/2;                     // 中央そろえ
     pool.forEach((d,i)=>{
-      const cx = STAFF.x0 + 30 + (n>1? spanX*i/(n-1) : spanX/2);
+      const cx = startX + GAP_X*i;
       const lv=curLevel();
       const col = lv.color ? colorOf(d) : '#5B7A88';
       const draw=drawNote(d, {cx, showName: (state.label==='on'||lv.hint), color:col});

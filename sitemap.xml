@@ -41,6 +41,11 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://ktteacher.net/tools/onputower/</loc>
+    <lastmod>2026-07-08</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://ktteacher.net/tools/unmei/</loc>
     <lastmod>2026-07-05</lastmod>
     <priority>0.8</priority>
