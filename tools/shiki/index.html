@@ -189,43 +189,92 @@ function parseMusicXML(text, fallbackName){
   const part = doc.querySelector('part');
   if(!part) throw new Error('no part');
   const STEP = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
-  let divisions=1, cursor=0, mainVoice=null;
-  const notes=[];
-  part.querySelectorAll(':scope > measure').forEach(meas=>{
+
+  // --- 小節ごとに音符を集めつつ、リピート/1番2番かっこの情報も読む ---
+  const measEls = [...part.querySelectorAll(':scope > measure')];
+  const measData = [];   // 各小節: {notes:[{tRel,d,m}], len, fwd,bwd,ending}
+  let divisions = 1;
+  for(const meas of measEls){
+    let cursor = 0, mainVoice = null;
+    const mnotes = [];
+    let fwd=false, bwd=0, endStart=null, endStop=false, maxLen=0;
     for(const el of meas.children){
       const tag = el.tagName;
-      if(tag==='attributes'){
+      if(tag === 'attributes'){
         const d = el.querySelector('divisions');
-        if(d) divisions = parseInt(d.textContent)||divisions;
-      } else if(tag==='backup'){
-        cursor -= (parseInt(el.querySelector('duration')?.textContent)||0)/divisions;
-      } else if(tag==='forward'){
-        cursor += (parseInt(el.querySelector('duration')?.textContent)||0)/divisions;
-      } else if(tag==='note'){
+        if(d) divisions = parseInt(d.textContent) || divisions;
+      }
+      else if(tag === 'backup'){ cursor -= (parseInt(el.querySelector('duration')?.textContent)||0)/divisions; }
+      else if(tag === 'forward'){ cursor += (parseInt(el.querySelector('duration')?.textContent)||0)/divisions; }
+      else if(tag === 'barline'){
+        const rep = el.querySelector('repeat');
+        if(rep){
+          if(rep.getAttribute('direction')==='forward') fwd=true;
+          if(rep.getAttribute('direction')==='backward') bwd=parseInt(rep.getAttribute('times'))||2;
+        }
+        const end = el.querySelector('ending');
+        if(end){
+          const ty=end.getAttribute('type');
+          if(ty==='start') endStart=(end.getAttribute('number')||'').split(/[,\s]+/).map(Number).filter(x=>x>0);
+          else endStop=true;
+        }
+      }
+      else if(tag === 'note'){
         if(el.querySelector('grace')) continue;
         const dur = (parseInt(el.querySelector('duration')?.textContent)||0)/divisions;
         const isChord = !!el.querySelector('chord');
         const voice = el.querySelector('voice')?.textContent || '1';
-        if(mainVoice===null) mainVoice = voice;
+        if(mainVoice === null) mainVoice = voice;
         const pitch = el.querySelector('pitch');
-        if(voice===mainVoice && !isChord && pitch){
-          const step = pitch.querySelector('step')?.textContent||'C';
-          const oct = parseInt(pitch.querySelector('octave')?.textContent)||4;
-          const alt = parseInt(pitch.querySelector('alter')?.textContent)||0;
-          const midi = (oct+1)*12 + (STEP[step]??0) + alt;
-          const tieStop = [...el.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='stop');
-          const prev = notes[notes.length-1];
-          if(tieStop && prev && prev.m===midi && Math.abs(prev.t+prev.d-cursor)<1e-6){
+        if(voice === mainVoice && !isChord && pitch){
+          const step = pitch.querySelector('step')?.textContent || 'C';
+          const oct  = parseInt(pitch.querySelector('octave')?.textContent) || 4;
+          const alt  = parseInt(pitch.querySelector('alter')?.textContent) || 0;
+          const midi = (oct+1)*12 + (STEP[step] ?? 0) + alt;
+          const tieStop = [...el.querySelectorAll('tie')].some(t => t.getAttribute('type')==='stop');
+          const prev = mnotes[mnotes.length-1];
+          if(tieStop && prev && prev.m===midi && Math.abs(prev.tRel + prev.d - cursor) < 1e-6){
             prev.d += dur;
           } else {
-            notes.push({t:cursor, d:dur, m:midi});
+            mnotes.push({tRel: cursor, d: dur, m: midi});
           }
         }
         if(!isChord) cursor += dur;
       }
+      if(cursor > maxLen) maxLen = cursor;
     }
-  });
-  notes.sort((a,b)=>a.t-b.t);
+    measData.push({notes:mnotes, len:maxLen, fwd,bwd,endStart,endStop});
+  }
+  // ending(かっこ)は start〜stop の間の小節に適用
+  let activeEnding=null;
+  for(const md of measData){ if(md.endStart) activeEnding=md.endStart; md.ending=activeEnding; if(md.endStop) activeEnding=null; }
+
+  // --- リピート展開：演奏順の小節インデックス列を作る ---
+  function expandOrder(){
+    const order=[]; let i=0, start=0, pass=1, guard=0;
+    while(i<measData.length && guard++<5000){
+      const md=measData[i];
+      if(md.fwd) start=i;
+      if(md.ending && !md.ending.includes(pass)){ i++; continue; }
+      order.push(i);
+      if(md.bwd && pass<md.bwd){ pass++; i=start; continue; }
+      if(md.bwd){ pass=1; start=i+1; }
+      else if(md.ending){ const nx=measData[i+1]; if(!nx || !nx.ending){ pass=1; start=i+1; } }
+      i++;
+    }
+    return order;
+  }
+  const order = expandOrder();
+
+  // --- 展開順に音符を並べ、各小節の長さぶん時間をずらす ---
+  const notes = [];
+  let tBase = 0;
+  for(const idx of order){
+    const md = measData[idx];
+    for(const n of md.notes) notes.push({t: tBase + n.tRel, d: n.d, m: n.m});
+    tBase += (md.len>0 ? md.len : beatsPerBar);
+  }
+    notes.sort((a,b)=>a.t-b.t);
   return { name, bpm, beatsPerBar, notes };
 }
 
