@@ -235,6 +235,7 @@ let viewOffset = 0;       // 停止中の表示位置(秒)・スワイプで移�
 let lastResult = null;
 let micStream = null, analyser = null, micBuf = null;
 let scheduledNodes = [];
+let masterGain = null;   // お手本全体の音量（再生中でも即時反映できるように1か所に集約）
 
 const $ = id => document.getElementById(id);
 /* 端末内記憶(ブラウザのローカル保存。使えない環境では静かに無効化) */
@@ -251,9 +252,16 @@ const NAMES_FLAT = ["ド","レ♭","レ","ミ♭","ミ","ファ","ソ♭","ソ",
 const STEP_KANA = {C:"ド",D:"レ",E:"ミ",F:"ファ",G:"ソ",A:"ラ",B:"シ"};
 
 /* ====== ユーティリティ ====== */
-function getAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==="suspended") audioCtx.resume(); return audioCtx; }
+function getAudio(){
+  if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+  if(!masterGain){ masterGain=audioCtx.createGain(); masterGain.gain.value=guideVol(); masterGain.connect(audioCtx.destination); }
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  return audioCtx;
+}
+function applyGuideVol(){ if(masterGain && audioCtx){ masterGain.gain.setTargetAtTime(guideVol(), audioCtx.currentTime, 0.02); } }
 function tempoScale(){ return Number($("tempoSlider").value)/100; }
 function transpose(){ return Number($("transVal").textContent); }
+function guideVol(){ return Number($("volSlider").value)/100; }
 function beatSec(){ return 60/(song.bpm*tempoScale()); }
 function noteStartSec(n){ return n.startBeat*beatSec(); }
 function noteEndSec(n){ return (n.startBeat+n.beats)*beatSec(); }
@@ -884,13 +892,12 @@ function roundRect(x,y,w,h,r){
 let sessFrom=0, sessTo=0;  // 今回のセッションの区間(絶対秒)
 let schedFloor=0;          // 再開時:この絶対秒より前の音は鳴らさない
 let pausedAt=null, prevMode=null;
-function guideVol(){ return Number($("volSlider").value)/100; }
 function scheduleNotes(notes, when, gainVal, type){
   const ac=getAudio(), tr=transpose();
   // 1本の発振器の音程と音量を予約で切り替える方式(部品数を最小化して音切れを防ぐ)
   const o=ac.createOscillator(); o.type=type;
   const g=ac.createGain(); g.gain.value=0;
-  o.connect(g); g.connect(ac.destination);
+  o.connect(g); g.connect(masterGain||ac.destination);
   let any=false, firstT=Infinity, lastT=0;
   for(const n of notes){
     const ns=noteStartSec(n);
@@ -910,14 +917,11 @@ function scheduleNotes(notes, when, gainVal, type){
   scheduledNodes.push(o,g);
 }
 function scheduleMelody(when){
-  const v=guideVol();
   const singing=isSinging();
-  // 自分のパート
-  scheduleNotes(song.notes, when, singing?0.4*v:0.5*v, singing?"sine":"triangle");
-  // ほかのパート(チェックしたものだけ、自分のパートよりやや控えめ)
+  scheduleNotes(song.notes, when, singing?0.4:0.5, singing?"sine":"triangle");
   if(song.otherParts){
     for(const q of song.otherParts){
-      if(q.on) scheduleNotes(q.notes, when, (singing?0.4*v:0.5*v)*0.65, "sine");
+      if(q.on) scheduleNotes(q.notes, when, (singing?0.4:0.5)*0.65, "sine");
     }
   }
 }
@@ -925,11 +929,11 @@ function scheduleMetronome(when){
   if(!$("metroChk").checked) return;
   const ac=getAudio();
   // カウントイン音よりわずかに控えめ(漏れ測定の基準内に収める)
-  const vol=Math.max(0.08, 0.32*guideVol());
+  const vol=0.32;
   const ms=song.measStarts, total=song.totalBeats;
   const o=ac.createOscillator(); o.type="square";
   const g=ac.createGain(); g.gain.value=0;
-  o.connect(g); g.connect(ac.destination);
+  o.connect(g); g.connect(masterGain||ac.destination);
   let any=false, firstT=Infinity, lastT=0;
   for(let i=0;i<ms.length;i++){
     const mStart=ms[i]*beatSec();
@@ -957,14 +961,14 @@ function scheduleMetronome(when){
 function scheduleCountIn(when,beats){
   const ac=getAudio();
   // お手本音量と連動:カウント音の漏れを測ってしきい値の基準にするため
-  const cv2=Math.max(0.1, 0.4*guideVol());
+  const cv2=0.4;
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
     const t0=when+i*beatSec();
     g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
-    o.connect(g); g.connect(ac.destination);
+    o.connect(g); g.connect(masterGain||ac.destination);
     o.start(t0); o.stop(t0+0.12);
     scheduledNodes.push(o);
   }
@@ -1264,10 +1268,10 @@ function buildPhrases(){
   return phrases;
 }
 function schedulePhrase(pf,pt,when){
-  const ac=getAudio(), tr=transpose(), v=guideVol();
+  const ac=getAudio(), tr=transpose();
   const o=ac.createOscillator(); o.type="triangle";
   const g=ac.createGain(); g.gain.value=0;
-  o.connect(g); g.connect(ac.destination);
+  o.connect(g); g.connect(masterGain||ac.destination);
   let any=false, lastT=0;
   for(const n of song.notes){
     const ns=noteStartSec(n);
@@ -1275,8 +1279,8 @@ function schedulePhrase(pf,pt,when){
     const t0=when+(ns-pf), t1=when+(Math.min(noteEndSec(n),pt)-pf);
     o.frequency.setValueAtTime(midiToFreq(n.midi+tr), Math.max(when,t0-0.003));
     g.gain.setValueAtTime(0,t0);
-    g.gain.linearRampToValueAtTime(0.5*v,t0+0.02);
-    g.gain.setValueAtTime(0.5*v,Math.max(t0+0.02,t1-0.06));
+    g.gain.linearRampToValueAtTime(0.5,t0+0.02);
+    g.gain.setValueAtTime(0.5,Math.max(t0+0.02,t1-0.06));
     g.gain.linearRampToValueAtTime(0,t1);
     any=true; lastT=Math.max(lastT,t1);
   }
@@ -1709,14 +1713,29 @@ function showResult(){
 }
 
 /* ====== コントロール ====== */
-$("tempoSlider").addEventListener("input",()=>{ $("tempoVal").textContent=$("tempoSlider").value+"%"; if(mode==="idle"&&song) draw(currentT()); });
-$("volSlider").addEventListener("input",()=>{ $("volVal").textContent=$("volSlider").value+"%"; });
+$("tempoSlider").addEventListener("input",()=>{ $("tempoVal").textContent=$("tempoSlider").value+"%"; if(mode==="idle"&&song) draw(currentT()); else if(mode==="play"||mode==="echo") rescheduleFromNow(); });
+$("volSlider").addEventListener("input",()=>{ $("volVal").textContent=$("volSlider").value+"%"; applyGuideVol(); });
 $("transUp").addEventListener("click",()=>{ bump(1); });
 $("transDown").addEventListener("click",()=>{ bump(-1); });
 function bump(d){
   const v=Math.max(-7,Math.min(7,transpose()+d));
   $("transVal").textContent=v;
-  if(song&&mode==="idle") draw(currentT());
+  if(!song) return;
+  if(mode==="idle"){ draw(currentT()); return; }
+  if(mode==="play"||mode==="echo"){ rescheduleFromNow(); }
+}
+
+function rescheduleFromNow(){
+  if(mode!=="play" && mode!=="echo") return;
+  const ac=getAudio();
+  const elapsed = ac.currentTime - startAt;
+  if(elapsed < 0) return;
+  const curAbs = sessFrom + elapsed;
+  stopScheduled();
+  startAt = ac.currentTime - elapsed;
+  schedFloor = curAbs + 0.03;
+  scheduleMelody(startAt);
+  scheduleMetronome(startAt);
 }
 $("nameChk").addEventListener("change",()=>{ if(song&&mode==="idle") draw(currentT()); });
 $("lyricChk").addEventListener("change",()=>{ if(song&&mode==="idle") draw(currentT()); });
