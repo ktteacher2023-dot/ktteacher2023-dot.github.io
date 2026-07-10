@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>ゆびミエ アルト（無料版）🎵 アルトリコーダーゆびれんしゅう</title>
 <link rel="canonical" href="https://ktteacher.net/tools/yubimie/">
-<meta name="description" content="アルトリコーダー用。リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
+<meta name="description" content="アルトリコーダー用。リコーダーの指づかいが、音符に合わせて光って見える。バロック式（学校のアルトリコーダーはバロック式です）。内蔵3曲で今すぐ練習できる無料版。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="ゆびミエ｜リコーダーの指づかいが見える練習アプリ">
-<meta property="og:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
+<meta property="og:description" content="リコーダーの指づかいが、音符に合わせて光って見える。バロック式（学校のアルトリコーダーはバロック式です）。内蔵3曲で今すぐ練習できる無料版。">
 <meta property="og:url" content="https://ktteacher.net/tools/yubimie/">
 <meta property="og:image" content="https://ktteacher.net/ogp.png">
 <meta property="og:site_name" content="けいてぃの音楽ツールズ">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ゆびミエ｜リコーダーの指づかいが見える練習アプリ">
-<meta name="twitter:description" content="リコーダーの指づかいが、音符に合わせて光って見える。ジャーマン式・バロック式対応、内蔵3曲で今すぐ練習できる無料版。">
+<meta name="twitter:description" content="リコーダーの指づかいが、音符に合わせて光って見える。バロック式（学校のアルトリコーダーはバロック式です）。内蔵3曲で今すぐ練習できる無料版。">
 <meta name="twitter:image" content="https://ktteacher.net/ogp.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;900&display=swap" rel="stylesheet">
@@ -324,13 +324,6 @@ input[type=range]{accent-color:var(--accent);width:130px}
 <dialog id="settingsDialog">
   <h2>⚙️ せってい</h2>
   <div class="setting-row">
-    <span>運指のしゅるい</span>
-    <div class="seg" id="systemSeg">
-      <button data-v="german" class="on">ジャーマン式</button>
-      <button data-v="baroque">バロック式</button>
-    </div>
-  </div>
-  <div class="setting-row">
     <span>ずのむき</span>
     <div class="seg" id="flipSeg">
       <button data-v="up" class="on">ふきくちが上</button>
@@ -397,11 +390,11 @@ const FINGERINGS = {
     63:{t:2,h:[2,2,2,2,2,1,0]},   // レ# D#4
     64:{t:2,h:[2,2,2,2,2,0,0]},   // ミ E4
     65:{t:2,h:[2,2,2,2,0,0,0]},   // ファ F4（ジャーマン）
-    66:{t:2,h:[2,2,2,0,2,2,0]},   // ファ# F#4
+    66:{t:2,h:[2,2,2,0,2,2,2]},   // ファ# F#4（ジャーマン：右手小指も）
     67:{t:2,h:[2,2,2,0,0,0,0]},   // ソ G4
     68:{t:2,h:[2,2,0,2,2,2,0]},   // ソ# G#4
     69:{t:2,h:[2,2,0,0,0,0,0]},   // ラ A4
-    70:{t:2,h:[2,0,2,2,0,0,0]},   // シ♭ B♭4
+    70:{t:2,h:[2,0,2,2,0,2,2]},   // シ♭ B♭4（ジャーマン）
     71:{t:2,h:[2,0,0,0,0,0,0]},   // シ B4
     72:{t:2,h:[0,2,0,0,0,0,0]},   // 高いド C5
     73:{t:0,h:[2,2,0,0,0,0,0]},   // 高いド# C#5
@@ -409,13 +402,16 @@ const FINGERINGS = {
     75:{t:0,h:[2,2,2,2,2,2,0]},   // 高いレ# D#5
     76:{t:1,h:[2,2,2,2,2,0,0]},   // 高いミ E5
     77:{t:1,h:[2,2,2,2,0,0,0]},   // 高いファ F5（ジャーマン）
-    78:{t:1,h:[2,2,2,0,2,0,0]},   // 高いファ# F#5
+    78:{t:1,h:[2,2,2,0,2,2,2]},   // 高いファ# F#5（ジャーマン）
     79:{t:1,h:[2,2,2,0,0,0,0]},   // 高いソ G5
     81:{t:1,h:[2,2,0,0,0,0,0]}    // 高いラ A5
   },
   baroque: {
     65:{t:2,h:[2,2,2,2,0,2,2]},   // ファ F4（バロック：フォーク運指）
-    77:{t:1,h:[2,2,2,2,0,2,0]}    // 高いファ F5（バロック）
+    66:{t:2,h:[2,2,2,0,2,2,0]},   // ファ# F#4（バロック：小指なし）
+    70:{t:2,h:[2,0,2,2,0,0,0]},   // シ♭ B♭4（バロック）
+    77:{t:1,h:[2,2,2,2,0,2,0]},   // 高いファ F5（バロック）
+    78:{t:1,h:[2,2,2,0,2,2,0]}    // 高いファ# F#5（バロック）
   }
 };
 // ソプラノは実音が記譜より1オクターブ上。アルトは記譜=実音。
@@ -451,7 +447,7 @@ const state = {
   notes: [],            // 記譜MIDIの配列（全小節をつなげたもの）
   measures: [],         // 小節ごとの配列（いちらんひょう用）
   index: 0,
-  system: 'german',
+  system: 'baroque',  // アルトはバロック式のみ（ジャーマン式のアルトは存在しない）
   instrument: 'alto',  // アルト固定
   flipView: 'up',
   mode: 'mic',          // 'mic' | 'tap'
@@ -1066,7 +1062,6 @@ function segSetup(id, key, onChange){
     });
   });
 }
-segSetup('systemSeg','system', ()=>{ updateView(); buildListView(); });
 segSetup('flipSeg','flipView', ()=>{ rebuildRecorderViews(); });
 function rebuildRecorderViews(){
   const flip = state.flipView==='down';
