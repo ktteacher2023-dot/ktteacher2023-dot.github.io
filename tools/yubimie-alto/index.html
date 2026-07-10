@@ -441,9 +441,9 @@ function nameHTML(midi){
 
 /* ---------- デモ曲（小節ごと） ---------- */
 const DEMO_SONGS = {
-  demo0:{ title:'メリーさんのひつじ', measures:[[64,62,60,62],[64,64,64],[62,62,62],[64,67,67],[64,62,60,62],[64,64,64,64],[62,62,64,62],[60]] },
-  demo1:{ title:'きらきらぼし', measures:[[60,60,67,67],[69,69,67],[65,65,64,64],[62,62,60],[67,67,65,65],[64,64,62],[67,67,65,65],[64,64,62],[60,60,67,67],[69,69,67],[65,65,64,64],[62,62,60]] },
-  demo2:{ title:'聖者の行進', measures:[[60,64,65,67],[60,64,65,67],[60,64,65,67],[64,60,64,62],[64,64,62,60],[60,64,67],[67,67,65],[64,65,67],[64,60,62,60]] }
+  demo0:{ title:'メリーさんのひつじ', measures:[[69,67,65,67],[69,69,69],[67,67,67],[69,72,72],[69,67,65,67],[69,69,69,69],[67,67,69,67],[65]] },
+  demo1:{ title:'きらきらぼし', measures:[[65,65,72,72],[74,74,72],[70,70,69,69],[67,67,65],[72,72,70,70],[69,69,67],[72,72,70,70],[69,69,67],[65,65,72,72],[74,74,72],[70,70,69,69],[67,67,65]] },
+  demo2:{ title:'聖者の行進', measures:[[65,69,70,72],[65,69,70,72],[65,69,70,72],[69,65,69,67],[69,69,67,65],[65,69,72],[72,72,70],[69,70,72],[69,65,67,65]] }
 };
 
 /* ---------- 状態 ---------- */
@@ -754,7 +754,7 @@ function stopMic(){
 }
 
 /* 自己相関によるピッチ検出 */
-function detectPitch(buf, sampleRate){
+function detectPitch(buf, sampleRate, expectedFreq){
   const N = buf.length;
   let rms=0;
   for(let i=0;i<N;i++) rms += buf[i]*buf[i];
@@ -782,10 +782,27 @@ function detectPitch(buf, sampleRate){
   for(let i=minLag;i<maxLag;i++) if(nc[i]>maxval) maxval=nc[i];
   // はっきりした周期性がなければ不検出（ざわざわしたノイズ対策）
   if(maxval < 0.3*nc[0]) return {freq:-1, rms, threshold};
-  // オクターブ下誤検出対策：最大値の90%以上ある「いちばん手前の山」を採用
-  let maxpos=-1;
+  // 強い山（最大値の85%以上）を候補として集める
+  const cands=[];
   for(let i=Math.max(minLag,1); i<maxLag; i++){
-    if(nc[i]>=nc[i-1] && nc[i]>=nc[i+1] && nc[i]>=0.9*maxval){ maxpos=i; break; }
+    if(nc[i]>=nc[i-1] && nc[i]>=nc[i+1] && nc[i]>=0.85*maxval) cands.push(i);
+  }
+  if(!cands.length) return {freq:-1, rms, threshold};
+  // 既定：いちばん手前の「90%以上」の山（オクターブ下誤検出対策・従来どおり）
+  let maxpos=-1;
+  for(const i of cands){ if(nc[i]>=0.9*maxval){ maxpos=i; break; } }
+  if(maxpos<0) maxpos=cands[0];
+  // つぎに吹く音がわかっているときは、候補のうち期待の高さに最も近い山を優先する。
+  // （アルトの低い音は倍音が強く、1オクターブ上の山に誤ロックしやすいため。
+  //   まちがった音を吹いた場合はどの候補も期待から外れるので、誤りはそのまま出る）
+  if(expectedFreq>0){
+    let best=-1, bestDist=1e9;
+    for(const i of cands){
+      const fq=sampleRate/i;
+      const d=Math.abs(12*Math.log2(fq/expectedFreq));
+      if(d<bestDist){ bestDist=d; best=i; }
+    }
+    if(best>0 && bestDist<=0.8) maxpos=best;
   }
   if(maxpos<=0) return {freq:-1, rms, threshold};
   // 放物線補間
@@ -802,9 +819,10 @@ function loop(){
   rafId = requestAnimationFrame(loop);
   if(!analyser || state.notes.length===0 || state.index>=state.notes.length) return;
   analyser.getFloatTimeDomainData(micBuf);
-  const {freq, rms, threshold} = detectPitch(micBuf, ctx().sampleRate);
-  const now = performance.now();
   const targetSounding = state.notes[state.index] + soundingOffset(state.instrument);   // 実音
+  const expectedFreq = 440*Math.pow(2,(targetSounding-69)/12);
+  const {freq, rms, threshold} = detectPitch(micBuf, ctx().sampleRate, expectedFreq);
+  const now = performance.now();
 
   // レベルメーター（音がとどいているかの見える化）
   const lf = $('levelFill');
