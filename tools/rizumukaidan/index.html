@@ -51,10 +51,10 @@ button{font-family:inherit; cursor:pointer; border:none; background:none; color:
 #scrSelect{overflow-y:auto; padding:56px 16px 90px; align-items:center}
 #scrSelect h2{font-size:22px; font-weight:900; color:var(--orange-d); margin-bottom:4px; text-align:center}
 #scrSelect .hint{font-size:13px; color:#8A7A62; margin-bottom:14px; text-align:center}
-#stairs{display:flex; flex-direction:column-reverse; gap:10px; width:min(560px,100%)}
+#stairs{display:flex; flex-direction:column; gap:10px; width:min(560px,100%)}
 .lvCard{
   display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px;
-  border:2px solid #EFE4D2; box-shadow:var(--shadow); padding:12px 16px; text-align:left; width:88%;
+  border:2px solid #EFE4D2; box-shadow:var(--shadow); padding:12px 16px; text-align:left; width:100%;
 }
 .lvCard:active{transform:scale(.98)}
 .lvCard .num{
@@ -72,7 +72,7 @@ button{font-family:inherit; cursor:pointer; border:none; background:none; color:
 .lvCard .seal.got{border-style:solid; border-color:var(--gold); background:#FFF3D0; box-shadow:0 0 10px rgba(245,179,47,.5)}
 .lvCard .best{font-size:12px; color:#B99}
 .lvCard.hands2{border-color:#D6E6F5}
-.lvCard.customCard{border-color:#CBE5D0; width:100%}
+.lvCard.customCard{border-color:#CBE5D0}
 
 /* ===== プレイ画面 ===== */
 #scrPlay{background:#FDF9F2}
@@ -878,9 +878,10 @@ function handleTap(hand){
   const now=S.ac.currentTime;
   (hand==="R"?tapR:tapL)(now);
   flashPad(hand);
-  if(S.phase!=="play") return;                 // ①あそぶ：いつでも音は鳴る
+  if(S.phase!=="play" && S.phase!=="count") return; // ①あそぶ：いつでも音は鳴る
   if(S.mode!=="challenge") return;             // れんしゅうは判定なし
   const pt = now - S.startAt - S.countDur + S.latency/1000;
+  if(pt < -0.35) return;                       // カウント中でも1拍目の直前なら判定する
   const list=S.events[hand];
   let best=null, bestD=1e9;
   list.forEach(ev=>{
@@ -979,24 +980,7 @@ function show(id){
 }
 function buildSelect(){
   const box=document.getElementById("stairs"); box.innerHTML="";
-  LEVELS.forEach(lv=>{
-    const p=S.progress["lv"+lv.id]||{};
-    const best=Math.max(p.ex0||0,p.ex1||0);
-    const card=document.createElement("button");
-    card.className="lvCard"+(lv.hands===2?" hands2":"");
-    card.style.marginLeft = ((lv.id-1)*2.4)+"%";
-    card.innerHTML=`
-      <span class="num">${lv.id}</span>
-      <span class="info">
-        <span class="name">${lv.name}　<span class="stars">${"★".repeat(lv.stars)}</span></span><br>
-        <span class="desc">${lv.desc}${lv.hands===2?"（りょうて）":""}</span>
-        ${best?`<br><span class="best">ベスト ${"⭐".repeat(best)}</span>`:""}
-      </span>
-      <span class="seal ${p.seal?"got":""}">${p.seal?lv.seal:"？"}</span>`;
-    card.addEventListener("click",()=>openLevel(lv));
-    box.appendChild(card);
-  });
-  // 🎼 じぶんの きょく（MusicXML）— column-reverse なので最後＝いちばん上
+  // 🎼 じぶんの きょく（MusicXML）— いちばん上
   const cc=document.createElement("button");
   cc.className="lvCard customCard";
   cc.innerHTML=`
@@ -1008,6 +992,23 @@ function buildSelect(){
     <span class="seal">＋</span>`;
   cc.addEventListener("click",()=>document.getElementById("xmlInput").click());
   box.appendChild(cc);
+  // レベル1〜11を順番に
+  LEVELS.forEach(lv=>{
+    const p=S.progress["lv"+lv.id]||{};
+    const best=Math.max(p.ex0||0,p.ex1||0);
+    const card=document.createElement("button");
+    card.className="lvCard"+(lv.hands===2?" hands2":"");
+    card.innerHTML=`
+      <span class="num">${lv.id}</span>
+      <span class="info">
+        <span class="name">${lv.name}　<span class="stars">${"★".repeat(lv.stars)}</span></span><br>
+        <span class="desc">${lv.desc}${lv.hands===2?"（りょうて）":""}</span>
+        ${best?`<br><span class="best">ベスト ${"⭐".repeat(best)}</span>`:""}
+      </span>
+      <span class="seal ${p.seal?"got":""}">${p.seal?lv.seal:"？"}</span>`;
+    card.addEventListener("click",()=>openLevel(lv));
+    box.appendChild(card);
+  });
 }
 
 function openLevel(lv){
