@@ -36,21 +36,29 @@ body{font-family:'Zen Maru Gothic',sans-serif;background:var(--paper);color:var(
 #stats{display:flex;gap:12px;font-weight:900;font-size:12px;white-space:nowrap}
 #stats b{color:var(--main);font-size:16px}
 
-/* ===== game canvas ===== */
-#gameWrap{flex:1 1 auto;min-height:0;position:relative;margin:0 10px}
+/* ===== game canvas（りずむかいだんの譜面帯にならってコンパクトに） ===== */
+#gameWrap{flex:0 0 auto;height:clamp(170px,32dvh,300px);min-height:0;position:relative;margin:0 10px}
 #game{position:absolute;inset:0;width:100%;height:100%;border-radius:20px;
   background:linear-gradient(#FFFFFF,#FFF3EC);box-shadow:inset 0 0 0 3px #F6E3D9}
 
-/* ===== tap zone ===== */
-#tapBtn{flex:0 0 auto;margin:10px auto 8px;width:min(88vw,560px);height:clamp(64px,11dvh,96px);
-  border-radius:999px;border:none;background:var(--main);color:#fff;font-family:inherit;
-  font-size:clamp(20px,5vw,28px);font-weight:900;letter-spacing:.15em;cursor:pointer;
-  box-shadow:0 7px 0 var(--main-d);transition:transform .05s, box-shadow .05s}
-#tapBtn:active{transform:translateY(6px);box-shadow:0 1px 0 var(--main-d)}
-#tapBtn:disabled{background:#e8c9c0;box-shadow:0 7px 0 #d8b5aa;color:#fff;cursor:default}
+/* ===== tap zone（りずむかいだんのパッドと同じ型：最下段を全部使う） ===== */
+#tapBtn{flex:1 1 auto;min-height:120px;margin:0 10px calc(10px + env(safe-area-inset-bottom));
+  align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border-radius:22px;border:none;color:#fff;font-family:inherit;
+  background:linear-gradient(180deg,#FF8A8A,var(--main));cursor:pointer;
+  position:relative;overflow:hidden;touch-action:none;
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.14), 0 6px 14px rgba(217,79,79,.25);
+  transition:transform .05s, filter .05s}
+#tapBtn .big{font-size:clamp(26px,6vw,40px);font-weight:900;letter-spacing:.15em;text-shadow:0 2px 3px rgba(0,0,0,.18)}
+#tapBtn .small{font-size:clamp(12px,2.6vw,15px);font-weight:700;opacity:.92}
+#tapBtn:active{transform:translateY(3px);filter:brightness(1.2)}
+#tapBtn:disabled{background:linear-gradient(180deg,#eed3ca,#e8c9c0);box-shadow:inset 0 -8px 0 rgba(0,0,0,.06);color:#fff;cursor:default}
+#tapBtn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);
+  transform:translate(-50%,-50%);animation:tapRip .45s ease-out forwards;pointer-events:none}
+@keyframes tapRip{from{width:0;height:0;opacity:.9}to{width:300px;height:300px;opacity:0}}
 
 /* ===== bottom controls ===== */
-#controls{flex:0 0 auto;display:flex;gap:6px;padding:0 10px calc(10px + env(safe-area-inset-bottom));
+#controls{flex:0 0 auto;display:flex;gap:6px;padding:8px 10px;
   justify-content:center;flex-wrap:wrap}
 .ctl{font-family:inherit;font-weight:900;font-size:clamp(11.5px,2.9vw,14px);
   padding:8px 14px;border-radius:999px;border:2.5px solid var(--ink);
@@ -119,8 +127,6 @@ select.ctl{appearance:none;-webkit-appearance:none;max-width:34vw;text-overflow:
   </div>
 </div>
 
-<button id="tapBtn" disabled>タップ!</button>
-
 <div id="controls">
   <button class="ctl accent" id="startBtn">▶ スタート</button>
   <select class="ctl" id="songSel"></select>
@@ -138,6 +144,8 @@ select.ctl{appearance:none;-webkit-appearance:none;max-width:34vw;text-overflow:
   <button class="ctl" id="loadBtn">📄 がくふ をよみこむ</button>
   <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl">
 </div>
+
+<button id="tapBtn" disabled><span class="big">タップ!</span><span class="small">はくに あわせて たたこう</span></button>
 
 <script>
 (() => {
@@ -546,7 +554,20 @@ function tap(){
   $('combo').textContent = combo;
   $('score').textContent = score;
 }
-$('tapBtn').addEventListener('pointerdown', tap);
+$('tapBtn').addEventListener('pointerdown', e => {
+  // 押した場所から波紋が広がる（りずむかいだんと同じ手応え）
+  const btn = $('tapBtn');
+  if(!btn.disabled){
+    const r = btn.getBoundingClientRect();
+    const rip = document.createElement('span');
+    rip.className = 'ripple';
+    rip.style.left = (e.clientX - r.left) + 'px';
+    rip.style.top  = (e.clientY - r.top) + 'px';
+    btn.appendChild(rip);
+    setTimeout(() => rip.remove(), 500);
+  }
+  tap();
+});
 cv.addEventListener('pointerdown', tap);
 window.addEventListener('keydown', e => {
   if(e.code === 'Space'){ e.preventDefault(); tap(); }
