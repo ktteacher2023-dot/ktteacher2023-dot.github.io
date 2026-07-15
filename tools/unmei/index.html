@@ -136,15 +136,6 @@
   .volLabel .word{font-size:clamp(11px,1.6vw,14px);color:var(--sub);font-family:inherit;}
   .volLabel.top{top:12px;}
   .volLabel.bottom{bottom:12px;}
-  #hint{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    text-align:center;color:var(--ink);pointer-events:none;
-    background:rgba(255,255,255,.85);border-radius:16px;padding:16px 26px;
-    font-size:clamp(14px,2.1vw,18px);line-height:2;transition:opacity .4s;
-    box-shadow:0 2px 12px rgba(36,51,82,.08);
-    max-width:92%;
-  }
-  #hint strong{color:var(--accent);font-size:1.15em;}
   #banner{
     position:absolute;top:12px;left:50%;transform:translateX(-50%);
     background:var(--ink);color:#fff;border-radius:999px;
@@ -199,7 +190,6 @@
     .note.active{box-shadow:0 0 0 4px rgba(232,84,47,.22);}
     #stageWrap{margin:6px 8px;}
     #stageCard{border-radius:14px;border-width:2px;}
-    #hint{padding:10px 14px;font-size:12px;line-height:1.9;border-radius:12px;}
     .volLabel{left:10px;gap:5px;}
     .volLabel .mark{font-size:17px;}
     .volLabel .word{font-size:9px;}
@@ -275,11 +265,6 @@ window.addEventListener('error', function(ev){
   <canvas id="stage"></canvas>
   <div class="volLabel top"><span class="mark">f</span><span class="word">上のほう＝つよい音</span></div>
   <div class="volLabel bottom"><span class="mark">p</span><span class="word">下のほう＝よわい音</span></div>
-  <div id="hint">
-    ここをタップして「運命」をえんそうしよう<br>
-    <strong>タン・タン・タン・ぎゅーっ</strong><br>
-    「だーん」のあいだに指を上下にうごかすと、音が大きく・小さくなるよ
-  </div>
   <div id="banner"></div>
 </div>
 
@@ -436,7 +421,6 @@ window.addEventListener('error', function(ev){
   let playbackTimers = [], isPlayback = false;
   let lastEnvSample = 0;
 
-  const hint = document.getElementById('hint');
   const banner = document.getElementById('banner');
   const dynValue = document.getElementById('dynValue');
   const dynMark = v => v<0.12?'pp':v<0.28?'p':v<0.45?'mp':v<0.62?'mf':v<0.82?'f':'ff';
@@ -538,7 +522,6 @@ window.addEventListener('error', function(ev){
     /* ★v2：「目に見える反応」を音の準備より先に出す。
        万一オーディオの初期化に失敗しても、光の粒と強弱表示は必ず動くので、
        「タッチが効いているのか／音だけの問題なのか」がその場で分かる */
-    hint.style.opacity = 0;
     showDyn(dyn);
     spawnBurst(ox, oy, dyn);
 
