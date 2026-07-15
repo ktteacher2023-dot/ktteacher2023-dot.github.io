@@ -265,6 +265,7 @@ window.addEventListener('error', function(ev){
   <canvas id="stage"></canvas>
   <div class="volLabel top"><span class="mark">f</span><span class="word">上のほう＝つよい音</span></div>
   <div class="volLabel bottom"><span class="mark">p</span><span class="word">下のほう＝よわい音</span></div>
+  <div id="verBadge" style="position:absolute;right:10px;bottom:8px;pointer-events:none;font-size:10px;color:#8A96B0;background:rgba(255,255,255,.7);border-radius:8px;padding:3px 8px;letter-spacing:.05em;">v4</div>
   <div id="banner"></div>
 </div>
 
@@ -358,6 +359,20 @@ window.addEventListener('error', function(ev){
     filter.type = 'lowpass'; filter.frequency.value = 2400; filter.Q.value = 0.6;
     master = ctx.createGain(); master.gain.value = 0.9;
     master.connect(filter).connect(comp).connect(ctx.destination);
+  }
+
+  /* ★v3の核心：音の装置の「起こし待ち」に制限時間を付ける。
+     iPadでは ctx.resume() の完了通知が永遠に来ないことがあり（iOS Safariの既知の癖）、
+     旧コードはそれを待ち続けて以降のタップが全滅していた。
+     0.6秒待って返事がなければ、鳴っても鳴らなくても先へ進む。
+     装置は次のタップで再度起こしにいくので、詰まりが残らない */
+  function resumeWithTimeout(ms){
+    return new Promise(res => {
+      let done = false;
+      const finish = () => { if (!done){ done = true; res(); } };
+      try { ctx.resume().then(finish, finish); } catch(_) { finish(); }
+      setTimeout(finish, ms);
+    });
   }
 
   /* 強弱→音量・音色の変換（②きづく：pp と ff の差が耳ではっきりわかるように）
@@ -503,6 +518,18 @@ window.addEventListener('error', function(ev){
   let activeId = null;          // いま演奏中の指のID（pointerId / touch identifier / 'mouse'）
   let downInProgress = false;   // タッチ開始処理（AudioContext起動待ち）の途中か
   let upWhileDown = false;      // その待ち中に指が離れた（速いタップ対策）
+  let lastDownAt = 0;           // ★v3：詰まり検知用（最後にタッチが始まった時刻）
+
+  /* ★v3：どんな状態からでも無条件で初期状態に戻す安全装置 */
+  function forceRelease(){
+    downInProgress = false; upWhileDown = false;
+    if (holdIdx !== -1){
+      if (holdVoice && ctx){ try { holdVoice.release(ctx.currentTime); } catch(_){} }
+      holdVoice = null; holdPoint = null;
+      flashNote(holdIdx, false); holdIdx = -1;
+    }
+    activeId = null;
+  }
 
   // 座標はcanvasの矩形から計算する（offsetX/Yはタッチ環境で不安定なことがある）
   const posFromXY = (clientX, clientY) => {
@@ -511,7 +538,14 @@ window.addEventListener('error', function(ev){
   };
 
   async function handleDown(clientX, clientY, id){
-    if (isPlayback || activeId !== null) return;
+    if (isPlayback) return;
+    if (activeId !== null){
+      // ★v3：前のタッチが何かの理由で解放されないまま残っていたら、4秒で強制復帰。
+      //   これで「一度詰まると二度と反応しない」が起こらなくなる
+      if (performance.now() - lastDownAt > 4000) forceRelease();
+      else return;
+    }
+    lastDownAt = performance.now();
     activeId = id;
     downInProgress = true;
     upWhileDown = false;
@@ -519,23 +553,25 @@ window.addEventListener('error', function(ev){
     const { x: ox, y: oy } = posFromXY(clientX, clientY);
     const dyn = dynFromY(oy);
 
-    /* ★v2：「目に見える反応」を音の準備より先に出す。
-       万一オーディオの初期化に失敗しても、光の粒と強弱表示は必ず動くので、
-       「タッチが効いているのか／音だけの問題なのか」がその場で分かる */
+    /* 「目に見える反応」を音の準備より先に出す */
     showDyn(dyn);
     spawnBurst(ox, oy, dyn);
 
     unlockMediaRoute();
     try {
       if (!ctx) initAudio();
-      // 音の装置が眠っている時は、1拍目を鳴らす前に必ず起こしきる
-      if (ctx.state === 'suspended'){ try { await ctx.resume(); } catch(_){} }
+      // 装置が眠っていたら起こす。ただし0.6秒以上は待たない（★v3）
+      if (ctx.state !== 'running') await resumeWithTimeout(600);
     } catch(err){
       // 音が作れなくても演奏の進行（見た目）は続ける
       var b = document.getElementById('errBox');
       if (b){ b.style.display='block'; b.textContent = '⚠ 音の準備に失敗: ' + err.message; }
     }
     downInProgress = false;
+
+    // ★v4：音の装置のいまの状態を右下に表示（診断用）
+    var vb = document.getElementById('verBadge');
+    if (vb) vb.textContent = 'v4 ・ おと: ' + (ctx ? ctx.state : 'なし');
 
     const note = NOTES[idx];
 
@@ -815,6 +851,14 @@ window.addEventListener('error', function(ev){
   updateMotif();
   resize();
   requestAnimationFrame(draw);
+
+  /* ★v3：iPadで通知・アプリ切替・ロックの後に音の装置が止まったままになる対策。
+     画面に戻ってきたら自動で起こし直す */
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && ctx && ctx.state !== 'running'){
+      try { ctx.resume().catch(()=>{}); } catch(_){}
+    }
+  });
 })();
 </script>
 </body>
