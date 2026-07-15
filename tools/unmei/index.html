@@ -265,7 +265,6 @@ window.addEventListener('error', function(ev){
   <canvas id="stage"></canvas>
   <div class="volLabel top"><span class="mark">f</span><span class="word">上のほう＝つよい音</span></div>
   <div class="volLabel bottom"><span class="mark">p</span><span class="word">下のほう＝よわい音</span></div>
-  <div id="verBadge" style="position:absolute;right:10px;bottom:8px;pointer-events:none;font-size:10px;color:#8A96B0;background:rgba(255,255,255,.7);border-radius:8px;padding:3px 8px;letter-spacing:.05em;">v4</div>
   <div id="banner"></div>
 </div>
 
@@ -568,10 +567,6 @@ window.addEventListener('error', function(ev){
       if (b){ b.style.display='block'; b.textContent = '⚠ 音の準備に失敗: ' + err.message; }
     }
     downInProgress = false;
-
-    // ★v4：音の装置のいまの状態を右下に表示（診断用）
-    var vb = document.getElementById('verBadge');
-    if (vb) vb.textContent = 'v4 ・ おと: ' + (ctx ? ctx.state : 'なし');
 
     const note = NOTES[idx];
 
