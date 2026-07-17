@@ -238,6 +238,7 @@
       <li>購入者ページへのアクセス（アップデート無料配布）</li>
       <li>スタートガイド（配布手順・プリセット組み込み手順つき)</li>
       <li>担当する授業・学級の児童生徒端末への配布OK</li>
+      <li>購入後の個別サポート（使い方・設定のご相談に対応）</li>
     </ul>
     <div class="btns">
       <a class="btn buy" data-buy href="#" rel="noopener">noteで購入する →</a>
@@ -284,13 +285,13 @@
 /* ================= 設定（ここだけ差し替え） =================
    PURCHASE_URL: 販売note記事のURL（公開後に差し替え）
    PRICE      : noteで設定した税込価格（数字のみ）
-   SCARCITY   : 実際に設定した部数・期限がある場合のみ記入（例:"先行50部はこの価格です"）。なければ空のまま */
+   SCARCITY   : 再販の限定文。◯部の◯は、土曜の需要調査のあと"実際に売る数"へ必ず置き換える（捏造しない） */
 var PURCHASE_URL = "https://note.com/kt_teacher/n/n1d47481f2d2a";
 var SET_URL = "https://note.com/kt_teacher/n/n0eb4d609bb2d";  /* 2本セット販売note記事のURL */
-var PRICE = "4,980";
-var SET_PRICE = "7,980";
-var SET_SAVE = "1,980";
-var SCARCITY = "";
+var PRICE = "6,280";
+var SET_PRICE = "9,980";
+var SET_SAVE = "2,580";
+var SCARCITY = "購入後の使い方・設定を個別にサポートしているため、今回は◯部限定での再販です。この価格でのご案内は今回まで（次回以降は価格を改定します）。";
 /* ============================================================ */
 document.querySelectorAll("[data-buy]").forEach(function(a){
   if(a.getAttribute("href")==="#") a.href=PURCHASE_URL;
