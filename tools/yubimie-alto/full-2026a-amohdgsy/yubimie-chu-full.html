@@ -416,6 +416,13 @@ input[type=range]{accent-color:var(--accent);width:130px}
     </div>
   </div>
   <div class="setting-row">
+    <span>コードの音もチェック</span>
+    <div class="seg" id="chordCheckSeg">
+      <button data-v="on" class="on">する</button>
+      <button data-v="off">しない</button>
+    </div>
+  </div>
+  <div class="setting-row">
     <span>マイクのかんど</span>
     <input type="range" id="sensRange" min="1" max="10" value="7">
   </div>
@@ -425,6 +432,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
   <p class="hint-small">
     「やさしい」はオクターブちがいでもOKにします。<br>
+    「コードの音もチェック」＝<b>する</b> は、押さえた音が合っているときだけ進みます。<b>しない</b> はジャランと鳴らせば進みます（合奏の練習など）。<br>
     運指はメーカーによって少しちがうことがあります。
   </p>
   <button class="dialog-close" id="settingsClose">とじる</button>
@@ -468,7 +476,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>中学生版 v2026.08.02-10</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>中学生版 v2026.08.02-11</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -869,7 +877,8 @@ const state = {
   startTime: 0,
   songTitle: '',
   demoTempo: 'normal',
-  demoPlaying: false
+  demoPlaying: false,
+  chordCheck: true      // コードモードで「音そのもの」もチェックするか
 };
 const HOLD_MS = 300;        // 正しい音をキープする時間
 const GRACE_MS = 110;       // 一瞬とぎれてもOKな時間
@@ -1255,6 +1264,7 @@ function playFanfare(){
    マイク・ピッチ検出
    ===================================================== */
 let micStream=null, analyser=null, micBuf=null, rafId=null;
+let chromaAnalyser=null;   /* コードの「音そのもの」を見るための、こまかい分析用 */
 async function startMic(){
   try{
     micStream = await navigator.mediaDevices.getUserMedia({
@@ -1271,6 +1281,10 @@ async function startMic(){
   analyser.fftSize = 2048;
   src.connect(analyser);
   micBuf = new Float32Array(analyser.fftSize);
+  chromaAnalyser = c.createAnalyser();
+  chromaAnalyser.fftSize = 16384;            /* 低い弦まで音の高さを見分けるために大きくとる */
+  chromaAnalyser.smoothingTimeConstant = 0;
+  src.connect(chromaAnalyser);
   state.listening = true;
   state.phase = 'armed'; state.holdStart=0;
   els.micBtn.textContent = '⏸ マイクストップ';
@@ -1283,6 +1297,7 @@ function stopMic(){
   state.listening = false;
   if(rafId) cancelAnimationFrame(rafId);
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  chromaAnalyser = null;
   els.micBtn.textContent = '🎤 マイクスタート';
   els.micBtn.classList.remove('listening');
   $('levelWrap').style.display = 'none';
@@ -1760,6 +1775,23 @@ function rebuildRecorderViews(){
   updateView();
 }
 segSetup('strictSeg','strict');
+/* コードの音チェック（'on'/'off' を true/false にほんやくして持つ） */
+document.querySelectorAll('#chordCheckSeg button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#chordCheckSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    state.chordCheck = (b.dataset.v === 'on');
+    try{ localStorage.setItem('yubimie_chu_chordcheck', b.dataset.v); }catch(e){}
+    if(window.updateView) updateView();
+  });
+});
+try{
+  const cc = localStorage.getItem('yubimie_chu_chordcheck');
+  if(cc === 'off'){
+    state.chordCheck = false;
+    document.querySelectorAll('#chordCheckSeg button').forEach(x=>x.classList.toggle('on', x.dataset.v==='off'));
+  }
+}catch(e){}
 segSetup('modeSeg','mode', v=>{
   if(v==='tap'){ stopMic(); els.micBtn.style.display='none'; els.tapNextBtn.style.display=''; }
   else{ els.micBtn.style.display=''; els.tapNextBtn.style.display='none'; }
@@ -2475,7 +2507,9 @@ function renderChordPractice(){
   const name = entryName(entry);
   els.progressLabel.textContent = `${i+1} / ${seq.length} ばんめのコード`;
   els.bigNote.innerHTML = `<span style="font-size:.8em">${name}</span>`;
-  els.noteLetter.textContent = 'ジャランとならして、つぎへ';
+  els.noteLetter.textContent = (state.chordCheck === false)
+    ? 'ジャランとならして、つぎへ'
+    : 'この形でおさえて ジャラン！（音があっていたら つぎへ）';
   els.nextName.textContent = seq[i+1] ? entryName(seq[i+1]) : 'ゴール🏁';
   els.progressFill.style.width = (i/seq.length*100)+'%';
   // コードが多い曲は、いまの前後だけを見せる（画面が埋まらないように）
@@ -2544,17 +2578,108 @@ let lastStrumAt = 0;
 let strumCalUntil = 0;     // このじこくまでは 測定中
 let strumQuietSince = 0;
 const RMS_HIST = new Float32Array(5); let rmsHistI = 0;
+let judgeUntil = 0;        // ジャランのあと、この時刻まで「音の高さ」を見る
+let judgeFrom = 0;         // 音がそろうまで すこし待ってから見る
+let judgeBest = 0;         // その間の いちばん良かった一致ぐあい
+let judgeHits = 0;         // 続けて合格したかいすう（1回だけの まぐれを ふせぐ）
+
+/* ===== コードの「音そのもの」を聞き分ける（クロマ解析） =====
+   マイクの音を12の音名（ド〜シ）ごとの強さに分けて、
+   そのコードの構成音とどれだけ一致しているかを見ます。
+   これで「ならせば何でも正解」ではなく、押さえまちがいは進まなくなります。 */
+let chromaBuf = null;
+function micChroma(){
+  if(!chromaAnalyser) return null;
+  if(!chromaBuf || chromaBuf.length !== chromaAnalyser.frequencyBinCount)
+    chromaBuf = new Float32Array(chromaAnalyser.frequencyBinCount);
+  chromaAnalyser.getFloatFrequencyData(chromaBuf);
+  const sr = ctx().sampleRate, n = chromaAnalyser.fftSize, binHz = sr/n;
+  const lo = Math.max(2, Math.floor(70/binHz));
+  const hi = Math.min(chromaBuf.length-2, Math.floor(1400/binHz));
+  let peakDb = -Infinity;
+  for(let i=lo;i<=hi;i++) if(chromaBuf[i] > peakDb) peakDb = chromaBuf[i];
+  if(peakDb === -Infinity || peakDb < -88) return null;   // ほぼ無音なら判定しない
+  const cut = Math.max(-100, peakDb - 32);
+  const ch = new Float32Array(12);
+  let total = 0, nPk = 0;
+  for(let i=lo;i<=hi;i++){
+    const db = chromaBuf[i];
+    if(db < cut) continue;
+    if(db < chromaBuf[i-1] || db < chromaBuf[i+1]) continue;   // 山の頂上だけ
+    const y1=chromaBuf[i-1], y2=db, y3=chromaBuf[i+1];
+    const dd = (y1+y3-2*y2);
+    const off = dd ? -0.5*(y3-y1)/dd : 0;
+    const f = (i + (Math.abs(off)<1 ? off : 0)) * binHz;
+    const m = 69 + 12*Math.log2(f/440);
+    if(Math.abs(m - Math.round(m)) > 0.35) continue;           // 音名からずれた山は無視
+    const amp = Math.pow(10, db/20);
+    const w = amp / (1 + f/700);                               // 高い倍音は軽く見る
+    const pc = ((Math.round(m)%12)+12)%12;
+    ch[pc] += w; total += w; nPk++;
+  }
+  if(total <= 0 || nPk < 3) return null;    // 山が2つ以下＝コードの音ではない（声・雑音）
+  let mx = 0; for(let i=0;i<12;i++) if(ch[i]>mx) mx=ch[i];
+  if(mx<=0) return null;
+  for(let i=0;i<12;i++) ch[i] /= mx;
+  return ch;
+}
+/* コードの構成音（12音のどれか）を、押さえ方から計算する */
+function chordPCs(entry){
+  const sh = entryShape(entry);
+  if(!sh) return null;
+  const set = [];
+  for(let i=0;i<6;i++){
+    const f = sh[i];
+    if(f===null || f===undefined || f<0) continue;
+    const pc = ((GTR_OPEN[5-i]+f)%12+12)%12;   /* 押さえ方は 6弦→1弦、GTR_OPEN は 1弦→6弦 */
+    if(set.indexOf(pc)<0) set.push(pc);
+  }
+  return set.length ? set : null;
+}
+/* そのコードの「土台の音（いちばん低い弦の音）」＝ルート */
+function chordRootPC(entry){
+  const sh = entryShape(entry);
+  if(!sh) return -1;
+  for(let i=0;i<6;i++){                       // 6弦（低い）から順に、最初に鳴らす弦
+    const f = sh[i];
+    if(f===null || f===undefined || f<0) continue;
+    return ((GTR_OPEN[5-i]+f)%12+12)%12;
+  }
+  return -1;
+}
+/* いま鳴っている音が そのコードに どれだけ合っているか（0〜1） */
+function chordMatch(entry){
+  const pcs = chordPCs(entry);
+  const ch = micChroma();
+  if(!pcs || !ch) return null;
+  let inSum=0, allSum=0, present=0, maxExtra=0;
+  for(let i=0;i<12;i++){
+    const v = Math.max(0, ch[i] - 0.18);     /* にじみ（倍音のもれ）を切りおとす */
+    allSum += v;
+    if(pcs.indexOf(i)>=0){ inSum += v; if(ch[i] >= 0.25) present++; }
+    else if(ch[i] > maxExtra) maxExtra = ch[i];   /* コードにない音が強く鳴っていないか */
+  }
+  const score = allSum>0 ? inSum/allSum : 0;
+  const root = chordRootPC(entry);
+  const rootOK = (root>=0 && ch[root] >= 0.45);     // 土台の音が ちゃんと鳴っているか
+  return {score, present, root, rootOK, maxExtra,
+          ok: (present>=2 && score>=0.70 && rootOK && maxExtra < 0.55)};
+}
 
 /* マイクを入れなおすたびに 測りなおす */
 const _startMicBase = startMic;
 startMic = async function(){
   strumFloor = 0.006; strumArmed = false; lastStrumAt = 0;
   strumQuietSince = 0; RMS_HIST.fill(0); strumCalUntil = 0;
+  judgeUntil = 0; judgeFrom = 0; judgeBest = 0; judgeHits = 0;
   await _startMicBase();
   if(state.listening && window.chordActive && chordActive()){
     strumCalUntil = performance.now() + 900;
   }
 };
+
+const _stopMicBase = stopMic;
+stopMic = function(){ judgeUntil = 0; judgeFrom = 0; judgeBest = 0; judgeHits = 0; _stopMicBase(); };
 
 const _loop = loop;
 loop = function(){
@@ -2608,13 +2733,51 @@ loop = function(){
     if(!strumArmed && now - lastStrumAt > 1500) strumArmed = true;
   }
 
+  /* ④ ジャランを見つけたら、そこから0.6秒だけ「音の高さ」を調べる */
   if(strumArmed && rms >= threshold && attack >= 1.9 && now - lastStrumAt > 500){
     strumArmed = false; strumQuietSince = 0;
     lastStrumAt = now;
-    els.hearing.innerHTML = '<span class="ok">🎸 きこえたよ！</span>';
     if(!state.startTime) state.startTime = now;
-    chordAdvance(true);
-  }else if(rms < quietLevel){
+    if(state.chordCheck === false){        // 「音は見ない」設定のとき（前と同じ動き）
+      els.hearing.innerHTML = '<span class="ok">🎸 きこえたよ！</span>';
+      chordAdvance(true);
+      return;
+    }
+    judgeFrom = now + 200; judgeUntil = now + 950; judgeBest = 0; judgeHits = 0;
+    els.hearing.innerHTML = '<span style="opacity:.7">🎧 きいています…</span>';
+    return;
+  }
+
+  /* ⑤ 判定中：合っていたらすぐ進む。合わなければ おしえてあげる */
+  if(judgeUntil){
+    if(now >= judgeFrom){                     // 弦の音がそろうまで 0.2秒まつ
+      const r = chordMatch(state.chordSeq[state.chordIndex]);
+      if(r){
+        if(r.score > judgeBest) judgeBest = r.score;
+        if(r.ok){
+          judgeHits++;
+          if(judgeHits >= 2){                 // 2回つづけて合格したら本物
+            judgeUntil = 0;
+            els.hearing.innerHTML = '<span class="ok">🎸 その音、あってる！ ⭕</span>';
+            chordAdvance(true);
+            return;
+          }
+        }else judgeHits = 0;
+      }else judgeHits = 0;
+    }
+    if(now >= judgeUntil){
+      judgeUntil = 0;
+      state.combo = 0;
+      const nm = entryName(state.chordSeq[state.chordIndex]);
+      els.hearing.innerHTML = judgeBest >= 0.45
+        ? `<span class="near">おしい！ どこか1本 ちがうかも（${nm}）</span>`
+        : `<span class="ng">ちがう音みたい。${nm} の図を見て、もういちど</span>`;
+      els.combo.textContent = '';
+    }
+    return;
+  }
+
+  if(rms < quietLevel){
     els.hearing.innerHTML = '<span style="opacity:.5">🎧 ジャランを まっています…</span>';
   }
 };
@@ -2805,6 +2968,9 @@ $('chordBeatSeg').querySelectorAll('button').forEach(b=>{
 });
 /* Fの押さえ方（かんたんF ⇔ バレーF） */
 window.resolveChordName = resolveChordName;
+/* 検証用（自動テストから触れるように） */
+window.__t = { micChroma:()=>micChroma(), chordPCs:e=>chordPCs(e), chordMatch:e=>chordMatch(e),
+               entryName:e=>entryName(e), curTarget:()=>state.chordSeq[state.chordIndex] };
 $('fSeg').querySelectorAll('button').forEach(b=>{
   if(b.dataset.v===F_PREF) b.classList.add('on');
   b.addEventListener('click', ()=>{
