@@ -275,6 +275,12 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </select>
   <button class="file-btn" id="fileBtn">📂 楽譜ファイルをひらく（MusicXML / .mxl）</button>
   <input type="file" id="fileInput" accept=".xml,.musicxml,.mxl" hidden>
+  <select id="instSelect" title="がっきをえらぶ">
+    <option value="soprano">🎼 リコーダー</option>
+    <option value="pianica">🔒 けんばんハーモニカ（フル版）</option>
+    <option value="xylo">🔒 もっきん（フル版）</option>
+    <option value="glock">🔒 てっきん（フル版）</option>
+  </select>
   <button class="icon-btn" id="viewToggle">👥 いちらんひょう</button>
   <span class="song-title" id="songTitle"></span>
 </div>
@@ -1178,9 +1184,48 @@ updateView();
   var NOTE_URL = "full/";  /* 販売LP（tools/yubimie/full/） */
   var bar=document.createElement("div");
   bar.id="demoBar";
-  bar.innerHTML='<span>これは<b>無料版</b>です（内蔵3曲）<span class="sub">｜自分の楽譜・きょうざいきょく・けっかカードはフル版で</span></span>'+
+  bar.innerHTML='<span>これは<b>無料版</b>です（内蔵3曲・リコーダー）<span class="sub">｜🆕もっきん・てっきん・けんばんハーモニカ、自分の楽譜、きょうざいきょくはフル版で</span></span>'+
     '<a id="demoCta" href="'+NOTE_URL+'">🔓 フル版のくわしい内容を見る →</a>';
   document.body.appendChild(bar);
+
+  /* ---- がっきメニュー：フル版機能のロック表示 ---- */
+  var INST_NAMES = { pianica:'けんばんハーモニカ', xylo:'もっきん', glock:'てっきん' };
+  var instSel = document.getElementById('instSelect');
+  if(instSel){
+    instSel.addEventListener('change', function(){
+      var v = instSel.value;
+      if(v === 'soprano') return;
+      instSel.value = 'soprano';           // 無料版はリコーダーのまま
+      showLockDialog(INST_NAMES[v] || 'このがっき');
+    });
+  }
+  function showLockDialog(name){
+    var old = document.getElementById('lockOverlay');
+    if(old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = 'lockOverlay';
+    ov.innerHTML =
+      '<div class="lock-card">'+
+        '<div class="lock-emoji">🔒</div>'+
+        '<div class="lock-title">「'+name+'」はフル版のがっきです</div>'+
+        '<p class="lock-text">フル版では、リコーダーにくわえて<br><b>もっきん・てっきん・けんばんハーモニカ</b>の<br>たたく場所・おさえる鍵盤が光ります。<br>合奏のパート練習にも使えます。</p>'+
+        '<a class="lock-cta" href="'+NOTE_URL+'">🔓 フル版のくわしい内容を見る →</a>'+
+        '<button class="lock-close" type="button">とじる</button>'+
+      '</div>';
+    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+    ov.querySelector('.lock-close').addEventListener('click', function(){ ov.remove(); });
+    document.body.appendChild(ov);
+  }
+  var lockCss = document.createElement('style');
+  lockCss.textContent =
+    '#lockOverlay{position:fixed;inset:0;background:rgba(35,66,59,.45);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px}'+
+    '.lock-card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(35,66,59,.25);padding:28px 26px;max-width:360px;text-align:center;font-family:inherit}'+
+    '.lock-emoji{font-size:38px;margin-bottom:6px}'+
+    '.lock-title{font-weight:900;font-size:17px;margin-bottom:10px;color:#23423B}'+
+    '.lock-text{font-size:13.5px;line-height:1.9;color:#4A6259;margin-bottom:16px}'+
+    '.lock-cta{display:block;background:#FF6B5E;color:#fff;text-decoration:none;border-radius:999px;padding:12px 18px;font-weight:900;font-size:15px;margin-bottom:10px}'+
+    '.lock-close{background:none;border:none;color:#7A948D;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px}';
+  document.head.appendChild(lockCss);
 
   // アプリの操作バー(.controls)は画面下固定なので、CTAバーの高さぶん上に逃がす
   function fitBar(){
