@@ -468,7 +468,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>中学生版 v2026.08.02-9</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>中学生版 v2026.08.02-10</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -2533,8 +2533,29 @@ restart = function(){
   }
   _restart();
 };
-/* ---------- コードモードのマイク＝ジャラン（音の立ちあがり）で進む ---------- */
-let strumPrevRms = 0, lastStrumAt = 0;
+/* ---------- コードモードのマイク＝ジャラン（音の立ちあがり）で進む ----------
+   教室のざわざわで かってに すすまないように、3段がまえにしています。
+   ① マイクを入れた直後の0.9秒で「しずかなときの音量（ノイズフロア）」をじどうで測る
+   ② そこから ドンと立ちあがった（音量が急に何倍にもなった）ときだけ 1回すすむ
+   ③ 一度すすんだら、音がしずまるまで つぎのジャランを受けつけない            */
+let strumFloor = 0.006;    // ノイズフロア（じどう更新）
+let strumArmed = false;    // つぎのジャランを受けつけられる状態か
+let lastStrumAt = 0;
+let strumCalUntil = 0;     // このじこくまでは 測定中
+let strumQuietSince = 0;
+const RMS_HIST = new Float32Array(5); let rmsHistI = 0;
+
+/* マイクを入れなおすたびに 測りなおす */
+const _startMicBase = startMic;
+startMic = async function(){
+  strumFloor = 0.006; strumArmed = false; lastStrumAt = 0;
+  strumQuietSince = 0; RMS_HIST.fill(0); strumCalUntil = 0;
+  await _startMicBase();
+  if(state.listening && window.chordActive && chordActive()){
+    strumCalUntil = performance.now() + 900;
+  }
+};
+
 const _loop = loop;
 loop = function(){
   if(!chordActive()){ _loop(); return; }
@@ -2544,21 +2565,58 @@ loop = function(){
   analyser.getFloatTimeDomainData(micBuf);
   let rms=0; for(let i=0;i<micBuf.length;i++) rms += micBuf[i]*micBuf[i];
   rms = Math.sqrt(rms/micBuf.length);
-  const threshold = 0.02 * Math.pow(0.8, state.sensitivity - 5);
+  const now = performance.now();
+
+  /* かんど(1〜10)で決まる「これ以下では ぜったいに反応しない」下限 */
+  const absMin = 0.030 * Math.pow(0.85, state.sensitivity - 5);
+  /* じっさいのしきい値＝下限 と ノイズフロアの3.2倍 の 大きいほう */
+  const threshold = Math.max(absMin, strumFloor * 3.2);
+
   const lf = $('levelFill');
   lf.style.width = Math.min(100, rms/0.05*100) + '%';
   lf.classList.toggle('hot', rms >= threshold);
   $('levelMark').style.left = Math.min(96, threshold/0.05*100) + '%';
-  const now = performance.now();
-  if(rms >= threshold && strumPrevRms < threshold && now - lastStrumAt > 450){
+
+  /* ① 測定中（さいしょの0.9秒） */
+  if(now < strumCalUntil){
+    if(rms > strumFloor) strumFloor = rms;
+    RMS_HIST[rmsHistI] = rms; rmsHistI = (rmsHistI+1)%RMS_HIST.length;
+    els.hearing.innerHTML = '<span style="opacity:.6">🎧 まわりの音を はかっています…（すこし しずかに）</span>';
+    return;
+  }
+  if(strumCalUntil){        // 測定おわり
+    strumCalUntil = 0; strumArmed = true;
+    if(strumFloor > 0.035) showToast('まわりの音が大きいようです。しずかな場所か、⚙️せってい の「かんど」を下げてね', 3600);
+  }
+
+  /* ② 立ちあがりの強さ＝いまの音量 ÷ すこし前の いちばん小さい音量 */
+  let recentMin = Infinity;
+  for(let i=0;i<RMS_HIST.length;i++) if(RMS_HIST[i] < recentMin) recentMin = RMS_HIST[i];
+  RMS_HIST[rmsHistI] = rms; rmsHistI = (rmsHistI+1)%RMS_HIST.length;
+  const attack = rms / Math.max(recentMin, 1e-4);
+
+  /* ③ 音がしずまったら つぎを受けつける＋ノイズフロアを ゆっくり更新 */
+  const quietLevel = Math.max(strumFloor*1.8, absMin*0.45);
+  if(rms < quietLevel){
+    if(!strumQuietSince) strumQuietSince = now;
+    if(now - strumQuietSince >= 120) strumArmed = true;
+    strumFloor = strumFloor*0.985 + rms*0.015;
+    if(rms < strumFloor) strumFloor = strumFloor*0.9 + rms*0.1;
+  }else{
+    strumQuietSince = 0;
+    /* 念のための保険：1.5秒たったら しずまらなくても受けつける（止まらないように） */
+    if(!strumArmed && now - lastStrumAt > 1500) strumArmed = true;
+  }
+
+  if(strumArmed && rms >= threshold && attack >= 1.9 && now - lastStrumAt > 500){
+    strumArmed = false; strumQuietSince = 0;
     lastStrumAt = now;
     els.hearing.innerHTML = '<span class="ok">🎸 きこえたよ！</span>';
     if(!state.startTime) state.startTime = now;
     chordAdvance(true);
-  }else if(rms < threshold*0.6){
+  }else if(rms < quietLevel){
     els.hearing.innerHTML = '<span style="opacity:.5">🎧 ジャランを まっています…</span>';
   }
-  strumPrevRms = rms;
 };
 /* micBtn・tapNextBtn・playBtn のコードモード対応は、本体側のリスナーに組み込み済み */
 /* =====================================================
