@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ゆびミエ フル版｜購入者ページ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2F7F5; --card:#FFFFFF; --ink:#23423B; --muted:#7A948D;
+    --accent:#FF6B5E; --accent-soft:#FFE3E0;
+    --blue:#3E8ED0; --blue-soft:#E3F0FA;
+    --gold:#FFC53D; --line:#D8E5E0;
+    --radius:18px; --shadow:0 4px 16px rgba(35,66,59,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);color:var(--ink);
+       padding:24px 18px 60px;max-width:760px;margin:0 auto;line-height:1.9;}
+  h1{font-size:24px;margin-bottom:6px;}
+  .lead{font-size:14px;color:var(--muted);margin-bottom:14px;}
+  .moved{background:var(--blue-soft);border:2px solid var(--blue);border-radius:14px;
+         padding:12px 16px;font-size:13.5px;margin-bottom:22px;}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+        padding:24px 22px;margin-bottom:18px;}
+  h2{font-size:17px;margin-bottom:12px;}
+  h2 .no{display:inline-flex;align-items:center;justify-content:center;
+        width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;
+        font-size:14px;margin-right:8px;vertical-align:-4px;}
+  p, li{font-size:14px;}
+  ul{padding-left:22px;margin:8px 0;}
+  .btn{display:inline-block;text-decoration:none;text-align:center;
+       background:var(--accent);color:#fff;border-radius:999px;
+       padding:14px 30px;font-weight:900;font-size:16px;margin:6px 6px 6px 0;}
+  .btn.sub{background:var(--card);color:var(--ink);border:2px solid var(--line);font-weight:700;}
+  .note-s{font-size:12.5px;color:var(--muted);margin-top:8px;}
+  .warn{background:#FFF8E6;border:2px solid var(--gold);border-radius:12px;
+        padding:12px 16px;font-size:13px;margin-top:12px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px;}
+  th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--bg);white-space:nowrap;}
+  .hist td:first-child{white-space:nowrap;color:var(--muted);}
+  .new-badge{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;
+             font-size:11px;padding:1px 10px;margin-left:6px;vertical-align:2px;}
+  footer{text-align:center;font-size:12px;color:var(--muted);margin-top:30px;}
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<h1>ゆびミエ フル版｜購入者ページ</h1>
+<p class="lead">ご購入ありがとうございます。このページから、いつでも最新版をひらけます。<b>ブックマーク</b>をおすすめします。</p>
+
+<div class="moved">📦 購入者ページは、この新しい住所に引っ越しました(2026年8月)。以前のページ(netlify.app)をブックマークしていた方は、<b>このページに更新をお願いします</b>。今後の更新はこちらだけに届きます。</div>
+
+<div class="card">
+  <h2><span class="no">1</span>まずは開いてみる(30秒)</h2>
+  <p>下のボタンで、ブラウザでそのまま使えます。「📚 きょうざいきょく」から曲をえらんで、マイクスタートでおためしください。</p>
+  <a class="btn" href="./yubimie-full.html">▶ ブラウザでフル版を開く</a>
+  <a class="btn sub" href="./yubimie-full.html" download="yubimie-full.html">⬇ ファイルをダウンロード</a>
+  <p class="note-s">ダウンロードした yubimie-full.html は、ダブルクリックで<b>オフラインでも動きます</b>。※圧縮形式(.mxl)の楽譜読み込みだけはオンライン時のみ。ふつうの .xml / .musicxml はオフラインでも読み込めます。</p>
+</div>
+
+<div class="card">
+  <h2><span class="no">2</span>自分の教材曲を入れる</h2>
+  <ul>
+    <li>Flat for Education などから <b>MusicXML形式</b>(.xml / .musicxml / .mxl)で書き出します</li>
+    <li>「📂 楽譜ファイルをひらく」で読み込み(オクターブは自動補正されます)</li>
+    <li>「きょうざいきょく」→「追加」で、プリセットに登録できます</li>
+  </ul>
+  <p><b>配布用ファイルへの焼き込み:</b>「組み込み用コード」をコピーし、テキストエディタで yubimie-full.html 内の PRESETS 配列に貼り付けて保存すると、開いた瞬間から曲が入った状態のファイルを作れます。</p>
+  <div class="warn">⚠️ 教科書掲載曲など<b>著作権保護曲</b>を焼き込んだファイルは、ご自身の授業・学級の範囲内でのみお使いください。学校外への配布はパブリックドメイン曲のみでお願いします。</div>
+</div>
+
+<div class="card">
+  <h2><span class="no">3</span>子どもの端末に配る</h2>
+  <p>Google Classroom・Teams・ロイロノートなどでファイルを配布できます。子どもはダウンロードして開くだけ。登録・インストールは不要です。</p>
+  <p class="note-s">🔒 マイクの音はすべて端末の中だけで処理され、サーバーに送信されることはありません。</p>
+  <div class="warn">📋 ライセンスの範囲: ご購入された先生の授業・学級でのご利用に限ります。他の先生への共有や、SNS等での再配布はご遠慮ください。校内全体でのご利用は<a href="https://ktteacher.net/tools/utamie/school/">スクールライセンス</a>をご検討ください。</div>
+</div>
+
+<div class="card">
+  <h2><span class="no">4</span>うまくいかないとき</h2>
+  <table>
+    <tr><th>音をひろわない</th><td>①せってい(⚙️)でマイク感度を上げる ②静かな場所で1人ずつ ③タップモードに切り替え</td></tr>
+    <tr><th>楽譜が読み込めない</th><td>Flatの「エクスポート → MusicXML」で書き出してください。運指表にない音はスキップできます</td></tr>
+    <tr><th>音が出ない</th><td>端末の消音スイッチ・音量を確認 → ページを再読み込み → ボタンを押してから操作</td></tr>
+    <tr><th>その他</th><td><a href="https://lin.ee/n3WhXbP">公式LINE</a>からメッセージをお送りください</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="no">5</span>アップデートについて</h2>
+  <p>機能追加・改善版は、このページで<b>無料</b>で配布します。更新のお知らせは<a href="https://lin.ee/n3WhXbP">公式LINE</a>から届きます。</p>
+  <p class="note-s">提供を終了する場合は事前に予告します。買い切りのため、ダウンロード済みのファイルはその後もオフラインでお使いいただけます。</p>
+  <table class="hist">
+    <tr><td>2026-08-02</td><td><b>v2026.07.28-12</b><span class="new-badge">NEW</span><br>
+      ・がっきをえらべるようになりました: <b>もっきん・てっきん・けんばんハーモニカ</b>(画面上部の「がっきをえらぶ」から)<br>
+      ・おてほんの<b>「▶️ ここから」再生</b>(いま表示している音から聴けます)<br>
+      ・運指の修正(4音)と、先生が自分で直せる<b>運指エディタ</b>(⚙️せってい内)</td></tr>
+    <tr><td>2026-07-07</td><td>フル版 v1.0 公開(きょうざいきょくプリセット5曲・組み込みコード書き出し・けっかカード保存・全画面ボタン)</td></tr>
+  </table>
+</div>
+
+<footer>
+  <p><a href="https://ktteacher.net/tools/utamie/terms/">利用規約</a> ｜ <a href="https://ktteacher.net/tools/">無料ツールいちらん</a> ｜ <a href="https://note.com/kt_teacher">note</a></p>
+  <p>© けいてぃの音楽ツールズ(フル版・購入者用) ｜ ファイル・URLの再配布はご遠慮ください</p>
+</footer>
+
+</body>
+</html>
