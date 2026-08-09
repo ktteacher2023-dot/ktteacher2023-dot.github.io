@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>おとつみき｜けいてぃの音楽ツールズ</title>
 <link rel="canonical" href="https://ktteacher.net/tools/tsumiki/">
-<meta name="description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta name="description" content="音を積むだけで、旋律ができる。日本・沖縄・中国・アラビアの音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="おとつみき｜音を積んで作曲する無料ツール">
-<meta property="og:description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta property="og:description" content="音を積むだけで、旋律ができる。日本・沖縄・中国・アラビアの音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
 <meta property="og:url" content="https://ktteacher.net/tools/tsumiki/">
 <meta property="og:image" content="https://ktteacher.net/ogp.png">
 <meta property="og:site_name" content="けいてぃの音楽ツールズ">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="おとつみき｜音を積んで作曲する無料ツール">
-<meta name="twitter:description" content="音を積むだけで、旋律ができる。日本・沖縄の音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
+<meta name="twitter:description" content="音を積むだけで、旋律ができる。日本・沖縄・中国・アラビアの音階にも対応。作った曲はリンクで共有できる、登録なしで使える無料の作曲ツール。">
 <meta name="twitter:image" content="https://ktteacher.net/ogp.png">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -41,6 +41,8 @@ select.ctl{appearance:none;-webkit-appearance:none}
 #labels{display:grid;gap:3px;flex:0 0 auto}
 .lab{display:flex;align-items:center;justify-content:center;font-weight:900;
   font-size:clamp(9.5px,2.3vw,13px);width:clamp(28px,7.5vw,42px);border-radius:8px;color:#fff}
+/* 「ファ♯」など3文字以上の音名がラベルからはみ出さないように */
+.lab.small{font-size:clamp(7.5px,1.85vw,10.5px);letter-spacing:-.04em}
 #grid{flex:1 1 auto;display:grid;gap:3px;min-width:0}
 .cell{border-radius:22%;background:#E7ECF5;border:none;cursor:pointer;
   transition:transform .08s;position:relative;min-width:0}
@@ -57,7 +59,8 @@ select.ctl{appearance:none;-webkit-appearance:none}
 #tempo{width:clamp(70px,18vw,130px);accent-color:var(--main)}
 #toast{position:fixed;left:50%;bottom:18%;transform:translateX(-50%);
   background:var(--ink);color:#fff;font-weight:900;font-size:14px;
-  padding:12px 22px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9}
+  padding:12px 22px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9;
+  max-width:min(88vw,420px);text-align:center;line-height:1.65}
 #toast.show{opacity:1}
 </style>
 </head>
@@ -102,6 +105,8 @@ select.ctl{appearance:none;-webkit-appearance:none}
       <option value="1">♪ ドレミファソラシ</option>
       <option value="2">♪ にほんの おんかい</option>
       <option value="3">♪ おきなわの おんかい</option>
+      <option value="4">♪ ちゅうごくの おんかい</option>
+      <option value="5">♪ アラビアの おんかい</option>
     </select>
     <select class="ctl" id="meterSel">
       <option value="4" selected>4びょうし</option>
@@ -145,7 +150,9 @@ const PITCH_ROWS = 8, PERC_ROWS = 2, ROWS = PITCH_ROWS + PERC_ROWS;
 const MAX_COLS = 64;
 
 /* ===== scales (top = high) ===== */
-const COLORS = {'ド':'#FF6B6B','レ':'#FF9F1C','ミ':'#FFD23F','ファ':'#7BE0AD','ソ':'#00B8A9','ラ':'#4EA8DE','シ':'#9B5DE5'};
+const COLORS = {'ド':'#FF6B6B','レ':'#FF9F1C','ミ':'#FFD23F','ファ':'#7BE0AD','ソ':'#00B8A9','ラ':'#4EA8DE','シ':'#9B5DE5',
+  /* ♭♯つきの音は、もとの音と同じなかまの色をすこし濃くした */
+  'ミ♭':'#E0A32B','ファ♯':'#3FBF87','シ♭':'#7B45C9'};
 const SCALES = [
   { name:'ドレミソラ', rows:[
     {n:'ミ',m:76},{n:'レ',m:74},{n:'ド',m:72},{n:'ラ',m:69},
@@ -159,6 +166,20 @@ const SCALES = [
   { name:'おきなわの おんかい', rows:[
     {n:'ファ',m:77},{n:'ミ',m:76},{n:'ド',m:72},{n:'シ',m:71},
     {n:'ソ',m:67},{n:'ファ',m:65},{n:'ミ',m:64},{n:'ド',m:60}]},
+  /* 中国の五声音階（羽調式＝ラを土台にした並び）。
+     音のなかまは「ドレミソラ」と同じだが、いちばん下がラなので
+     終わったときの気もちが変わる。②きづく の仕かけ。
+     音色は琴のように「はじく音」にして、耳でも国のちがいがわかるようにした */
+  { name:'ちゅうごくの おんかい', tone:'pluck', rows:[
+    {n:'レ',m:74},{n:'ド',m:72},{n:'ラ',m:69},{n:'ソ',m:67},
+    {n:'ミ',m:64},{n:'レ',m:62},{n:'ド',m:60},{n:'ラ',m:57}]},
+  /* アラビアの音階（ヒジャーズ）。レを土台に、ミ♭→ファ♯の
+     大きなひらき（増2度）が「アラビアらしさ」の正体。
+     ほんとうのアラブ音楽には半音より小さい音もあるが、
+     ここでは鍵盤でも出せる音だけでつくっている */
+  { name:'アラビアの おんかい', tone:'reed', rows:[
+    {n:'レ',m:74},{n:'ド',m:72},{n:'シ♭',m:70},{n:'ラ',m:69},
+    {n:'ソ',m:67},{n:'ファ♯',m:66},{n:'ミ♭',m:63},{n:'レ',m:62}]},
 ];
 const PERC = [
   {n:'たいこ', c:'#8a6f5c'},
@@ -183,7 +204,7 @@ function build(){
   labels.style.gridTemplateRows = 'repeat(' + ROWS + ',1fr)';
   SCALES[scaleIdx].rows.forEach(r => {
     const d = document.createElement('div');
-    d.className = 'lab';
+    d.className = 'lab' + (r.n.length >= 3 ? ' small' : '');
     d.textContent = r.n;
     d.style.background = COLORS[r.n];
     labels.appendChild(d);
@@ -281,13 +302,33 @@ function ensureAudio(){
   if(audio.state === 'suspended') audio.resume();
 }
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+/* 音色。音階ごとに変えて、ならした瞬間に「ちがう国の音だ」と気づけるようにした（②きづく）
+   base=これまでどおり / pluck=琴のようにはじく音（中国）/ reed=鼻にかかった笛の音（アラビア） */
+const TONES = {
+  base:  {type:'triangle', atk:.015, lvl:.15,  decay:1,   filt:0},
+  pluck: {type:'triangle', atk:.004, lvl:.20,  decay:.85, filt:1},
+  reed:  {type:'sawtooth', atk:.022, lvl:.105, decay:1,   filt:2}
+};
 function note(m, t, dur, dest){
+  const tone = TONES[SCALES[scaleIdx].tone] || TONES.base;
   const o = audio.createOscillator(), g = audio.createGain();
-  o.type = 'triangle'; o.frequency.value = mf(m);
+  o.type = tone.type; o.frequency.value = mf(m);
+  let last = o;
+  if(tone.filt === 1){                     // はじいた瞬間だけ明るく、すぐ丸くなる
+    const f = audio.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(4200, t);
+    f.frequency.exponentialRampToValueAtTime(650, t + dur * .8);
+    o.connect(f); last = f;
+  }else if(tone.filt === 2){               // 一本の細い笛のような、鼻にかかった響き
+    const f = audio.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 1700; f.Q.value = 3.5;
+    o.connect(f); last = f;
+  }
   g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(.15, t + .015);
-  g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  o.connect(g).connect(dest || audio.destination);
+  g.gain.linearRampToValueAtTime(tone.lvl, t + tone.atk);
+  g.gain.exponentialRampToValueAtTime(.001, t + dur * tone.decay);
+  last.connect(g).connect(dest || audio.destination);
   o.start(t); o.stop(t + dur + .05);
 }
 function taiko(t, dest){
@@ -358,9 +399,17 @@ $('playBtn').addEventListener('click', () => {
 });
 
 /* ===== settings ===== */
+/* ③なまえ：あそんだあとに、その音階の「らしさがどこから来ているか」だけを短く出す */
+const SCALE_HINT = {
+  2:'ミとファ、シとドが となりどうし。せつない ひびきになるよ',
+  3:'ファとシが 入ると、いっきに 沖縄の風に なるよ',
+  4:'音のなかまは「ドレミソラ」と おなじ。でも ラで おわると 中国の音に きこえるよ',
+  5:'ミ♭から ファ♯への 大きな ひらきが、アラビアらしさの ひみつ'
+};
 $('scaleSel').addEventListener('change', e => {
   scaleIdx = +e.target.value;
   build();                                 // 音は変わるが、マスの配置はそのまま
+  if(SCALE_HINT[scaleIdx]) toast(SCALE_HINT[scaleIdx]);
   hashDirty = true;
 });
 $('meterSel').addEventListener('change', e => {
