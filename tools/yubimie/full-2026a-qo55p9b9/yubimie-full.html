@@ -458,7 +458,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.08.06-13（くり返し対応）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.08.12-14（パートえらび強化）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -1151,50 +1151,57 @@ function parseMusicXML(xmlText){
   const candidates = [];
   for(const part of partEls){
     const pname = nameMap[part.getAttribute('id')] || '';
-    const measures = [];
+    /* 声部（voice）・段（staff）ごとに分けて読む。
+       ピアノ譜の上下段や、1つの楽器に2声部で書かれた楽譜は、これまで
+       全部の音が順番に混ざって読まれてリズムが崩れていた。声部ごとに
+       独立した「パート」候補として取り出し、パートえらびに出す。 */
+    const groups = new Map();      // "voice/staff" → {measures, tied, cur}
     const barlines = [];
-    let prevTiedMidi = null;
-    let divisions = 1;                                        // 4分音符1つぶんの分割数
-    // タイのつづき：直前の音イベントに拍をたす（小節またぎ対応）
-    const addToPrevNote = (midi, beats) => {
+    let divisions = 1;
+    let partTimeSig = null;
+    const addToPrevNote = (g, midi, beats) => {
       const scan = arr2 => {
         for(let k=arr2.length-1;k>=0;k--){
           if(arr2[k].m!==null){ if(arr2[k].m===midi){ arr2[k].d += beats; return true; } return false; }
         }
         return false;
       };
-      // いまの小節→前の小節の順でさがす
-      if(scan(curArr)) return;
-      for(let mi=measures.length-1; mi>=0; mi--){ if(scan(measures[mi])) return; if(measures[mi].some(e=>e.m!==null)) return; }
+      if(scan(g.cur)) return;
+      for(let mi=g.measures.length-1; mi>=0; mi--){ if(scan(g.measures[mi])) return; if(g.measures[mi].some(e=>e.m!==null)) return; }
     };
-    let curArr = [];
-    let partTimeSig = null;                                   // 拍子（4/4なら4）
     for(const meas of part.querySelectorAll('measure')){
-      const arr = []; curArr = arr;
       const dEl = meas.querySelector('attributes > divisions');
       if(dEl){ const dv = parseInt(dEl.textContent); if(dv>0) divisions = dv; }
       const tsEl = meas.querySelector('attributes > time > beats');
       if(tsEl && !partTimeSig){ partTimeSig = parseInt(tsEl.textContent) || 4; }
+      for(const g of groups.values()) g.cur = [];
       meas.querySelectorAll(':scope > note').forEach(n=>{
         if(n.querySelector('chord')) return;                  // 和音は上の音だけ
+        const key = (n.querySelector(':scope > voice')?.textContent||'1') + '/'
+                  + (n.querySelector(':scope > staff')?.textContent||'1');
+        let g = groups.get(key);
+        if(!g){
+          g = {measures:[], tied:null, cur:[]};
+          while(g.measures.length < barlines.length) g.measures.push([]);   // 途中から現れた声部は前を空でそろえる
+          groups.set(key, g);
+        }
         const durEl = n.querySelector(':scope > duration');
         let beats = durEl ? (parseInt(durEl.textContent)||0)/divisions : 0;
         if(beats<=0) beats = 0.5;                             // 装飾音符など
-        if(n.querySelector('rest')){ prevTiedMidi=null; arr.push({m:null, d:beats}); return; }
+        if(n.querySelector('rest')){ g.tied=null; g.cur.push({m:null, d:beats}); return; }
         const p = n.querySelector('pitch'); if(!p) return;
         const step = p.querySelector('step')?.textContent;
         const oct  = parseInt(p.querySelector('octave')?.textContent);
         const alt  = parseInt(p.querySelector('alter')?.textContent||'0');
         if(!(step in stepMap) || isNaN(oct)) return;
         const midi = (oct+1)*12 + stepMap[step] + alt;
-        // タイでつながった音は「のばす」＝前の音に拍をたす
         const tieStop = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='stop');
-        if(tieStop && prevTiedMidi===midi){ addToPrevNote(midi, beats); return; }
+        if(tieStop && g.tied===midi){ addToPrevNote(g, midi, beats); return; }
         const tieStart = [...n.querySelectorAll('tie')].some(t=>t.getAttribute('type')==='start');
-        prevTiedMidi = tieStart ? midi : null;
-        arr.push({m:midi, d:beats});
+        g.tied = tieStart ? midi : null;
+        g.cur.push({m:midi, d:beats});
       });
-      measures.push(arr);
+      for(const g of groups.values()) g.measures.push(g.cur);
       let fwd=false, bwd=0, endStart=null, endStop=false;
       meas.querySelectorAll(':scope > barline').forEach(bl=>{
         const rep=bl.querySelector('repeat');
@@ -1207,10 +1214,7 @@ function parseMusicXML(xmlText){
           const ty=end.getAttribute('type');
           if(ty==='start') endStart=(end.getAttribute('number')||'').split(/[,\s]+/).map(Number).filter(x=>x>0);
           else if(ty==='stop') endStop=true;
-          /* type="discontinue" は「かっこの線を閉じずに開けたまま描く」という
-             見た目だけの指定。かっこの範囲はここで終わりではないので、閉じない。
-             （Flatの書き出しでよく出てくる。ここを閉じてしまうと、1番かっこが
-               1小節しかないものとして扱われ、くり返しがおかしくなる） */
+          /* type="discontinue" は見た目だけの指定。かっこの範囲はここで終わりではない */
         }
       });
       barlines.push({fwd,bwd,endStart,endStop});
@@ -1219,17 +1223,33 @@ function parseMusicXML(xmlText){
     barlines.forEach(b=>{
       if(b.endStart) activeEnding=b.endStart;
       b.ending=activeEnding;
-      // かっこが閉じたとき、または くり返し記号(:|)を通過したら、かっこの範囲はそこまで
       if(b.endStop || b.bwd) activeEnding=null;
     });
-    const expanded = expandRepeats(measures, barlines);
-    const flat = expanded.flat().filter(e=>e.m!==null).map(e=>e.m);   // 音だけ（休符除く）
-    if(flat.length){
+    // 平均の高さで「上→下」の順に並べる（2声部なら 上のパート／下のパート）
+    const stats = [...groups.values()].map(g=>{
+      const notes = g.measures.flat().filter(e=>e.m!==null);
+      return {g, n:notes.length, avg: notes.length ? notes.reduce((s2,e)=>s2+e.m,0)/notes.length : -1};
+    }).filter(st=>st.n>0).sort((a,b)=>b.avg-a.avg);
+    stats.forEach((st,gi)=>{
+      const expanded = expandRepeats(st.g.measures, barlines);
+      const flat = expanded.flat().filter(e=>e.m!==null).map(e=>e.m);
+      if(!flat.length) return;
       const ts0 = partTimeSig || 4;
-      const firstBeats = expanded[0].reduce((s,e)=>s+e.d, 0);
-      const pickup = (firstBeats > 0 && firstBeats < ts0) ? ts0 - firstBeats : 0;   // 弱起のぶん
-      candidates.push({name: pname || ('パート'+(candidates.length+1)), measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: measures.length});
-    }
+      const firstBeats = expanded[0].reduce((s2,e)=>s2+e.d, 0);
+      const pickup = (firstBeats > 0 && firstBeats < ts0) ? ts0 - firstBeats : 0;
+      /* 変換ミスの検出：拍子より長い小節（PDF/MIDI変換で壊れたファイルの特徴） */
+      const badMeasures = [];
+      st.g.measures.forEach((mm,mi)=>{
+        const total = mm.reduce((s2,e)=>s2+e.d, 0);
+        if(total > ts0 + 0.02) badMeasures.push(mi+1);
+      });
+      let nm;
+      const base = pname || ('パート'+(candidates.length+1));
+      if(stats.length===1) nm = base;
+      else if(stats.length===2) nm = (pname ? pname+'・' : '') + (gi===0 ? '上のパート' : '下のパート');
+      else nm = (pname ? pname+'・' : '') + '声部'+(gi+1);
+      candidates.push({name: nm, measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: st.g.measures.length, badMeasures});
+    });
   }
   if(candidates.length===0) throw new Error('nonotes');
   return {title, parts: candidates};
@@ -1244,10 +1264,12 @@ function fitShiftFor(flat, instrument){
   }
   return best;
 }
-function applyPart(title, part){
+function applyPart(title, part, bundle){
   const fit = fitShiftFor(part.flat, state.instrument);
   const evt = part.measures.map(mm=>mm.map(e=>({m: e.m===null?null:e.m+fit.shift, d:e.d})));
   setSong(title, evt, part.measures);
+  if(bundle!==undefined){ state.loadedSong = bundle; }
+  updatePartSwitchBtn();
   state.timeSig = part.timeSig || 4;
   state.beatOffset = part.pickup || 0;
   if(part.rawMeasures && part.measures.length > part.rawMeasures){
@@ -1255,8 +1277,30 @@ function applyPart(title, part){
     showToast('🔁 くり返しをひらきました（楽譜 '+part.rawMeasures+'小節 → えんそう '+part.measures.length+'小節）', 3600);
   }
   if(fit.cov<1) showToast('いまの楽器の音域にない音がふくまれています（スキップできます）');
+  if(part.badMeasures && part.badMeasures.length){
+    const bm = part.badMeasures.slice(0,3).join('・');
+    showToast('⚠️ '+bm+'小節目'+(part.badMeasures.length>3?'など':'')+'の拍が拍子とあいません。PDFやMIDIからの変換ではなく、Flatから直接「MusicXML」で書き出したファイルだと直ることが多いです', 7000);
+  }
 }
-function openPartPicker(title, parts){
+/* 複数パートの楽譜を読んだあと、いつでもパートを切りかえられるボタン */
+function updatePartSwitchBtn(){
+  let b = $('partSwitchBtn');
+  if(!b){
+    b = document.createElement('button');
+    b.id = 'partSwitchBtn'; b.className = 'file-btn';
+    b.textContent = '🎼 パートをかえる';
+    b.style.display = 'none';
+    $('fileBtn').insertAdjacentElement('afterend', b);
+    b.addEventListener('click', ()=>{
+      const ls = state.loadedSong;
+      if(ls && ls.parts && ls.parts.length>1) openPartPicker(ls.title, ls.parts, ls);
+    });
+  }
+  const ls = state.loadedSong;
+  b.style.display = (ls && ls.parts && ls.parts.length>1) ? '' : 'none';
+}
+function openPartPicker(title, parts, bundle){
+  bundle = bundle || {title, parts};
   let ov=$('partOverlay');
   if(!ov){
     ov=document.createElement('div'); ov.id='partOverlay';
@@ -1270,7 +1314,7 @@ function openPartPicker(title, parts){
     const d=document.createElement('div'); d.className='pItem';
     d.innerHTML=`<div class="t"><b>🎵 ${p.name.replace(/[<>&]/g,'')}</b><small>${p.flat.length}音・いまの楽器で ${cov}% えんそう可</small></div>`;
     const b=document.createElement('button'); b.className='use'; b.textContent='このパート';
-    b.addEventListener('click', ()=>{ ov.classList.remove('open'); applyPart(title, p); });
+    b.addEventListener('click', ()=>{ ov.classList.remove('open'); applyPart(title, p, bundle); });
     d.appendChild(b); list.appendChild(d);
   });
   ov.classList.add('open');
@@ -1295,9 +1339,14 @@ async function loadFile(file){
       xmlText = await file.text();
     }
     const parsed = parseMusicXML(xmlText);
-    const title = parsed.title || file.name.replace(/\.(mxl|xml|musicxml)$/i,'');
-    if(parsed.parts.length===1){ applyPart(title, parsed.parts[0]); }
-    else{ openPartPicker(title, parsed.parts); }
+    /* 変換ツールの初期タイトル（music21Fragment等）ならファイル名を使う */
+    let title = (parsed.title||'').trim();
+    if(!title || /^(music21\s*fragment|untitled|title|score|無題|新しいスコア)$/i.test(title)){
+      title = file.name.replace(/\.(mxl|xml|musicxml)$/i,'');
+    }
+    const bundle = {title, parts: parsed.parts};
+    if(parsed.parts.length===1){ applyPart(title, parsed.parts[0], bundle); }
+    else{ openPartPicker(title, parsed.parts, bundle); }
   }catch(e){
     showToast('楽譜をよみこめませんでした。Flatから MusicXML で書き出したファイルをためしてね');
   }
@@ -1316,6 +1365,8 @@ function setSong(title, measures, raw){
   els.songTitle.textContent = '♪ ' + title;
   const missing = state.notes.filter(m=>!playable(m, state.instrument));
   if(missing.length) showToast('いまの楽器でえんそうできない音が '+missing.length+' こあります（スキップできます）');
+  state.loadedSong = null;                                   // 読み込み曲以外に切りかえたらパート切替は隠す（applyPartがすぐ再設定する）
+  if(typeof updatePartSwitchBtn==='function') updatePartSwitchBtn();
   buildListView();
   restart();
   showToast('「'+title+'」をよみこんだよ！ 🎤マイクスタートでれんしゅう開始');
@@ -1820,9 +1871,19 @@ updateView();
     }
     arr.forEach(function(p,i){
       var d=document.createElement("div"); d.className="pItem";
-      d.innerHTML='<div class="t"><b>🎼 '+esc(p.title||"（無題）")+'</b><small>この端末に保存された曲</small></div>';
+      d.innerHTML='<div class="t"><b>🎼 '+esc(p.title||"（無題）")+'</b><small>この端末に保存された曲（✏️で名前を変えられます）</small></div>';
       var use=document.createElement("button"); use.className="use"; use.textContent="この曲にする";
       use.addEventListener("click", function(){ pick(p); });
+      var ren=document.createElement("button"); ren.className="mini"; ren.textContent="✏️";
+      ren.title="なまえをかえる";
+      ren.addEventListener("click", function(){
+        var nv=prompt("あたらしい曲名を入力してください", p.title||"");
+        if(nv===null) return;
+        nv=nv.replace(/^\s+|\s+$/g,"");
+        if(!nv){ showToast("曲名が空のままだったので、変更しませんでした"); return; }
+        var a=devLoad();
+        if(a[i]){ a[i].title=nv; devSave(a); renderLists(); }
+      });
       var code=document.createElement("button"); code.className="mini"; code.textContent="組み込み用コード";
       code.addEventListener("click", function(){ copyEmbed(p); });
       var del=document.createElement("button"); del.className="mini"; del.textContent="🗑";
@@ -1830,7 +1891,7 @@ updateView();
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(code); d.appendChild(del); dl.appendChild(d);
+      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(del); dl.appendChild(d);
     });
   }
   $("addPresetBtn").addEventListener("click", function(){
