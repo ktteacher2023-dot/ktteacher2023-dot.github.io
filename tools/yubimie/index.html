@@ -588,8 +588,11 @@ function renderFingering(svg, fing){
   for(let i=0;i<7;i++){
     const v = fing.h[i];
     if(i>=5){
-      setHole(q(`hole${i}a`), v>=1?2:0, animate);
-      setHole(q(`hole${i}b`), v===2?2:0, animate);
+      /* 片方だけふさぐ(1)とき：実物を「ふきくちが下」に置くと左右も入れかわるので、
+         ふさぐ側の丸も入れかえる（雨宮先生のご指摘 2026-08） */
+      const flipped = state.flipView==='down';
+      setHole(q(`hole${i}a`), (v===2 || (v===1 && !flipped)) ? 2 : 0, animate);
+      setHole(q(`hole${i}b`), (v===2 || (v===1 && flipped))  ? 2 : 0, animate);
     }else{
       setHole(q(`hole${i}`), v, animate);
     }
