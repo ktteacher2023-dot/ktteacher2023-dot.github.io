@@ -250,7 +250,7 @@
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  <b>v2026.08.24-1（くり返し修正）</b>
+  <b>v2026.08.24-2（くり返し修正）</b>
 </footer>
 
 <script>
@@ -503,9 +503,15 @@ function parseMusicXML(xmlText, fname){
 }
 
 let songMeta=null;
+/* 楽譜の読み取り方を直したときは、この数字を1つ増やす。
+   端末に保存ずみの楽譜は「古い読み取り方の結果」なので、
+   番号が変わっていたら捨てて、読み込み直してもらう。
+   （2026-08-24：くり返し記号の展開を修正したため 1 → 2） */
+const PARSER_VERSION = 2;
 function saveSongToDevice(){
   if(!songMeta) return;
   try{
+    songMeta.pv = PARSER_VERSION;
     const j=JSON.stringify(songMeta);
     if(j.length<3500000){ store.set("utamie_song", j); $("forgetBtn").style.display="inline-block"; }
   }catch(e){}
@@ -1824,6 +1830,12 @@ function restoreSong(){
     if(!j) return;
     const meta=JSON.parse(j);
     if(!meta||!meta.parts||!meta.parts.length) return;
+    // 古い読み取り方で保存された楽譜は使わない（くり返しの展開などが直っていないため）
+    if((meta.pv||1) !== PARSER_VERSION){
+      store.del("utamie_song"); store.del("utamie_part");
+      banner("🔄 アプリを新しくしました。前回の楽譜「"+escapeHtml(meta.title||"")+"」は古い読み取り方で記憶していたので、お手数ですが「楽譜を読み込む」からもう一度読み込んでください。");
+      return;
+    }
     setSong(meta,false);
     $("forgetBtn").style.display="inline-block";
     banner("📂 前回の楽譜「"+escapeHtml(meta.title||"")+"」をこの端末の記憶から開きました。別の曲にするには「楽譜を読み込む」を押してください。");
