@@ -226,7 +226,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません<br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.24-1（くり返し修正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -367,7 +367,10 @@ function parseMusicXML(xmlText, fname){
           if(end){
             const ty=end.getAttribute("type");
             if(ty==="start") endStart=parseNums(end.getAttribute("number"));
-            else endStop=true; // stop / discontinue
+            else if(ty==="stop") endStop=true;
+            /* type="discontinue" は かっこの線を閉じないという見た目だけの指定。
+               かっこの範囲はここで終わりではないので、endStopにしない。
+               （Flat/MuseScoreは1番かっこの途中に discontinue を書くことがある） */
           }
         }else if(tag==="backup"){
           cur-=Number(el.querySelector("duration")?.textContent||0);
@@ -412,7 +415,8 @@ function parseMusicXML(xmlText, fname){
     for(const m of meas){
       if(m.endStart) activeEnding=m.endStart;
       m.ending=activeEnding;
-      if(m.endStop) activeEnding=null;
+      // くり返し線（:|）でも かっこの範囲は終わる
+      if(m.endStop || m.bwd) activeEnding=null;
     }
     // リピート展開(1番・2番カッコ対応、何周目かも記録)
     // ★2巡目以降にn番かっこを読み飛ばした後、周回カウンタ(pass)が1に戻らず
@@ -424,7 +428,9 @@ function parseMusicXML(xmlText, fname){
     let i=0, start=0, pass=1, guard=0;
     while(i<meas.length && guard++<5000){
       const m=meas[i];
-      if(m.fwd) start=i;
+      // 新しいくり返しの始まり（|:）に入ったら戻り先にして周回をリセット。
+      // 戻ってきて同じ小節を通るときはリセットしない（周回カウンタが壊れるため）
+      if(m.fwd && i!==start){ start=i; pass=1; }
       if(m.ending && !m.ending.includes(pass)){ i++; continue; }
       order.push({idx:i, pass});
       if(m.bwd && pass<m.bwd){ pass++; i=start; continue; }
