@@ -458,7 +458,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.08.22-16（運指修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.08.26-1（配布リンク機能）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -1865,7 +1865,10 @@ updateView();
       d.innerHTML='<div class="t"><b>'+(p.icon||"🎵")+' '+esc(p.title)+'</b><small>'+esc(p.origin||"")+'・パブリックドメイン</small></div>';
       var b=document.createElement("button"); b.className="use"; b.textContent="この曲にする";
       b.addEventListener("click", function(){ pick(p); });
-      d.appendChild(b); bl.appendChild(d);
+      var bl2=document.createElement("button"); bl2.className="mini"; bl2.textContent="🔗";
+      bl2.title="この曲が入った状態でひらくURLをコピー";
+      bl2.addEventListener("click", function(){ makeSongLink(p); });
+      d.appendChild(b); d.appendChild(bl2); bl.appendChild(d);
     });
     var dl=$("deviceList"); dl.innerHTML="";
     var arr=devLoad();
@@ -1889,12 +1892,15 @@ updateView();
       });
       var code=document.createElement("button"); code.className="mini"; code.textContent="組み込み用コード";
       code.addEventListener("click", function(){ copyEmbed(p); });
+      var lnk=document.createElement("button"); lnk.className="mini"; lnk.textContent="🔗 はいふリンク";
+      lnk.title="この曲が入った状態でひらくURLをコピー";
+      lnk.addEventListener("click", function(){ makeSongLink(p); });
       var del=document.createElement("button"); del.className="mini"; del.textContent="🗑";
       del.addEventListener("click", function(){
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(del); dl.appendChild(d);
+      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
     });
   }
   $("addPresetBtn").addEventListener("click", function(){
@@ -1917,6 +1923,41 @@ updateView();
     document.body.appendChild(ta); ta.select();
     try{ document.execCommand("copy"); }catch(e){}
     document.body.removeChild(ta);
+  }
+  /* ====== ②b 配布リンク（曲入りリンク） ====== */
+  /* 学期ごとにフォルダを変えたら、この定数も新しい置き場所に書き換えること */
+  var HOSTED_URL="https://ktteacher.net/tools/yubimie/full-2026a-qo55p9b9/yubimie-full.html";
+  function b64uEnc(obj){
+    var json=JSON.stringify(obj);
+    var bytes=new TextEncoder().encode(json), bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function b64uDec(str){
+    str=String(str).replace(/-/g,"+").replace(/_/g,"/");
+    while(str.length%4) str+="=";
+    var bin=atob(str), bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  function makeSongLink(p){
+    var base=(location.protocol==="http:"||location.protocol==="https:") ? location.href.split("#")[0] : HOSTED_URL;
+    var url=base+"#s="+b64uEnc({v:1,title:p.title,measures:p.measures});
+    var done=function(){ alert("🔗 配布リンクをコピーしました。\nロイロノートや Classroom、学級のページに貼ると、ひらいた人はこの曲が入った状態でゆびミエが開きます。\n（URLがとても長いのは曲のデータが入っているためです。そのまま貼って大丈夫です）"); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(done, function(){ fb(url); done(); });
+    }else{ fb(url); done(); }
+  }
+  function loadFromHash(){
+    try{
+      var m=location.hash.match(/[#&]s=([A-Za-z0-9\-_]+)/);
+      if(!m) return false;
+      var d=b64uDec(m[1]);
+      if(!d || !d.title || !d.measures || !d.measures.length) return false;
+      setSong(d.title, d.measures.map(function(x){return x.slice();}));
+      showToast("🔗 「"+d.title+"」をひらきました");
+      return true;
+    }catch(e){ return false; }
   }
   /* ====== ③ けっかカード保存 ====== */
   $("cardBtn").addEventListener("click", function(){
@@ -1960,6 +2001,8 @@ updateView();
   document.addEventListener("fullscreenchange", function(){
     $("fsBtn").textContent=document.fullscreenElement?"⛶ もどす":"⛶ 全画面";
   });
+  /* 起動時: 配布リンク(#s=…)で開かれたら、その曲を読み込む */
+  loadFromHash();
 })();
 </script>
 </body>

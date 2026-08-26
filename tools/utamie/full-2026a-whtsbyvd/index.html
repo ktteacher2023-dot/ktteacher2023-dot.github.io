@@ -226,7 +226,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.24-2（くり返し修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.26-1（配布リンク機能）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -1966,7 +1966,10 @@ restoreSong();
       d.innerHTML='<div class="t"><b>🎵 '+escapeHtml(p.title)+'</b><small>'+escapeHtml(p.origin||"")+'・パブリックドメイン</small></div>';
       var b=document.createElement("button"); b.className="blue"; b.textContent="この曲にする";
       b.addEventListener("click", function(){ pickSong(p, false); });
-      d.appendChild(b); bl.appendChild(d);
+      var bl2=document.createElement("button"); bl2.className="mini"; bl2.textContent="🔗";
+      bl2.title="この曲が入った状態でひらくURLをコピー";
+      bl2.addEventListener("click", function(){ makeSongLink(p); });
+      d.appendChild(b); d.appendChild(bl2); bl.appendChild(d);
     });
     var dl=$("deviceList"); dl.innerHTML="";
     var arr=devLoad();
@@ -1980,13 +1983,16 @@ restoreSong();
       use.addEventListener("click", function(){ pickSong(p, false); });
       var code=document.createElement("button"); code.className="mini"; code.textContent="組み込み用コード";
       code.addEventListener("click", function(){ copyEmbed(p); });
+      var lnk=document.createElement("button"); lnk.className="mini"; lnk.textContent="🔗 はいふリンク";
+      lnk.title="この曲が入った状態でひらくURLをコピー";
+      lnk.addEventListener("click", function(){ makeSongLink(p); });
       var del=document.createElement("button"); del.className="mini"; del.textContent="🗑";
       del.title="この端末のリストから消す";
       del.addEventListener("click", function(){
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(code); d.appendChild(del); dl.appendChild(d);
+      d.appendChild(use); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
     });
   }
 
@@ -2012,6 +2018,63 @@ restoreSong();
     document.body.appendChild(ta); ta.select();
     try{ document.execCommand("copy"); }catch(e){}
     document.body.removeChild(ta);
+  }
+
+  /* ====== ②b 配布リンク（曲入りリンク） ====== */
+  /* 学期ごとにフォルダを変えたら、この定数も新しい置き場所に書き換えること */
+  var HOSTED_URL="https://ktteacher.net/tools/utamie/full-2026a-whtsbyvd/";
+  function bytesToB64u(bytes){
+    var bin=""; for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function b64uToBytes(str){
+    str=String(str).replace(/-/g,"+").replace(/_/g,"/");
+    while(str.length%4) str+="=";
+    var bin=atob(str), bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    return bytes;
+  }
+  function encodeSong(obj){
+    var bytes=new TextEncoder().encode(JSON.stringify(obj));
+    if(window.CompressionStream){
+      try{
+        var cs=new CompressionStream("deflate-raw");
+        var stream=new Blob([bytes]).stream().pipeThrough(cs);
+        return new Response(stream).arrayBuffer().then(function(buf){
+          return "z."+bytesToB64u(new Uint8Array(buf));
+        }).catch(function(){ return "j."+bytesToB64u(bytes); });
+      }catch(e){}
+    }
+    return Promise.resolve("j."+bytesToB64u(bytes));
+  }
+  function decodeSong(tok){
+    var kind=tok.slice(0,2), bytes=b64uToBytes(tok.slice(2));
+    if(kind==="z."){
+      if(!window.DecompressionStream) return Promise.reject(new Error("この端末のブラウザが古いため、このリンクを開けませんでした"));
+      var ds=new DecompressionStream("deflate-raw");
+      var stream=new Blob([bytes]).stream().pipeThrough(ds);
+      return new Response(stream).text().then(function(t){ return JSON.parse(t); });
+    }
+    return Promise.resolve(JSON.parse(new TextDecoder().decode(bytes)));
+  }
+  function makeSongLink(p){
+    var obj={v:1, title:p.title, bpm:p.bpm, parts:p.parts};
+    encodeSong(obj).then(function(tok){
+      var base=(location.protocol==="http:"||location.protocol==="https:") ? location.href.split("#")[0] : HOSTED_URL;
+      var url=base+"#s="+tok;
+      var done=function(){ alert("🔗 配布リンクをコピーしました。\nロイロノートや Classroom、学級のページに貼ると、ひらいた人はこの曲が入った状態でうたミエが開きます。\n（URLがとても長いのは曲のデータが入っているためです。そのまま貼って大丈夫です）"); };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(done, function(){ fallbackCopy(url); done(); });
+      }else{ fallbackCopy(url); done(); }
+    });
+  }
+  function loadFromHash(){
+    var m=location.hash.match(/[#&]s=([A-Za-z0-9.\-_]+)/);
+    if(!m) return;
+    decodeSong(m[1]).then(function(d){
+      if(!d || !d.title || !d.parts || !d.parts.length) return;
+      setSong(JSON.parse(JSON.stringify({title:d.title, bpm:d.bpm||100, parts:d.parts})), false);
+    }).catch(function(){ /* 壊れたリンクは無視して普通に起動 */ });
   }
 
   /* ====== ③ けっかカード保存（いま表示中の結果をPNGに） ====== */
@@ -2081,6 +2144,8 @@ restoreSong();
   document.addEventListener("fullscreenchange", function(){
     $("fsBtn").textContent=document.fullscreenElement?"⛶ もどす":"⛶ 全画面";
   });
+  /* 起動時: 配布リンク(#s=…)で開かれたら、その曲を読み込む */
+  loadFromHash();
 })();
 </script>
 </body>
