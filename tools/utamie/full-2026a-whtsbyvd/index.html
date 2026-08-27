@@ -226,7 +226,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.26-2（配布リンク機能・内蔵曲の整理）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.26-3（曲名の変更・タイトル自動補正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -334,7 +334,11 @@ $("fileInput").addEventListener("change", async e=>{
 function parseMusicXML(xmlText, fname){
   const doc=new DOMParser().parseFromString(xmlText,"application/xml");
   if(doc.querySelector("parsererror")) throw new Error("XMLとして読み取れませんでした");
-  let title=(doc.querySelector("work-title, movement-title")||{}).textContent || fname;
+  let title=((doc.querySelector("work-title, movement-title")||{}).textContent||"").trim();
+  /* 変換ツールの初期タイトル（Music21 Fragment等）ならファイル名を使う */
+  if(!title || /^(music21\s*fragment|untitled|title|score|無題|新しいスコア)$/i.test(title)){
+    title = (fname||"").replace(/\.(mxl|xml|musicxml)$/i,"") || "（無題）";
+  }
   const ts=doc.querySelector("sound[tempo]");
   const bpm=Number(ts?.getAttribute("tempo"))||100;
   const nameOf={};
@@ -1970,9 +1974,19 @@ restoreSong();
     }
     arr.forEach(function(p,i){
       var d=document.createElement("div"); d.className="pItem";
-      d.innerHTML='<div class="t"><b>🎼 '+escapeHtml(p.title||"（無題）")+'</b><small>この端末に保存された曲</small></div>';
+      d.innerHTML='<div class="t"><b>🎼 '+escapeHtml(p.title||"（無題）")+'</b><small>この端末に保存された曲（✏️で名前を変えられます）</small></div>';
       var use=document.createElement("button"); use.className="blue"; use.textContent="この曲にする";
       use.addEventListener("click", function(){ pickSong(p, false); });
+      var ren=document.createElement("button"); ren.className="mini"; ren.textContent="✏️";
+      ren.title="なまえをかえる";
+      ren.addEventListener("click", function(){
+        var nv=prompt("あたらしい曲名を入力してください", p.title||"");
+        if(nv===null) return;
+        nv=nv.replace(/^\s+|\s+$/g,"");
+        if(!nv){ alert("曲名が空のままだったので、変更しませんでした"); return; }
+        var a=devLoad();
+        if(a[i]){ a[i].title=nv; devSave(a); renderLists(); }
+      });
       var code=document.createElement("button"); code.className="mini"; code.textContent="組み込み用コード";
       code.addEventListener("click", function(){ copyEmbed(p); });
       var lnk=document.createElement("button"); lnk.className="mini"; lnk.textContent="🔗 はいふリンク";
@@ -1984,7 +1998,7 @@ restoreSong();
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
+      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
     });
   }
 
