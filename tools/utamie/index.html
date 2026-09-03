@@ -239,6 +239,7 @@
 
 <div id="result">
   <div id="scoreBig"></div>
+  <div id="scoreWhen" style="font-size:.8rem;color:var(--sub);margin:2px 0 4px"></div>
   <div id="scoreDetail"></div>
   <div id="scoreMsg"></div>
   <div id="scoreAsk"></div>
@@ -250,7 +251,7 @@
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  <b>v2026.08.24-2（くり返し修正）</b>
+  <b>v2026.09.04-1（8分の6拍子に対応・結果に日時表示）</b>
 </footer>
 
 <script>
@@ -499,7 +500,15 @@ function parseMusicXML(xmlText, fname){
     }
   }
   if(!parts.length) throw new Error("音符が見つかりませんでした");
-  return {title, bpm, parts};
+  /* 8分の6・8分の9・8分の12 は付点4分(1.5拍)を1拍として数える */
+  let beatUnit=1;
+  const timeEl=doc.querySelector("time");
+  if(timeEl){
+    const bt=Number(timeEl.querySelector("beat-type")?.textContent||4);
+    const bts=Number(timeEl.querySelector("beats")?.textContent||4);
+    if(bt===8 && bts%3===0 && bts>=6) beatUnit=1.5;
+  }
+  return {title, bpm, parts, beatUnit};
 }
 
 let songMeta=null;
@@ -539,7 +548,7 @@ function applyPart(i){
   stopAll();
   store.set("utamie_part", String(i));
   const p=songMeta.parts[i];
-  song={title:songMeta.title, bpm:songMeta.bpm, notes:p.notes,
+  song={title:songMeta.title, bpm:songMeta.bpm, beatUnit:songMeta.beatUnit||1, notes:p.notes,
         measStarts:p.measStarts||[0],
         totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0),
         keyFifths:p.keyFifths||0};
@@ -982,9 +991,10 @@ function scheduleMetronome(when){
     const mStart=ms[i]*beatSec();
     const mEnd=(i+1<ms.length?ms[i+1]:total)*beatSec();
     if(mEnd<=sessFrom||mStart>=sessTo) continue;
-    const beats=Math.max(1,Math.round((mEnd-mStart)/beatSec()));
+    const unit=(song.beatUnit||1)*beatSec();  // 8分の6などは付点4分=1.5拍を1拍として鳴らす
+    const beats=Math.max(1,Math.round((mEnd-mStart)/unit));
     for(let k=0;k<beats;k++){
-      const tAbs=mStart+k*beatSec();
+      const tAbs=mStart+k*unit;
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
       if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
@@ -1008,7 +1018,7 @@ function scheduleCountIn(when,beats){
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
-    const t0=when+i*beatSec();
+    const t0=when+i*((song.beatUnit||1)*beatSec());
     g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     o.connect(g); g.connect(masterGain||ac.destination);
@@ -1134,7 +1144,7 @@ function startSession(withMic){
   const countBeats=4;
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,countBeats);
-  const melodyAt=begin+countBeats*beatSec();
+  const melodyAt=begin+countBeats*((song.beatUnit||1)*beatSec());
   if(!withMic||$("guideChk").checked) scheduleMelody(melodyAt);
   scheduleMetronome(melodyAt);
   startAt=melodyAt;
@@ -1351,7 +1361,7 @@ $("echoBtn").addEventListener("click",async()=>{
   const ac=getAudio();
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,4);
-  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*beatSec()};
+  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*((song.beatUnit||1)*beatSec())};
   echoLoop();
 });
 function echoLoop(){
@@ -1504,6 +1514,7 @@ function finishBreath(){
   if(!song) $("emptyMsg").style.display="flex";
   if(song) draw(viewOffset);
   $("scoreBig").innerHTML=dur.toFixed(1)+"<small> 秒</small>";
+  $("scoreWhen").textContent=whenLabel();
   $("scoreDetail").textContent="こえをのばせた時間 ／ 高さの安定 "+stars(pStar)+" ／ 音量の安定 "+stars(vStar);
   let msg;
   if(dur>=12&&pStar>=2&&vStar>=2) msg="長くてとても安定したロングトーン!息のささえがしっかりできているサインです 🎉";
@@ -1738,8 +1749,21 @@ function finishSing(){
   stopAll();
   showResult();
 }
+function whenLabel(){
+  const d=new Date();
+  const w=["日","月","火","水","木","金","土"][d.getDay()];
+  const hh=String(d.getHours()).padStart(2,"0"), mm=String(d.getMinutes()).padStart(2,"0");
+  let s=d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"（"+w+"）"+hh+":"+mm;
+  if(song&&song.title){
+    s+="　♪ "+song.title;
+    const sel=$("partSel");
+    if(songMeta&&songMeta.parts&&songMeta.parts.length>1&&sel&&sel.selectedIndex>=0) s+="（"+songMeta.parts[sel.selectedIndex].name+"）";
+  }
+  return s;
+}
 function showResult(){
   const {score,hits,total}=lastResult;
+  $("scoreWhen").textContent=whenLabel();
   const [a,b]=rangeMeas();
   const rangeLabel=isFullRange()?"":"(小節"+a+"〜"+b+")";
   $("scoreBig").innerHTML=score+"<small> %</small>";

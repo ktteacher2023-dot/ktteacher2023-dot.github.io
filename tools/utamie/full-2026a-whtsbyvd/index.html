@@ -214,6 +214,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 <div id="result">
   <div id="scoreBig"></div>
+  <div id="scoreWhen" style="font-size:.8rem;color:var(--sub);margin:2px 0 4px"></div>
   <div id="scoreDetail"></div>
   <div id="scoreMsg"></div>
   <div id="scoreAsk"></div>
@@ -226,7 +227,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.08.26-3（曲名の変更・タイトル自動補正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.04-1（8分の6拍子に対応・結果に日時表示）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -482,7 +483,15 @@ function parseMusicXML(xmlText, fname){
     }
   }
   if(!parts.length) throw new Error("音符が見つかりませんでした");
-  return {title, bpm, parts};
+  /* 8分の6・8分の9・8分の12 は付点4分(1.5拍)を1拍として数える */
+  let beatUnit=1;
+  const timeEl=doc.querySelector("time");
+  if(timeEl){
+    const bt=Number(timeEl.querySelector("beat-type")?.textContent||4);
+    const bts=Number(timeEl.querySelector("beats")?.textContent||4);
+    if(bt===8 && bts%3===0 && bts>=6) beatUnit=1.5;
+  }
+  return {title, bpm, parts, beatUnit};
 }
 
 let songMeta=null;
@@ -522,7 +531,7 @@ function applyPart(i){
   stopAll();
   store.set("utamie_part", String(i));
   const p=songMeta.parts[i];
-  song={title:songMeta.title, bpm:songMeta.bpm, notes:p.notes,
+  song={title:songMeta.title, bpm:songMeta.bpm, beatUnit:songMeta.beatUnit||1, notes:p.notes,
         measStarts:p.measStarts||[0],
         totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0),
         keyFifths:p.keyFifths||0};
@@ -966,9 +975,10 @@ function scheduleMetronome(when){
     const mStart=ms[i]*beatSec();
     const mEnd=(i+1<ms.length?ms[i+1]:total)*beatSec();
     if(mEnd<=sessFrom||mStart>=sessTo) continue;
-    const beats=Math.max(1,Math.round((mEnd-mStart)/beatSec()));
+    const unit=(song.beatUnit||1)*beatSec();  // 8分の6などは付点4分=1.5拍を1拍として鳴らす
+    const beats=Math.max(1,Math.round((mEnd-mStart)/unit));
     for(let k=0;k<beats;k++){
-      const tAbs=mStart+k*beatSec();
+      const tAbs=mStart+k*unit;
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
       if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
@@ -992,7 +1002,7 @@ function scheduleCountIn(when,beats){
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
-    const t0=when+i*beatSec();
+    const t0=when+i*((song.beatUnit||1)*beatSec());
     g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     o.connect(g); g.connect(masterGain||ac.destination);
@@ -1118,7 +1128,7 @@ function startSession(withMic){
   const countBeats=4;
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,countBeats);
-  const melodyAt=begin+countBeats*beatSec();
+  const melodyAt=begin+countBeats*((song.beatUnit||1)*beatSec());
   if(!withMic||$("guideChk").checked) scheduleMelody(melodyAt);
   scheduleMetronome(melodyAt);
   startAt=melodyAt;
@@ -1335,7 +1345,7 @@ $("echoBtn").addEventListener("click",async()=>{
   const ac=getAudio();
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,4);
-  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*beatSec()};
+  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*((song.beatUnit||1)*beatSec())};
   echoLoop();
 });
 function echoLoop(){
@@ -1488,6 +1498,7 @@ function finishBreath(){
   if(!song) $("emptyMsg").style.display="flex";
   if(song) draw(viewOffset);
   $("scoreBig").innerHTML=dur.toFixed(1)+"<small> 秒</small>";
+  $("scoreWhen").textContent=whenLabel();
   $("scoreDetail").textContent="こえをのばせた時間 ／ 高さの安定 "+stars(pStar)+" ／ 音量の安定 "+stars(vStar);
   let msg;
   if(dur>=12&&pStar>=2&&vStar>=2) msg="長くてとても安定したロングトーン!息のささえがしっかりできているサインです 🎉";
@@ -1722,8 +1733,21 @@ function finishSing(){
   stopAll();
   showResult();
 }
+function whenLabel(){
+  const d=new Date();
+  const w=["日","月","火","水","木","金","土"][d.getDay()];
+  const hh=String(d.getHours()).padStart(2,"0"), mm=String(d.getMinutes()).padStart(2,"0");
+  let s=d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"（"+w+"）"+hh+":"+mm;
+  if(song&&song.title){
+    s+="　♪ "+song.title;
+    const sel=$("partSel");
+    if(songMeta&&songMeta.parts&&songMeta.parts.length>1&&sel&&sel.selectedIndex>=0) s+="（"+songMeta.parts[sel.selectedIndex].name+"）";
+  }
+  return s;
+}
 function showResult(){
   const {score,hits,total}=lastResult;
+  $("scoreWhen").textContent=whenLabel();
   const [a,b]=rangeMeas();
   const rangeLabel=isFullRange()?"":"(小節"+a+"〜"+b+")";
   $("scoreBig").innerHTML=score+"<small> %</small>";
@@ -1950,8 +1974,14 @@ restoreSong();
   $("presetClose").addEventListener("click", closeModal);
   ov.addEventListener("click", function(e){ if(e.target===ov) closeModal(); });
 
+  /* 曲データの受け渡し用（拍子の単位 beatUnit を落とさない） */
+  function songPayload(meta){
+    var o={title:meta.title, bpm:meta.bpm, parts:meta.parts};
+    if(meta.beatUnit) o.beatUnit=meta.beatUnit;
+    return o;
+  }
   function pickSong(meta, save){
-    setSong(JSON.parse(JSON.stringify({title:meta.title,bpm:meta.bpm,parts:meta.parts})), save!==false);
+    setSong(JSON.parse(JSON.stringify(songPayload(meta))), save!==false);
     closeModal();
   }
 
@@ -2006,13 +2036,13 @@ restoreSong();
     if(!songMeta){ alert("先に「📄 楽譜を読み込む」で曲を開いてください"); return; }
     var arr=devLoad();
     if(arr.some(function(p){return p.title===songMeta.title;}) && !confirm("同じ名前の曲がすでにあります。もうひとつ追加しますか?")) return;
-    arr.push({title:songMeta.title, bpm:songMeta.bpm, parts:songMeta.parts});
+    arr.push(songPayload(songMeta));
     devSave(arr); renderLists();
   });
 
   /* ====== ② 組み込み用コードのコピー ====== */
   function copyEmbed(p){
-    var obj={title:p.title, origin:"", bpm:p.bpm, parts:p.parts};
+    var obj=songPayload(p); obj.origin="";
     var txt=",\n"+JSON.stringify(obj);
     var done=function(){ alert("組み込み用コードをコピーしました。\nutamie-full.html の PRESETS 配列の最後（★印のコメントの上）に貼り付けて保存してください。"); };
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -2064,7 +2094,7 @@ restoreSong();
     return Promise.resolve(JSON.parse(new TextDecoder().decode(bytes)));
   }
   function makeSongLink(p){
-    var obj={v:1, title:p.title, bpm:p.bpm, parts:p.parts};
+    var obj=songPayload(p); obj.v=1;
     encodeSong(obj).then(function(tok){
       var base=(location.protocol==="http:"||location.protocol==="https:") ? location.href.split("#")[0] : HOSTED_URL;
       var url=base+"#s="+tok;
@@ -2079,7 +2109,9 @@ restoreSong();
     if(!m) return;
     decodeSong(m[1]).then(function(d){
       if(!d || !d.title || !d.parts || !d.parts.length) return;
-      setSong(JSON.parse(JSON.stringify({title:d.title, bpm:d.bpm||100, parts:d.parts})), false);
+      var meta={title:d.title, bpm:d.bpm||100, parts:d.parts};
+      if(d.beatUnit) meta.beatUnit=d.beatUnit;
+      setSong(JSON.parse(JSON.stringify(meta)), false);
     }).catch(function(){ /* 壊れたリンクは無視して普通に起動 */ });
   }
 
@@ -2104,7 +2136,7 @@ restoreSong();
     g.fillText(title, W/2, 165);
     var d=new Date();
     g.font="18px "+FONT;
-    g.fillText(d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate(), W/2, 195);
+    g.fillText(d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"), W/2, 195);
     // スコア（画面の表示をそのまま写す）
     var big=($("scoreBig").textContent||"").trim();
     g.fillStyle="#FF7A59"; g.font="bold 110px "+FONT;
@@ -2120,7 +2152,7 @@ restoreSong();
     g.font="16px "+FONT; g.fillStyle="#8A99A3";
     g.fillText("© けいてぃの音楽ツールズ", W/2, H-75);
     var a=document.createElement("a");
-    a.download="utamie_card_"+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+".png";
+    a.download="utamie_card_"+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"_"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+".png";
     a.href=c.toDataURL("image/png");
     a.click();
   });
