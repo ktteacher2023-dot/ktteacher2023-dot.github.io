@@ -227,7 +227,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.04-1（8分の6拍子の修正・地球星歌の追加・結果に日時表示）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.05-1（8分の6拍子の修正・地球星歌の追加・結果に日時表示）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -2040,7 +2040,17 @@ restoreSong();
       d.innerHTML='<div class="t"><b>🎼 '+escapeHtml(p.title||"（無題）")+'</b><small>この端末に保存された曲</small></div>';
       var use=document.createElement("button"); use.className="blue"; use.textContent="この曲にする";
       use.addEventListener("click", function(){ pickSong(p, false); });
+      var ren2=document.createElement("button"); ren2.className="mini"; ren2.textContent="✏️";
+      ren2.title="曲名をかえる（配布リンク・結果カードにも反映されます）";
+      ren2.addEventListener("click", function(){
+        var nv=prompt("曲名を入力してください", p.title||"");
+        if(nv===null) return;
+        nv=nv.replace(/^\s+|\s+$/g,"");
+        if(!nv){ alert("曲名が空のままだったので、変更しませんでした"); return; }
+        var a=devLoad(); if(a[i]){ a[i].title=nv; devSave(a); } renderLists();
+      });
       var code=document.createElement("button"); code.className="mini"; code.textContent="組み込み用コード";
+      code.title="ファイル本体（HTML）に曲を焼き込む先生向け。ふだんは使いません";
       code.addEventListener("click", function(){ copyEmbed(p); });
       var lnk=document.createElement("button"); lnk.className="mini"; lnk.textContent="🔗 はいふリンク";
       lnk.title="この曲が入った状態でひらくURLをコピー";
@@ -2051,7 +2061,7 @@ restoreSong();
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
+      d.appendChild(use); d.appendChild(ren2); d.appendChild(lnk); d.appendChild(code); d.appendChild(del); dl.appendChild(d);
     });
   }
 
