@@ -179,6 +179,10 @@
     <option value="A">A 最後に向かってだんだん盛り上がる</option>
     <option value="B">B 2人で会話している</option>
     <option value="C">C 2人が競走している</option>
+    <option value="J">喜（うれしい）</option>
+    <option value="D">怒（おこっている）</option>
+    <option value="S">哀（かなしい）</option>
+    <option value="R">楽（たのしい）</option>
     <option value="X">自分たちで考えた</option>
   </select>
   <input type="text" id="imgTxt" placeholder="どんな音楽？（自由に）" maxlength="30" style="display:none">
@@ -196,7 +200,7 @@
   <section class="stage" id="stage"></section>
 </main>
 
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-11</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-12</footer>
 
 <div id="toast"></div>
 <canvas id="spark"></canvas>
@@ -277,7 +281,7 @@ const RCARDS=[   // 教科書「リズムパターンの例」a〜f（8分スロ
   {tag:"e", name:"♩♩♪♩♪", p:[[0,2],[2,2],[4,1],[5,2],[7,1]]},
   {tag:"f", name:"𝄽♩𝄽♫", p:[[2,2],[6,1],[7,1]]}
 ];
-const IMGS={A:"最後に向かってだんだん盛り上がる音楽",B:"2人で会話しているような音楽",C:"2人が競走しているような音楽",X:"自分たちで考えたイメージ"};
+const IMGS={A:"最後に向かってだんだん盛り上がる音楽",B:"2人で会話しているような音楽",C:"2人が競走しているような音楽",J:"喜（うれしい）",D:"怒（おこっている）",S:"哀（かなしい）",R:"楽（たのしい）",X:"自分たちで考えたイメージ"};
 
 let meas=8;
 let parts={A:[],B:[]};     // note: {s:slot, len, two:0|1, snd:"h"|"f"}
@@ -445,6 +449,11 @@ function adviceFor(s){
   if(img==="A"&&meas===8){ const late=onsets("A",6).size+onsets("B",6).size+onsets("A",7).size+onsets("B",7).size, early=onsets("A",0).size+onsets("B",0).size+onsets("A",1).size+onsets("B",1).size; if(late<=early) return "「だんだん盛り上がる」なら、後半（7・8小節）の音を前半より多くしたり、2人が同じリズムになるところを作ってみよう"; }
   if(img==="B"&&!s.used.includes("掛け合い")) return "「会話」なら、掛け合い（Aが打つときBは休む）を入れると会話らしくなります";
   if(img==="C"&&!s.used.includes("ちがうリズムを重ねる")) return "「競走」なら、ちがうリズムを同時に重ねると競っている感じが出ます";
+  const footN=parts.A.concat(parts.B).filter(n=>n.snd==="f").length, allN=parts.A.length+parts.B.length;
+  if(img==="J"&&!s.used.includes("同じリズムを重ねる")) return "「喜」なら、2人が同じリズムでそろうところを作ると明るくなります。手拍子を多めに";
+  if(img==="D"&&footN<allN*0.3) return "「怒」なら、足踏みを増やしたり、ちがうリズムをぶつけたりすると強さが出ます";
+  if(img==="S"&&allN>meas*6) return "「哀」なら、休みを多くして音を減らすと、静かな感じになります。テンポも下げてみよう";
+  if(img==="R"&&!s.used.includes("掛け合い")) return "「楽」なら、掛け合いや16分音符を入れるとにぎやかになります";
   if(!s.ok) return "課題は「重なり方を2つ以上」。いま使っていない重なり方を、どこか1小節に入れてみよう";
   if(!s.rep&&meas===8) return "反復（同じ小節をくり返す）があると、まとまりが出ます。「前半をコピー」も使えます";
   return "";
