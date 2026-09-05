@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>かさねてリズム フル版｜けいてぃの音楽ツールズ</title>
+<meta name="description" content="手拍子と足踏みで、2人で演奏する8小節のリズムアンサンブルをつくるツール。同じリズムを重ねる・掛け合い・異なるリズムを重ねる、反復・変化・対照が画面で見える。中学校の音楽づくりに。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#33474F; --muted:#7f8f96; --paper:#fffdf8; --line:#e3ddcc;
+    --pa:#4a90e2; --pa-d:#2f6fbf; --pa-bg:#eaf2fc;      /* パートA 青 */
+    --pb:#e0669a; --pb-d:#b83f73; --pb-bg:#fdeaf1;      /* パートB ピンク */
+    --hand:#f2994a; --hand-d:#c96f22;                   /* 手拍子 */
+    --foot:#5fb37a; --foot-d:#3b8a55;                   /* 足踏み */
+    --play:#ff7a59;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{font-family:'M PLUS Rounded 1c',sans-serif;color:var(--ink);background:var(--paper);
+    user-select:none;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  button{font-family:inherit;cursor:pointer;border:none;}
+  header{display:flex;align-items:center;gap:8px;padding:6px 12px;flex:0 0 auto;
+    border-bottom:2px solid #f0ead9;background:var(--paper);z-index:20;flex-wrap:wrap;}
+  .logo{font-weight:800;font-size:clamp(15px,2.2vw,21px);color:var(--pa-d);white-space:nowrap;margin-right:4px;}
+  .sub{font-size:clamp(10px,1.3vw,13px);color:var(--muted);white-space:nowrap;}
+  .spacer{flex:1;}
+  .btn{font-size:clamp(13px,1.6vw,15px);font-weight:800;padding:9px 14px;border-radius:999px;
+    background:#f2ede0;color:var(--ink);min-height:42px;transition:transform .1s,background .15s;display:inline-flex;align-items:center;gap:6px;}
+  .btn:active{transform:scale(.96);}
+  .btn.play{background:var(--play);color:#fff;font-size:clamp(15px,2vw,19px);padding:10px 22px;box-shadow:0 8px 18px -10px rgba(255,122,89,.9);}
+  .btn.play.on{background:#e04f2e;}
+  .btn.ghost{background:transparent;border:2px solid var(--line);}
+  .btn.small{min-height:36px;padding:6px 12px;font-size:13px;}
+  .btn.on{background:var(--pa-d);color:#fff;}
+  .seg{display:inline-flex;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:#fff;}
+  .seg button{background:#fff;color:var(--muted);font-weight:800;padding:8px 13px;min-height:38px;font-size:13.5px;}
+  .seg button.on{background:var(--pa-d);color:#fff;}
+  .seg button.b.on{background:var(--pb-d);}
+  .bar2{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:2px solid #f0ead9;background:#fbf8ef;flex-wrap:wrap;font-size:13px;font-weight:800;color:var(--muted);}
+  .bar2 select{font-family:inherit;font-size:14px;font-weight:800;padding:6px 10px;border-radius:10px;border:2px solid var(--line);background:#fff;color:var(--ink);}
+  .bar2 input[type=text]{font-family:inherit;font-size:14px;padding:6px 10px;border-radius:10px;border:2px solid var(--line);min-width:160px;}
+
+  main{flex:1;display:flex;min-height:0;}
+  aside.palette{flex:0 0 auto;width:clamp(84px,9.5vw,110px);display:flex;flex-direction:column;gap:6px;padding:8px 8px;
+    border-right:2px solid #f0ead9;background:#fbf8ef;overflow-y:auto;}
+  .palette .ttl{font-size:11px;font-weight:800;color:var(--muted);text-align:center;letter-spacing:.1em;margin-top:2px;}
+  .tool{width:100%;min-height:54px;border-radius:16px;background:#fff;border:3px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;color:var(--ink);padding:4px 2px;
+    transition:transform .1s,border-color .15s,background .15s;}
+  .tool .g svg,.cell-note svg,.rcard svg,.rhyrow svg{height:1em;width:auto;vertical-align:-0.15em;fill:currentColor;}
+  .tool .g{font-size:clamp(22px,3.2vw,32px);line-height:1;display:flex;align-items:center;justify-content:center;height:1.1em;}
+  .tool .n{font-size:clamp(10px,1.1vw,12px);color:var(--muted);}
+  .tool.on{border-color:var(--pa-d);background:#eaf2fc;transform:scale(1.04);}
+  .tool.snd.hand.on{border-color:var(--hand-d);background:#fff1e4;}
+  .tool.snd.foot.on{border-color:var(--foot-d);background:#e9f7ee;}
+  .tool.snd .g{font-size:clamp(24px,3.4vw,34px);}
+
+  section.stage{flex:1;overflow:auto;padding:8px 14px 60px;position:relative;}
+  #rcardBar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:2px 0 8px;}
+  #rcardBar .ttl{font-size:12px;font-weight:800;color:var(--muted);margin-right:2px;}
+  .rcard{background:#fff;border:2px solid var(--line);border-radius:12px;padding:4px 10px;font-size:23px;line-height:1;min-height:40px;display:inline-flex;align-items:center;gap:1px;color:var(--ink);}
+  .rcard.on{border-color:var(--play);background:#fff1ec;box-shadow:0 0 0 3px #ffd9cf;}
+  .rcard.add{font-size:13px;font-weight:800;color:var(--muted);}
+  .rcard .tag{font-size:11px;font-weight:800;color:#fff;background:#8a99a3;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;}
+  .rcard.on .tag{background:var(--play);}
+  #rcardBar .hint{font-size:12px;color:var(--muted);}
+
+  .sys{margin-bottom:14px;}
+  .sysgrid{display:grid;grid-template-columns:56px 1fr;grid-template-rows:auto auto auto auto auto;gap:0 6px;}
+  .mhead{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:3px;}
+  .mhead div{font-size:12px;font-weight:800;color:var(--muted);text-align:center;background:#f2ede0;border-radius:8px;padding:3px 0;position:relative;}
+  .mhead div.pick{background:var(--play);color:#fff;cursor:pointer;}
+  .rowlab{display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:18px;border-radius:12px;margin:2px 0;}
+  .rowlab.a{color:var(--pa-d);background:var(--pa-bg);} .rowlab.b{color:var(--pb-d);background:var(--pb-bg);}
+  .rowlab small{font-size:10px;color:var(--muted);font-weight:700;}
+  .cells{position:relative;display:grid;grid-template-columns:repeat(32,1fr);height:clamp(56px,8.5vh,80px);margin:2px 0;border-radius:10px;overflow:hidden;border:2px solid #ddd6c4;}
+  .cells.a{background:#f5f9ff;} .cells.b{background:#fff5f9;}
+  .cell{border-right:1px dashed #eee5d0;position:relative;}
+  .cell.m0{border-left:2px solid #b7b0a0;}
+  .cell.beat{border-right:1px solid #e3ddcc;}
+  .cell.b0::after{content:"";position:absolute;left:2px;top:3px;width:4px;height:4px;border-radius:50%;background:#d9d2bf;}
+  .cell.beat.b0::after{background:#c9c2b0;}
+  .notes{position:absolute;inset:0;pointer-events:none;}
+  .cell-note{position:absolute;top:4px;bottom:4px;border-radius:9px;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;gap:2px;font-size:clamp(11px,1.5vw,15px);box-shadow:0 3px 8px -4px rgba(0,0,0,.4);transition:transform .08s;overflow:hidden;white-space:nowrap;}
+  .cell-note.hand{background:var(--hand);} .cell-note.foot{background:var(--foot);}
+  .cell-note.lit{transform:scale(1.08);filter:brightness(1.18);}
+  .cell-note .g{font-size:.85em;opacity:.9;}
+  .cell-note .n2{font-size:.72em;opacity:.85;}
+  .cell-note.two{padding:0 2px;gap:2px;}
+  .cell-note.two .half{flex:1;height:72%;border-radius:5px;background:rgba(255,255,255,.28);border:1.5px solid rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:.78em;line-height:1;}
+  .head{position:absolute;top:0;bottom:0;width:3px;background:var(--play);box-shadow:0 0 8px var(--play);display:none;z-index:5;pointer-events:none;}
+  .cell.lock{background:repeating-linear-gradient(45deg,#eee 0 6px,#f6f6f6 6px 12px);}
+  .ovrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:2px;}
+  .ovrow div{font-size:12px;font-weight:800;text-align:center;padding:4px 2px;border-radius:8px;min-height:24px;color:var(--muted);}
+  .ovrow .same{background:#e4f1ff;color:#2f6fbf;} .ovrow .call{background:#fff1d6;color:#b8741c;} .ovrow .diff{background:#efe4ff;color:#7a3fb5;} .ovrow .solo{background:#f2ede0;color:#6b7c84;}
+  .formrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:2px;}
+  .formrow div{font-size:12px;font-weight:800;text-align:center;color:var(--muted);min-height:16px;line-height:1.15;}
+  .formrow .rep{color:var(--foot-d);} .formrow .var{color:#c96f22;} .formrow .con{color:#7a3fb5;}
+  .rhyrow{display:grid;grid-template-columns:repeat(16,1fr);font-size:17px;color:var(--ink);text-align:center;line-height:1;padding:1px 0;}
+  .rhyrow .beat{border-right:1px solid transparent;}
+  .rhyrow .beat.m0{border-left:2px solid #b7b0a0;}
+  .rhyrow .beat svg{height:1.05em;}
+  .rhyrow.a{color:var(--pa-d);} .rhyrow.b{color:var(--pb-d);}
+
+  #summary{margin:6px 0 0;padding:8px 12px;background:#fff;border:2px solid var(--line);border-radius:14px;font-size:13px;line-height:1.6;}
+  #summary b{color:var(--pa-d);}
+  #kufuBox{margin-top:8px;background:#fff;border:2px solid var(--line);border-radius:14px;padding:8px 12px;}
+  #kufuBox textarea{width:100%;font-family:inherit;font-size:14px;line-height:1.5;border:2px solid var(--line);border-radius:10px;padding:8px;min-height:70px;resize:vertical;}
+  #kufuBox label{font-size:12.5px;font-weight:800;color:var(--muted);}
+
+  #toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%) translateY(20px);background:rgba(51,71,79,.94);color:#fff;
+    padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50;max-width:92vw;text-align:center;}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+  canvas#spark{position:fixed;inset:0;pointer-events:none;z-index:40;}
+  footer{flex:0 0 auto;font-size:10.5px;color:var(--muted);text-align:center;padding:4px 10px;border-top:1px solid #f0ead9;background:var(--paper);}
+  footer a{color:var(--muted);}
+
+  /* 設定 */
+  #ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:60;}
+  #ov.open{display:flex;}
+  .panel{background:#fff;border-radius:22px;padding:18px 22px;width:min(640px,94vw);max-height:90vh;overflow:auto;}
+  .panel h2{margin:0 0 10px;font-size:18px;color:var(--pa-d);}
+  .row2{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap;}
+  .row2 label{width:150px;font-weight:800;font-size:14px;}
+  .row2 input[type=range]{flex:1;min-width:150px;}
+  .row2 select,.row2 input[type=text],.row2 input[type=password]{font-family:inherit;font-size:14px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);}
+  .row2 .val{min-width:36px;text-align:right;font-weight:800;}
+  .help{font-size:12px;color:var(--muted);line-height:1.6;margin:2px 0 4px;}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;margin-right:10px;}
+  .chk input{width:20px;height:20px;}
+  #cardList > .chk{display:inline-flex;align-items:center;min-width:46%;margin:3px 2% 3px 0;font-size:22px;line-height:1;}
+  #cardList svg,#toolPick svg{height:1em;width:auto;fill:currentColor;vertical-align:-0.15em;}
+  #cardList .tag{font-size:11px;font-weight:800;color:#fff;background:#8a99a3;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;margin:0 4px 0 2px;}
+  #dlg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:80;}
+  #dlg .box{background:#fff;border-radius:18px;padding:18px 20px;width:min(440px,92vw);}
+  #dlg .msg{font-size:15px;font-weight:700;line-height:1.6;white-space:pre-wrap;margin-bottom:10px;}
+  #dlg input{width:100%;font-family:inherit;font-size:16px;padding:9px 10px;border-radius:10px;border:2px solid var(--line);margin-bottom:10px;}
+  #dlg .bt{display:flex;gap:8px;justify-content:flex-end;}
+  #staffOv{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:55;}
+  #staffOv .box{background:#fff;border-radius:22px;padding:16px 18px;width:min(1000px,96vw);max-height:92vh;overflow:auto;}
+  #staffBox svg{width:100%;height:auto;}
+  @media (max-width:820px){ .sub{display:none;} .rowlab{font-size:15px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">かさねてリズム</span>
+  <span class="sub">手拍子と足踏みで、2人のリズムアンサンブルをつくろう</span>
+  <span class="spacer"></span>
+  <button class="btn play" id="playBtn">▶ きく</button>
+  <button class="btn" id="loopBtn" title="くりかえし再生">🔁</button>
+  <span id="tempoBar" style="display:inline-flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:999px;padding:2px 6px 2px 10px;font-weight:800;font-size:13px;background:#fff"><span style="color:var(--muted)">♩=</span><button class="btn small" id="tempoDn" style="min-height:30px;padding:3px 9px">−</button><span id="tempoNow" style="min-width:34px;text-align:center">100</span><button class="btn small" id="tempoUp" style="min-height:30px;padding:3px 9px">＋</button></span>
+  <span class="seg" id="lenSeg"><button data-m="4">4小節</button><button data-m="8" class="on">8小節</button></span>
+  <button class="btn" id="copyBtn" title="1〜4小節を5〜8小節にうつす">前半をコピー</button>
+  <button class="btn" id="exBtn">例をきく</button>
+  <button class="btn ghost" id="clearBtn">ぜんぶ消す</button>
+  <button class="btn ghost small" id="staffBtn">🎼 楽譜</button>
+  <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
+  <button class="btn ghost small" id="cardBtn">📷 記録</button>
+  <button class="btn small" id="fullBtn" style="background:#fff3c4;color:#8a5a00;display:none">🔓 フル版</button>
+  <button class="btn ghost small" id="setBtn">⚙</button>
+  <button class="btn ghost small" id="fsBtn">⛶</button>
+</header>
+<div class="bar2">
+  <span>きく：</span>
+  <span class="seg" id="hearSeg"><button data-h="both" class="on">両方</button><button data-h="A">Aだけ</button><button data-h="B" class="b">Bだけ</button></span>
+  <button class="btn ghost small" id="metroBtn" title="メトロノーム（1小節のカウントは常に鳴ります）">🎵 メトロノーム：ON</button>
+  <span style="margin-left:6px">小節</span>
+  <select id="rngFrom"></select><span>〜</span><select id="rngTo"></select>
+  <span class="spacer"></span>
+  <span>イメージ：</span>
+  <select id="imgSel">
+    <option value="">（えらぶ）</option>
+    <option value="A">A 最後に向かってだんだん盛り上がる</option>
+    <option value="B">B 2人で会話している</option>
+    <option value="C">C 2人が競走している</option>
+    <option value="X">自分たちで考えた</option>
+  </select>
+  <input type="text" id="imgTxt" placeholder="どんな音楽？（自由に）" maxlength="30" style="display:none">
+  <button class="btn ghost small" id="kufuBtn">📝 工夫した点</button>
+</div>
+
+<main>
+  <aside class="palette">
+    <div class="ttl">音</div>
+    <button class="tool snd hand on" data-snd="h"><span class="g">👏</span><span class="n">手拍子</span></button>
+    <button class="tool snd foot" data-snd="f"><span class="g">👣</span><span class="n">足踏み</span></button>
+    <div class="ttl">長さ</div>
+    <div id="tools"></div>
+  </aside>
+  <section class="stage" id="stage"></section>
+</main>
+
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-11</footer>
+
+<div id="toast"></div>
+<canvas id="spark"></canvas>
+
+<div id="cta" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60">
+  <div style="background:#fff;border-radius:22px;padding:22px 24px;width:min(540px,92vw);max-height:90vh;overflow:auto">
+    <h2 style="margin:0 0 6px;font-size:19px;color:#2f6fbf">🔓 フル版でできること</h2>
+    <p style="font-size:13px;color:#7f8f96;margin:0 0 10px;line-height:1.7">体験版は「4小節・手拍子と足踏みで、2人のリズムを置いて重なり方を聞く」ところまで。授業で使う機能はフル版にまとめてあります。</p>
+    <ul style="font-size:14px;line-height:1.9;padding-left:1.3em;margin:0 0 10px">
+      <li><b>8小節</b>と「前半をコピー」・<b>反復・変化・対照</b>の自動ラベル（A A′ B…）</li>
+      <li><b>リズムカード</b>：教科書のパターン例 a〜f を1タップで。先生のカード追加・使うカードの選択・「カードだけ」の制限</li>
+      <li><b>練習モード</b>：Aだけ／Bだけで鳴らす・小節を指定・くりかえし（ペア練習に）</li>
+      <li><b>イメージ</b>（盛り上がる・会話・競走）に合わせたヒントと「工夫した点」の記入</li>
+      <li><b>🎼 楽譜</b>（A・B 2段のリズム譜・画像保存）と<b>📷 記録</b>（ワークシート画像・名前と日付入り）</li>
+      <li><b>🔗 リンク</b>で配る・提出させる（先生の設定つき）・<b>先生ロック</b>・使える音符の設定</li>
+      <li>今後のアップデートを購入者ページから無料で受け取れる</li>
+    </ul>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn ghost" id="ctaClose">とじる</button>
+      <a class="btn" id="ctaGo" href="#" style="background:#ff7a59;color:#fff;text-decoration:none">フル版のくわしい内容を見る →</a>
+    </div>
+  </div>
+</div>
+<div id="dlg"><div class="box"><div class="msg" id="dlgMsg"></div><input id="dlgIn" type="text"><div class="bt"><button class="btn ghost" id="dlgNo">やめる</button><button class="btn on" id="dlgOk">OK</button></div></div></div>
+
+<div id="staffOv"><div class="box">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><b style="font-size:17px;color:var(--pa-d)">🎼 楽譜</b><span style="font-size:12px;color:var(--muted)">グリッドのリズムを楽譜に書きなおしたもの（上がA・下がB、音符の下は 手＝手拍子・足＝足踏み）</span><span class="spacer"></span><button class="btn small" id="staffSave">📷 画像でほぞん</button><button class="btn ghost small" id="staffClose">とじる</button></div>
+  <div id="staffBox"></div>
+</div></div>
+
+<div id="ov"><div class="panel">
+  <h2>⚙ せってい（先生用）</h2>
+  <div class="row2"><label>テンポ ♩=</label><input type="range" id="tempo" min="60" max="160" value="100"><span class="val" id="tempoV">100</span></div>
+  <div class="row2"><label>音量</label><input type="range" id="vol" min="0" max="100" value="80"><span class="val" id="volV">80</span></div>
+  <div class="row2"><label>入力のしかた</label><select id="inputMode"><option value="free" selected>自由に置ける（音符＋カード）</option><option value="cards">リズムカードだけ</option></select></div>
+  <div class="help">「リズムカードだけ」にすると、生徒はカードを小節に入れる・手拍子／足踏みを変える・小節ごと消す、だけができます（教科書のイから選んでつくる活動用）。配布リンクにも入ります。</div>
+  <div class="row2" style="align-items:flex-start"><label>使えるカード</label><div style="flex:1"><div style="margin-bottom:4px"><button class="btn ghost small" id="cardsAll" style="min-height:28px;padding:2px 10px;font-size:12px">すべて</button> <button class="btn ghost small" id="cardsNone" style="min-height:28px;padding:2px 10px;font-size:12px">すべて外す</button></div><div id="cardList"></div>
+    <div style="margin-top:6px"><label class="chk" style="font-size:13.5px;min-width:0;white-space:nowrap"><input type="checkbox" id="showAddCard"> 生徒の画面にも「＋自分のリズム」を出す</label></div>
+    <div class="help">チェックしたカードだけが生徒の画面に出ます（「リズムカードだけ」のときは、ここで選んだカードだけでつくることになります）。「＋自分のリズム」は、いま入っている小節（Aのリズム）をカードにします。</div></div></div>
+  <div class="row2"><label>ヒント表示</label><select id="advice"><option value="on" selected>出す（重なり方・構成のラベル）</option><option value="off">出さない（自分で気づかせたいとき）</option></select></div>
+  <div class="row2" style="align-items:flex-start"><label>使える音符</label><div id="toolPick" style="flex:1"></div></div>
+  <div class="help">チェックした音符だけが、左の「長さ」に出ます（消すボタンは常に出ます）。配布リンクにも入ります。</div>
+  <div class="row2"><label>先生ロック</label><input type="password" id="pin" inputmode="numeric" placeholder="4けたの数字（空なら無し）" maxlength="4" style="width:200px"><label class="chk"><input type="checkbox" id="hideGear"> ⚙を隠す</label></div>
+  <div class="help">数字を入れると、⚙を開くときにその数字をきかれます。⚙を隠したときは、左上の「かさねてリズム」を1.5秒長押しで開けます。配布リンクには先生の設定（テンポ・入力のしかた・使える音符・カード・ヒント・ロック）が入るので、生徒の端末でも同じ設定で使えます。</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn on" id="closeSet">とじる</button></div>
+</div></div>
+
+<script>
+/* ★ビルド設定 */
+const FULL=true; const HOSTED_URL="https://ktteacher.net/tools/kasanete/full-2026a-pv0x82aa/kasanete-full.html"; const LP_URL="../full/";
+const $=id=>document.getElementById(id);
+const SPM=8;   // 1小節=8スロット（8分音符単位）。♬（16分×2）は1スロットに2打
+/* ①あそぶ：音符記号は自前SVG（フォント依存を避ける） */
+const SVG={
+  quarter:'<svg viewBox="0 0 24 40"><path d="M20 4v26" stroke="currentColor" stroke-width="2.2" fill="none"/><ellipse cx="12" cy="31" rx="8.5" ry="5.6" transform="rotate(-20 12 31)" fill="currentColor"/></svg>',
+  dq:'<svg viewBox="0 0 30 40"><path d="M20 4v26" stroke="currentColor" stroke-width="2.2" fill="none"/><ellipse cx="12" cy="31" rx="8.5" ry="5.6" transform="rotate(-20 12 31)" fill="currentColor"/><circle cx="26" cy="31" r="2.6" fill="currentColor"/></svg>',
+  half:'<svg viewBox="0 0 24 40"><path d="M20 4v26" stroke="currentColor" stroke-width="2.2" fill="none"/><ellipse cx="12" cy="31" rx="8.5" ry="5.6" transform="rotate(-20 12 31)" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>',
+  whole:'<svg viewBox="0 0 24 40"><ellipse cx="12" cy="24" rx="10" ry="6.2" fill="currentColor"/><ellipse cx="12" cy="24" rx="3.4" ry="4.6" transform="rotate(-38 12 24)" fill="#fff"/></svg>',
+  eighth:'<svg viewBox="0 0 26 40"><path d="M18 4v26" stroke="currentColor" stroke-width="2.2" fill="none"/><ellipse cx="10" cy="31" rx="8.5" ry="5.6" transform="rotate(-20 10 31)" fill="currentColor"/><path d="M18 4c5 3 8 7 6 14-1-4-3-6-6-7z" fill="currentColor"/></svg>',
+  two8:'<svg viewBox="0 0 40 40"><path d="M15 6v25M35 4v25" stroke="currentColor" stroke-width="2.4" fill="none"/><path d="M15 4h20v5H15z" fill="currentColor"/><ellipse cx="8" cy="32" rx="7.5" ry="5" transform="rotate(-20 8 32)" fill="currentColor"/><ellipse cx="28" cy="30" rx="7.5" ry="5" transform="rotate(-20 28 30)" fill="currentColor"/></svg>',
+  two16:'<svg viewBox="0 0 40 40"><path d="M15 6v25M35 4v25" stroke="currentColor" stroke-width="2.4" fill="none"/><path d="M15 4h20v5H15zM15 12h20v5H15z" fill="currentColor"/><ellipse cx="8" cy="32" rx="7.5" ry="5" transform="rotate(-20 8 32)" fill="currentColor"/><ellipse cx="28" cy="30" rx="7.5" ry="5" transform="rotate(-20 28 30)" fill="currentColor"/></svg>',
+  four16:'<svg viewBox="0 0 64 40"><path d="M15 6v25M31 5v25M47 5v25M63 4v25" stroke="currentColor" stroke-width="2.4" fill="none"/><path d="M15 4h48v5H15zM15 12h48v5H15z" fill="currentColor"/><ellipse cx="8" cy="32" rx="7.5" ry="5" transform="rotate(-20 8 32)" fill="currentColor"/><ellipse cx="24" cy="31" rx="7.5" ry="5" transform="rotate(-20 24 31)" fill="currentColor"/><ellipse cx="40" cy="31" rx="7.5" ry="5" transform="rotate(-20 40 31)" fill="currentColor"/><ellipse cx="56" cy="30" rx="7.5" ry="5" transform="rotate(-20 56 30)" fill="currentColor"/></svg>',
+  rest:'<svg viewBox="0 0 20 40"><path d="M6 3l8 10-6 8 7 9c-5-3-9-1-8 4-4-5-3-9 2-11l-6-8 6-8z" fill="currentColor"/></svg>',
+  rest8:'<svg viewBox="0 0 20 40"><circle cx="5" cy="14" r="3.2" fill="currentColor"/><path d="M5 14c4 3 8 3 11 0L9 34" stroke="currentColor" stroke-width="2.2" fill="none"/></svg>',
+  resth:'<svg viewBox="0 0 24 40"><rect x="4" y="16" width="16" height="6" fill="currentColor"/><path d="M2 22h20" stroke="currentColor" stroke-width="1.5"/></svg>',
+  restw:'<svg viewBox="0 0 24 40"><rect x="4" y="14" width="16" height="6" fill="currentColor"/><path d="M2 14h20" stroke="currentColor" stroke-width="1.5"/></svg>',
+  erase:'<svg viewBox="0 0 40 40"><path d="M8 26 L22 12 a3 3 0 0 1 4 0 l8 8 a3 3 0 0 1 0 4 L24 34 H14 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M14 34 L8 26" stroke="currentColor" stroke-width="3"/></svg>'
+};
+/* 長さ：key → {len(8分スロット数), two(1スロット2打=16分×2), glyph, name} */
+const LENS={ "16":{len:1,two:1,g:SVG.two16,n:"16分×2"}, "8":{len:1,g:SVG.eighth,n:"8分"}, "4":{len:2,g:SVG.quarter,n:"4分"}, "4d":{len:3,g:SVG.dq,n:"付点4分"}, "2":{len:4,g:SVG.half,n:"2分"}, "1":{len:8,g:SVG.whole,n:"全音符"} };
+const LENORDER=["16","8","4","4d","2","1"];
+/* リズムカード（自作パターン・8分スロット単位 [slot,len,two?]） */
+const RCARDS=[   // 教科書「リズムパターンの例」a〜f（8分スロット単位 [slot,len,two?]）
+  {tag:"a", name:"♫♩♫♩", p:[[0,1],[1,1],[2,2],[4,1],[5,1],[6,2]]},
+  {tag:"b", name:"♬♬♩♬♬♩", p:[[0,1,1],[1,1,1],[2,2],[4,1,1],[5,1,1],[6,2]]},
+  {tag:"c", name:"♩𝄾♪♩𝄽", p:[[0,2],[3,1],[4,2]]},
+  {tag:"d", name:"♫𝄾♪♩𝄽", p:[[0,1],[1,1],[3,1],[4,2]]},
+  {tag:"e", name:"♩♩♪♩♪", p:[[0,2],[2,2],[4,1],[5,2],[7,1]]},
+  {tag:"f", name:"𝄽♩𝄽♫", p:[[2,2],[6,1],[7,1]]}
+];
+const IMGS={A:"最後に向かってだんだん盛り上がる音楽",B:"2人で会話しているような音楽",C:"2人が競走しているような音楽",X:"自分たちで考えたイメージ"};
+
+let meas=8;
+let parts={A:[],B:[]};     // note: {s:slot, len, two:0|1, snd:"h"|"f"}
+let snd="h", lenKey="4", rcard=null, addCardMode=false;
+let hear="both", rng=[1,8], loop=false;
+let img="", imgTxt="", kufu="";
+const cfg={tempo:100,vol:80,metro:"on",advice:"on",inputMode:"free",tools:{"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1},hiddenCards:[],customCards:[],pin:"",hideGear:false,showAddCard:false};
+const store={ get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
+function save(){ store.set("kasanete_v1", JSON.stringify({meas,parts,img,imgTxt,kufu,cfg,hear,rng})); }
+
+/* ---------- 小物 ---------- */
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2600); }
+function ask(msg,opt){ opt=opt||{}; return new Promise(res=>{
+  const d=$("dlg"), inp=$("dlgIn"); $("dlgMsg").textContent=msg;
+  inp.style.display=opt.input?"":"none"; inp.value=opt.value||""; inp.placeholder=opt.placeholder||""; inp.type=opt.type||"text"; inp.inputMode=opt.inputmode||"text";
+  $("dlgOk").textContent=opt.ok||"OK"; $("dlgNo").textContent=opt.cancel||"やめる";
+  d.style.display="flex"; if(opt.input) setTimeout(()=>{ inp.focus(); inp.select(); },50);
+  const fin=v=>{ d.style.display="none"; $("dlgOk").onclick=null; $("dlgNo").onclick=null; inp.onkeydown=null; res(v); };
+  $("dlgOk").onclick=()=>fin(opt.input?inp.value:true); $("dlgNo").onclick=()=>fin(opt.input?null:false);
+  inp.onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229) fin(inp.value); };
+}); }
+function b64uBytes(bytes){ let bin=""; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function ub64Bytes(str){ str=str.replace(/-/g,"+").replace(/_/g,"/"); while(str.length%4) str+="="; const bin=atob(str); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+async function packTok(obj){ const bytes=new TextEncoder().encode(JSON.stringify(obj));
+  if(window.CompressionStream){ try{ const buf=await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer(); return "z."+b64uBytes(new Uint8Array(buf)); }catch(e){} }
+  return "j."+b64uBytes(bytes); }
+async function unpackTok(tok){ if(tok.startsWith("z.")){ const buf=await new Response(new Blob([ub64Bytes(tok.slice(2))]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer(); return JSON.parse(new TextDecoder().decode(buf)); }
+  if(tok.startsWith("j.")) tok=tok.slice(2); return JSON.parse(new TextDecoder().decode(ub64Bytes(tok))); }
+function songObj(){ const enc=arr=>arr.map(n=>[n.s,n.len,n.two?1:0,n.snd==="f"?1:0]); return {v:1,meas,img,imgTxt,kufu,A:enc(parts.A),B:enc(parts.B)}; }
+function applySong(o){ const dec=arr=>(arr||[]).map(a=>({s:a[0],len:a[1],two:a[2]?1:0,snd:a[3]?"f":"h"})); meas=o.meas===4?4:8; parts={A:dec(o.A),B:dec(o.B)}; img=o.img||""; imgTxt=o.imgTxt||""; kufu=o.kufu||""; }
+function teacherCfgObj(){ return {tempo:cfg.tempo,metro:cfg.metro,advice:cfg.advice,inputMode:cfg.inputMode||"free",tools:cfg.tools,hiddenCards:cfg.hiddenCards||[],customCards:cfg.customCards||[],pin:cfg.pin||"",hideGear:!!cfg.hideGear,showAddCard:false}; }
+function restore(){
+  try{ const j=JSON.parse(store.get("kasanete_v1")||"null"); if(j&&j.parts){ meas=j.meas===4?4:8; parts=j.parts; img=j.img||""; imgTxt=j.imgTxt||""; kufu=j.kufu||""; Object.assign(cfg,j.cfg||{}); hear=j.hear||"both"; rng=j.rng||[1,meas]; if(!cfg.tools) cfg.tools={"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1}; } }catch(e){}
+}
+
+/* ---------- 分析（②きづく）---------- */
+function inM(part,m){ return parts[part].filter(n=>Math.floor(n.s/SPM)===m).sort((a,b)=>a.s-b.s); }
+function onsets(part,m){ const set=new Set(); inM(part,m).forEach(n=>{ const p=(n.s-m*SPM)*2; set.add(p); if(n.two) set.add(p+1); }); return set; }
+function sig(part,m){ return inM(part,m).map(n=>(n.s-m*SPM)+":"+n.len+":"+(n.two?1:0)+":"+n.snd).join(","); }
+function sigRhythm(part,m){ return inM(part,m).map(n=>(n.s-m*SPM)+":"+n.len+":"+(n.two?1:0)).join(","); }
+function setEq(a,b){ if(a.size!==b.size) return false; for(const x of a) if(!b.has(x)) return false; return true; }
+function overlap(a,b){ let c=0; for(const x of a) if(b.has(x)) c++; return c; }
+/* 重なり方：同じ／掛け合い／ちがう／Aだけ／Bだけ */
+function overlayOf(m){
+  const A=onsets("A",m), B=onsets("B",m);
+  if(!A.size&&!B.size) return {k:"",t:""};
+  if(!A.size) return {k:"solo",t:"Bだけ"};
+  if(!B.size) return {k:"solo",t:"Aだけ"};
+  if(setEq(A,B)) return {k:"same",t:sigRhythm("A",m)===sigRhythm("B",m)&&sig("A",m)!==sig("B",m)?"同じリズム（音はちがう）":"同じリズムを重ねる"};
+  if(overlap(A,B)===0) return {k:"call",t:"掛け合い"};
+  return {k:"diff",t:"ちがうリズムを重ねる"};
+}
+function overlayAll(){
+  const r=[]; for(let m=0;m<meas;m++) r.push(overlayOf(m));
+  // 小節ごとの掛け合い（Aだけ→Bだけ／Bだけ→Aだけ）
+  for(let m=0;m<meas-1;m++){ if(r[m].k==="solo"&&r[m+1].k==="solo"&&r[m].t!==r[m+1].t){ r[m]={k:"call",t:"掛け合い（"+r[m].t.charAt(0)+"→"+r[m+1].t.charAt(0)+"）"}; r[m+1]={k:"call",t:"掛け合い（"+r[m+1].t.charAt(0)+"）",cont:true}; m++; } }
+  return r;
+}
+/* 構成：反復（同じ）／変化（少し変えた）／対照（ちがう） 両パートまとめて */
+function measKey(m){ return sig("A",m)+"|"+sig("B",m); }
+function measSim(m,k){
+  const a1=onsets("A",m),b1=onsets("B",m),a2=onsets("A",k),b2=onsets("B",k);
+  const tot=a1.size+b1.size+a2.size+b2.size; if(!tot) return 0;
+  const ov=overlap(a1,a2)+overlap(b1,b2); return (2*ov)/tot;   // 0..1
+}
+function analyzeForm(){
+  const out=[]; const seen=[]; let letter=0;
+  for(let m=0;m<meas;m++){
+    const empty=!onsets("A",m).size&&!onsets("B",m).size;
+    if(empty){ out.push({label:"",cls:"",txt:""}); continue; }
+    const key=measKey(m); let hit=seen.find(x=>x.key===key);
+    if(hit){ out.push({label:hit.L,cls:"rep",txt:"反復（"+(hit.m+1)+"と同じ）"}); continue; }
+    let best=null,bs=0; seen.forEach(x=>{ const sm=measSim(m,x.m); if(sm>bs){ bs=sm; best=x; } });
+    if(best&&bs>=0.7){ const L=best.L.replace(/′+$/,"")+"′"; seen.push({key,L,m}); out.push({label:L,cls:"var",txt:"変化（"+(best.m+1)+"をかえた）"}); continue; }
+    const L=String.fromCharCode(65+letter++); seen.push({key,L,m}); out.push({label:L,cls:"con",txt:m===0?"":"対照"});
+  }
+  return out;
+}
+function summaryText(){
+  const ov=overlayAll(); const kinds=new Set(ov.filter(o=>o.k&&o.k!=="solo").map(o=>o.k));
+  const names={same:"同じリズムを重ねる",call:"掛け合い",diff:"ちがうリズムを重ねる"};
+  const used=[...kinds].map(k=>names[k]);
+  const f=analyzeForm(); const seq=f.map(x=>x.label).filter(Boolean).join(" ");
+  const rep=f.filter(x=>x.cls==="rep").length, vr=f.filter(x=>x.cls==="var").length, con=f.filter(x=>x.cls==="con"&&x.txt).length;
+  return {used,seq,rep,vr,con,ok:used.length>=2};
+}
+
+/* ---------- 画面（グリッド） ---------- */
+function build(){
+  const st=$("stage"); st.innerHTML="";
+  const bar=document.createElement("div"); bar.id="rcardBar"; bar.innerHTML='<span class="ttl">リズムカード'+(FULL?"":" 🔒")+'</span><div id="rcards" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div><span class="hint">えらんで、入れたい小節（AかB）をタップ</span>'; st.appendChild(bar);
+  const systems=meas/4;
+  for(let sy=0;sy<systems;sy++){
+    const g=document.createElement("div"); g.className="sys"; g.dataset.sy=sy;
+    g.innerHTML='<div class="sysgrid"><div></div><div class="mhead"></div>'+
+      '<div class="rowlab a">A<small>手・足</small></div><div class="cells a" data-part="A"><div class="notes"></div><div class="head"></div></div>'+
+      '<div class="rhylab"></div><div class="rhyrow a"></div>'+
+      '<div class="rowlab b">B<small>手・足</small></div><div class="cells b" data-part="B"><div class="notes"></div><div class="head"></div></div>'+
+      '<div></div><div class="rhyrow b"></div>'+
+      '<div style="font-size:11px;color:var(--muted);font-weight:800;text-align:center;align-self:center">重なり方</div><div class="ovrow"></div>'+
+      '<div style="font-size:11px;color:var(--muted);font-weight:800;text-align:center;align-self:center">'+(FULL?"構成":"")+'</div><div class="formrow"></div></div>';
+    const mh=g.querySelector(".mhead"); for(let k=0;k<4;k++){ const m=sy*4+k; const d=document.createElement("div"); d.textContent=(m+1)+"小節"; d.dataset.m=m; d.addEventListener("click",()=>{ if(addCardMode) addCardFromMeasure(m); }); mh.appendChild(d); }
+    g.querySelectorAll(".cells").forEach(cells=>{
+      for(let i=0;i<32;i++){ const s=sy*32+i; const d=document.createElement("div"); d.className="cell"+(i%8===0?" m0":"")+(i%2===1?" beat":"")+(i%2===0?" b0":""); d.dataset.s=s; cells.appendChild(d); }
+      const notesLayer=cells.querySelector(".notes"); cells.appendChild(notesLayer); cells.appendChild(cells.querySelector(".head"));
+      cells.addEventListener("pointerdown",e=>{ const el=document.elementFromPoint(e.clientX,e.clientY); const c=el&&el.closest(".cell"); if(!c) return; ensureAudio(); tapCell(cells.dataset.part, Number(c.dataset.s)); });
+    });
+    g.querySelector(".ovrow").innerHTML='<div></div><div></div><div></div><div></div>';
+    g.querySelector(".formrow").innerHTML='<div></div><div></div><div></div><div></div>';
+    st.appendChild(g);
+  }
+  const sm=document.createElement("div"); sm.id="summary"; st.appendChild(sm);
+  const kb=document.createElement("div"); kb.id="kufuBox"; kb.style.display=(FULL&&kufu)?"":"none"; kb.innerHTML='<label>📝 イメージを表すために、音の出し方や重ね方、構成を工夫した点</label><textarea id="kufuIn" maxlength="200" placeholder="例：前半は2人が同じリズムで、5小節目からちがうリズムを重ねて盛り上げた"></textarea>'; st.appendChild(kb);
+  $("kufuIn").value=kufu; $("kufuIn").addEventListener("input",()=>{ kufu=$("kufuIn").value; save(); });
+  buildCards(); renderAll(); renderRange();
+}
+function renderAll(){ renderNotes(); renderRhythm(); renderLabels(); save(); }
+function renderNotes(){
+  document.querySelectorAll(".cells").forEach(cells=>{
+    const part=cells.dataset.part, sy=Number(cells.closest(".sys").dataset.sy); const layer=cells.querySelector(".notes"); layer.innerHTML="";
+    parts[part].forEach((n,i)=>{ if(n.s<sy*32||n.s>=sy*32+32) return; const s0=n.s-sy*32;
+      const d=document.createElement("div"); d.className="cell-note "+(n.snd==="f"?"foot":"hand"); d.dataset.i=i; d.dataset.part=part;
+      d.style.left=`calc(${s0/32*100}% + 2px)`; d.style.width=`calc(${n.len/32*100}% - 4px)`;
+      const key=n.two?"16":n.len===1?"8":n.len===2?"4":n.len===3?"4d":n.len===4?"2":"1";
+      if(n.two){ d.classList.add("two"); const ch=(n.snd==="f"?"足":"手"); d.innerHTML='<span class="half">'+ch+'</span><span class="half">'+ch+'</span>'; }
+      else d.innerHTML='<span class="n2">'+(n.snd==="f"?"足":"手")+'</span><span class="g">'+LENS[key].g+'</span>';
+      layer.appendChild(d); });
+  });
+}
+/* 8分スロット→リズム行（1拍=2スロット） */
+function renderRhythm(){
+  document.querySelectorAll(".rhyrow").forEach(row=>{
+    const part=row.classList.contains("a")?"A":"B", sy=Number(row.closest(".sys").dataset.sy); row.innerHTML="";
+    for(let b=0;b<16;b++){ const s=sy*32+b*2; const d=document.createElement("div"); d.className="beat"+(b%4===0?" m0":"");
+      const n0=parts[part].find(n=>n.s===s), n1=parts[part].find(n=>n.s===s+1), cov=parts[part].find(n=>n.s<s&&n.s+n.len>s);
+      let h="";
+      if(cov){ h=""; }
+      else if(n0&&n0.len>=8) h=SVG.whole;
+      else if(n0&&n0.len===4) h=SVG.half;
+      else if(n0&&n0.len===3) h=SVG.dq;
+      else if(n0&&n0.len===2) h=SVG.quarter;
+      else if(n0&&n0.len===1){ h=(n0.two?SVG.two16:SVG.eighth)+(n1?(n1.two?SVG.two16:SVG.eighth):SVG.rest8); if(!n0.two&&n1&&!n1.two) h=SVG.two8; if(n0.two&&n1&&n1.two) h=SVG.four16; }
+      else if(n1){ h=SVG.rest8+(n1.two?SVG.two16:SVG.eighth); }
+      else h='<span style="opacity:.35">'+SVG.rest+'</span>';
+      d.innerHTML=h; row.appendChild(d); }
+  });
+}
+function renderLabels(){
+  const ov=overlayAll(), fm=analyzeForm(), show=cfg.advice==="on";
+  document.querySelectorAll(".sys").forEach(g=>{ const sy=Number(g.dataset.sy);
+    g.querySelectorAll(".ovrow div").forEach((d,k)=>{ const o=ov[sy*4+k]; d.className=show?(o.k||""):""; d.textContent=show?o.t:""; });
+    g.querySelectorAll(".formrow div").forEach((d,k)=>{ const f=fm[sy*4+k]; if(!FULL){ d.innerHTML=""; return; } d.className=show?f.cls:""; d.innerHTML=show&&f.label?`<span style="font-size:1.2em">${f.label}</span>${f.txt?`<small style="display:block;font-weight:700;opacity:.85">${f.txt}</small>`:""}`:""; });
+  });
+  const s=summaryText(); const el=$("summary");
+  if(!show){ el.style.display="none"; return; } el.style.display="";
+  const imgLine=img?("めざすイメージ：<b>"+(img==="X"?(imgTxt||"自分たちで考えた"):IMGS[img])+"</b>　"):"";
+  const usedLine=s.used.length?("使っている重なり方：<b>"+s.used.join("・")+"</b>"+(s.ok?" ✔（2つ以上）":" （課題は2つ以上）")):"重なり方：まだ2人とも入っている小節がありません";
+  const formLine=(FULL&&s.seq)?("　構成：<b>"+s.seq+"</b>"+(s.rep?"　反復"+s.rep:"")+(s.vr?"　変化"+s.vr:"")+(s.con?"　対照"+s.con:"")):"";
+  const hint=FULL?adviceFor(s):(parts.A.length&&parts.B.length?"重なり方を変えると、感じはどう変わる？（8小節・リズムカード・Aだけで練習は、フル版で）":"AとBの両方にリズムを置いて「▶ きく」を押してみよう");
+  el.innerHTML=imgLine+usedLine+formLine+(hint?'<div style="color:#b8741c;margin-top:2px">💡 '+hint+'</div>':"");
+}
+function adviceFor(s){
+  const total=parts.A.length+parts.B.length; if(!total) return "まず、カードを1枚えらんで1小節目のAに入れてみよう。次にBに何を重ねる？";
+  if(!parts.B.length) return "Bが空です。同じリズムを重ねる？ すきまに掛け合いで入れる？";
+  if(img==="A"&&meas===8){ const late=onsets("A",6).size+onsets("B",6).size+onsets("A",7).size+onsets("B",7).size, early=onsets("A",0).size+onsets("B",0).size+onsets("A",1).size+onsets("B",1).size; if(late<=early) return "「だんだん盛り上がる」なら、後半（7・8小節）の音を前半より多くしたり、2人が同じリズムになるところを作ってみよう"; }
+  if(img==="B"&&!s.used.includes("掛け合い")) return "「会話」なら、掛け合い（Aが打つときBは休む）を入れると会話らしくなります";
+  if(img==="C"&&!s.used.includes("ちがうリズムを重ねる")) return "「競走」なら、ちがうリズムを同時に重ねると競っている感じが出ます";
+  if(!s.ok) return "課題は「重なり方を2つ以上」。いま使っていない重なり方を、どこか1小節に入れてみよう";
+  if(!s.rep&&meas===8) return "反復（同じ小節をくり返す）があると、まとまりが出ます。「前半をコピー」も使えます";
+  return "";
+}
+
+/* ---------- 配置（①あそぶ） ---------- */
+function tapCell(part,s){
+  const m=Math.floor(s/SPM), L=LENS[lenKey];
+  if(rcard!==null){ applyCard(part,m); return; }
+  if(cfg.inputMode==="cards"){
+    const cov=parts[part].find(n=>n.s<=s&&n.s+n.len>s);
+    if(lenKey==="erase"){ if(inM(part,m).length){ parts[part]=parts[part].filter(n=>Math.floor(n.s/SPM)!==m); afterEdit(); toast((m+1)+"小節目の"+part+"を消しました"); } return; }
+    if(cov){ if(cov.snd!==snd){ cov.snd=snd; preview(snd); afterEdit(); } else toast("カードだけモードです。消すときは左の「消す」で小節ごと消えます"); return; }
+    toast("リズムカードをえらんでから、小節をタップしてください"); return;
+  }
+  if(lenKey==="erase"){ const cov=parts[part].find(n=>n.s<=s&&n.s+n.len>s); if(cov){ parts[part]=parts[part].filter(n=>n!==cov); afterEdit(); } return; }
+  const cov=parts[part].find(n=>n.s<=s&&n.s+n.len>s);
+  if(cov){
+    if(cov.snd!==snd){ cov.snd=snd; preview(snd); afterEdit(); return; }                       // 音だけ変える
+    if(cov.len!==L.len||!!cov.two!==!!L.two){ const st2=(L.len===1)?s:cov.s; const end=Math.min(st2+L.len,(m+1)*SPM); parts[part]=parts[part].filter(n=>n!==cov&&!(n.s<end&&n.s+n.len>st2)); parts[part].push({s:st2,len:end-st2,two:L.two?1:0,snd}); preview(snd,L.two); afterEdit(); return; }
+    parts[part]=parts[part].filter(n=>n!==cov); afterEdit(); return;                          // 同じなら消す
+  }
+  let st2=s; if(L.len>=2){ st2=s-(s%2); } if(L.len>=4){ st2=m*SPM+Math.floor((s-m*SPM)/4)*4; } if(L.len>=8) st2=m*SPM;
+  const end=Math.min(st2+L.len,(m+1)*SPM);
+  parts[part]=parts[part].filter(n=>!(n.s<end&&n.s+n.len>st2));
+  parts[part].push({s:st2,len:end-st2,two:L.two?1:0,snd}); preview(snd,L.two); afterEdit();
+}
+function afterEdit(){ renderAll(); }
+function applyCard(part,m){
+  const c=allCards().find(x=>x.id===rcard); if(!c) return;
+  parts[part]=parts[part].filter(n=>Math.floor(n.s/SPM)!==m);
+  c.p.forEach(([s,l,two])=>parts[part].push({s:m*SPM+s,len:l,two:two?1:0,snd}));
+  rcard=null; buildCards(); afterEdit(); toast((m+1)+"小節目の"+part+"に入れました（"+(snd==="f"?"足踏み":"手拍子")+"）。手・足を変えたいときは、そのマスをタップ"); previewCard(c);
+}
+
+/* ---------- 左パレット・カード ---------- */
+function buildTools(){
+  const box=$("tools"); box.innerHTML="";
+  const firstLen=LENORDER.find(k=>cfg.tools[k])||"4"; if(lenKey!=="erase"&&!cfg.tools[lenKey]) lenKey=firstLen;   // 使える音符が変わっても無限ループしない
+  if(cfg.inputMode==="cards"){ if(lenKey!=="erase") lenKey=firstLen; const info=document.createElement("div"); info.className="ttl"; info.style.cssText="font-size:10px;line-height:1.5;letter-spacing:0;margin-top:4px;color:#8a5a00"; info.textContent="カードで入れます"; box.appendChild(info); }
+  LENORDER.filter(k=>cfg.tools[k]&&cfg.inputMode!=="cards").forEach(k=>{ const b=document.createElement("button"); b.className="tool"+(k===lenKey?" on":""); b.dataset.len=k; b.innerHTML='<span class="g">'+LENS[k].g+'</span><span class="n">'+LENS[k].n+'</span>'; b.addEventListener("click",()=>{ lenKey=k; rcard=null; buildCards(); buildTools(); }); box.appendChild(b); });
+  const e=document.createElement("button"); e.className="tool"+(lenKey==="erase"?" on":""); e.innerHTML='<span class="g">'+SVG.erase+'</span><span class="n">'+(cfg.inputMode==="cards"?"小節を消す":"消す")+'</span>'; e.addEventListener("click",()=>{ lenKey="erase"; rcard=null; buildCards(); buildTools(); }); box.appendChild(e);
+}
+document.querySelectorAll(".tool.snd").forEach(b=>b.addEventListener("click",()=>{ snd=b.dataset.snd; document.querySelectorAll(".tool.snd").forEach(x=>x.classList.toggle("on",x===b)); ensureAudio(); preview(snd); }));
+function allCards(){ return RCARDS.map((c,i)=>Object.assign({id:"b"+i},c)).concat((cfg.customCards||[]).map((c,i)=>Object.assign({id:"c"+i},c))); }
+function visibleCards(){ return allCards().filter(c=>!(cfg.hiddenCards||[]).includes(c.id)); }
+function cardSvg(c){
+  let h="", slot=0; const p=c.p.slice().sort((a,b)=>a[0]-b[0]);
+  while(slot<8){ const n=p.find(x=>x[0]===slot);
+    if(n){ const [s,l,two]=n; if(l===1){ const nx=p.find(x=>x[0]===slot+1&&x[1]===1&&slot%2===0); if(two){ if(nx&&nx[2]){ h+=SVG.four16; slot+=2; continue; } h+=SVG.two16; } else if(nx&&!nx[2]){ h+=SVG.two8; slot+=2; continue; } else h+=SVG.eighth; }
+      else h+=l===8?SVG.whole:l===4?SVG.half:l===3?SVG.dq:SVG.quarter; slot+=l; }
+    else { const cov=p.find(x=>x[0]<slot&&x[0]+x[1]>slot); if(cov){ slot++; continue; } if(slot%2===0&&!p.find(x=>x[0]===slot+1)){ h+=SVG.rest; slot+=2; } else { h+=SVG.rest8; slot++; } } }
+  return h;
+}
+function buildCards(){
+  const box=$("rcards"); if(!box) return; box.innerHTML="";
+  visibleCards().forEach(c=>{ const b=document.createElement("button"); b.className="rcard"+(rcard===c.id?" on":""); b.dataset.id=c.id;
+    if(!FULL){ b.innerHTML=(c.tag?'<span class="tag">'+c.tag+'</span>':"")+cardSvg(c)+' <span style="font-size:12px">🔒</span>'; b.style.opacity=".75"; b.addEventListener("click",openCta); box.appendChild(b); return; } b.innerHTML=(c.tag?'<span class="tag">'+c.tag+'</span>':"")+cardSvg(c); b.title=c.name||"";
+    b.addEventListener("click",()=>{ rcard=(rcard===c.id)?null:c.id; addCardMode=false; buildCards(); updatePick(); if(rcard!==null){ ensureAudio(); previewCard(c); toast("入れたい小節（AかB）をタップしてください。音は左の「手拍子／足踏み」で決まります"); } });
+    box.appendChild(b); });
+  if(cfg.showAddCard||window.__teacherOpen){ const ab=document.createElement("button"); ab.className="rcard add"+(addCardMode?" on":""); ab.id="rcardAdd"; ab.textContent="＋ 自分のリズム"; ab.addEventListener("click",()=>{ addCardMode=!addCardMode; rcard=null; buildCards(); updatePick(); if(addCardMode) toast("カードにしたい小節の番号（上の「◯小節」）をタップしてください。Aのリズムがカードになります"); }); box.appendChild(ab); }
+}
+function updatePick(){ document.querySelectorAll(".mhead div").forEach(d=>{ d.classList.toggle("pick",addCardMode); d.textContent=addCardMode?"▼ "+(Number(d.dataset.m)+1)+"小節をカードに":(Number(d.dataset.m)+1)+"小節"; }); }
+function addCardFromMeasure(m){
+  const ns=inM("A",m); if(!ns.length){ toast("その小節のAにはリズムが入っていません"); return; }
+  const p=ns.map(n=>[n.s-m*SPM,n.len,n.two?1:0]); cfg.customCards=cfg.customCards||[]; cfg.customCards.push({name:"自分のリズム"+(cfg.customCards.length+1),p});
+  addCardMode=false; save(); buildCards(); updatePick(); toast("カードを追加しました");
+}
+
+
+/* ---------- 音（Web Audio合成・サンプル不要） ---------- */
+let AC=null, master=null, NOISE=null;
+function ensureAudio(){ if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); master=AC.createGain(); master.gain.value=0.9; master.connect(AC.destination); } if(AC.state==="suspended") AC.resume(); }
+function noiseBuf(){ if(!NOISE||NOISE.sampleRate!==AC.sampleRate){ NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); const d=NOISE.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return NOISE; }
+function panNode(pan){ if(AC.createStereoPanner){ const p=AC.createStereoPanner(); p.pan.value=pan; p.connect(master); return p; } return master; }
+function clap(t,vol,pan){   // 手拍子：帯域ノイズの短いバースト×3
+  const out=panNode(pan);
+  const bp=AC.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=1900; bp.Q.value=1.1;
+  const hp=AC.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=700; bp.connect(hp); hp.connect(out);
+  [0,0.011,0.022].forEach((d,i)=>{ const src=AC.createBufferSource(); src.buffer=noiseBuf(); src.loop=true; const g=AC.createGain();
+    const a=t+d, v=vol*(i===2?1:0.55); g.gain.setValueAtTime(0.0001,a); g.gain.exponentialRampToValueAtTime(v,a+0.003); g.gain.exponentialRampToValueAtTime(0.0001,a+(i===2?0.11:0.02));
+    src.connect(g); g.connect(bp); src.start(a,Math.random()*0.5); src.stop(a+0.15); });
+}
+function stomp(t,vol,pan){  // 足踏み：低いドスン＋ごく短いノイズ
+  const out=panNode(pan);
+  const o=AC.createOscillator(); o.type="sine"; o.frequency.setValueAtTime(110,t); o.frequency.exponentialRampToValueAtTime(48,t+0.09);
+  const g=AC.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol*1.4,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.19);
+  o.connect(g); g.connect(out); o.start(t); o.stop(t+0.22);
+  const src=AC.createBufferSource(); src.buffer=noiseBuf(); src.loop=true; const lp=AC.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=900; const ng=AC.createGain();
+  ng.gain.setValueAtTime(0.0001,t); ng.gain.exponentialRampToValueAtTime(vol*0.5,t+0.003); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+  src.connect(lp); lp.connect(ng); ng.connect(out); src.start(t,Math.random()*0.5); src.stop(t+0.08);
+}
+function hit(sndKind,t,part){ const v=(cfg.vol/100)*0.5; if(v<=0) return; const pan=part==="A"?-0.35:part==="B"?0.35:0; if(sndKind==="f") stomp(t,v,pan); else clap(t,v,pan); }
+function click(t,accent){ const g=AC.createGain(); g.connect(master); const o=AC.createOscillator(); o.type="square"; o.frequency.value=accent?1500:1000; o.connect(g); g.gain.setValueAtTime(accent?0.10:0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05); o.start(t); o.stop(t+0.06); }
+function preview(k,two){ ensureAudio(); const t=AC.currentTime+0.01; hit(k,t,null); if(two) hit(k,t+(60/cfg.tempo)/4,null); }
+function previewCard(c){ ensureAudio(); const bs=60/cfg.tempo, t0=AC.currentTime+0.05; c.p.forEach(([s,l,two])=>{ hit(snd,t0+s*bs/2,null); if(two) hit(snd,t0+s*bs/2+bs/4,null); }); }
+
+/* ---------- 再生・練習モード ---------- */
+let playing=false, startAt=0, timer=null, rafId=null, schedIdx=0, events=[], endTime=0, off0=0, passLen=0, passIdx=0, rngS=0;
+function buildEvents(noLead){
+  const bs=60/cfg.tempo, half=bs/2, ev=[]; const m0=rng[0]-1, m1=rng[1]-1; rngS=m0*SPM;
+  const lead=(cfg.metro!=="off"&&!noLead)?4:0; for(let i=0;i<lead;i++) ev.push({t:i*bs,type:"click",accent:i===0});
+  const off=lead*bs;
+  if(cfg.metro==="on") for(let m=m0;m<=m1;m++) for(let b=0;b<4;b++) ev.push({t:off+((m-m0)*4+b)*bs,type:"click",accent:b===0,quiet:true});
+  ["A","B"].forEach(part=>{ if(hear!=="both"&&hear!==part) return;
+    parts[part].forEach((n,i)=>{ const m=Math.floor(n.s/SPM); if(m<m0||m>m1) return; const t=off+(n.s-rngS)*half; ev.push({t,type:"hit",snd:n.snd,part,i}); if(n.two) ev.push({t:t+bs/4,type:"hit",snd:n.snd,part,i,sub:1}); }); });
+  ev.sort((a,b)=>a.t-b.t); return {ev,total:off+(m1-m0+1)*4*bs,off};
+}
+function start(){
+  ensureAudio(); if(!parts.A.length&&!parts.B.length){ toast("まず、リズムを入れてみよう"); return; }
+  const b=buildEvents(false); events=b.ev; endTime=b.total; schedIdx=0; off0=b.off; passLen=(rng[1]-rng[0]+1)*4*(60/cfg.tempo); passIdx=0;
+  startAt=AC.currentTime+0.1; playing=true; window.__lastSys=-1;
+  $("playBtn").textContent="■ とめる"; $("playBtn").classList.add("on"); document.querySelectorAll(".head").forEach(h=>h.classList.add("on"));
+  timer=setInterval(schedule,25); schedule(); rafId=requestAnimationFrame(anim);
+}
+function passBase(){ return passIdx===0?0:off0+passIdx*passLen; }
+function schedule(){
+  const horizon=AC.currentTime+0.15;
+  for(let guard=0;guard<8;guard++){
+    while(schedIdx<events.length && startAt+passBase()+events[schedIdx].t<horizon){ const e=events[schedIdx], t=startAt+passBase()+e.t;
+      if(e.type==="hit") hit(e.snd,t,e.part); else if(e.type==="click"){ if(!e.quiet||cfg.metro==="on") click(t,e.accent); } schedIdx++; }
+    if(loop && schedIdx>=events.length && startAt+off0+(passIdx+1)*passLen<horizon){ passIdx++; events=buildEvents(true).ev; schedIdx=0; continue; }
+    break;
+  }
+  if(!loop && AC.currentTime>startAt+endTime+0.1) finish();
+}
+function anim(){
+  if(!playing) return; const bs=60/cfg.tempo, half=bs/2;
+  let tt=AC.currentTime-startAt-off0; if(loop&&passLen>0&&tt>=passLen) tt%=passLen;
+  const slot=tt/half+rngS;
+  const curSys=Math.floor(Math.max(0,slot)/32); if(curSys!==window.__lastSys){ window.__lastSys=curSys; const el=document.querySelectorAll(".sys")[curSys]; if(el) el.scrollIntoView({behavior:"smooth",block:"nearest"}); }
+  document.querySelectorAll(".sys").forEach((sys,sy)=>{ const local=slot-sy*32; sys.querySelectorAll(".head").forEach(h=>{
+    if(tt<0&&sy===Math.floor(rngS/32)){ h.style.display="block"; h.style.left=((rngS-sy*32)/32*100)+"%"; h.style.opacity=(Math.floor(-tt/half)%2)?"0.35":"1"; }
+    else if(local>=0&&local<32&&tt>=0){ h.style.display="block"; h.style.left=(local/32*100)+"%"; h.style.opacity="1"; } else h.style.display="none"; }); });
+  document.querySelectorAll(".cell-note").forEach(d=>{ const n=parts[d.dataset.part][Number(d.dataset.i)]; if(!n) return; const on=(hear==="both"||hear===d.dataset.part)&&slot>=n.s&&slot<n.s+n.len&&tt>=0; d.classList.toggle("lit",on); });
+  rafId=requestAnimationFrame(anim);
+}
+function finish(){ stop(); sparkle(); }
+function stop(){ playing=false; clearInterval(timer); cancelAnimationFrame(rafId); $("playBtn").textContent="▶ きく"; $("playBtn").classList.remove("on"); document.querySelectorAll(".head").forEach(h=>{ h.style.display="none"; }); document.querySelectorAll(".cell-note.lit").forEach(d=>d.classList.remove("lit")); }
+$("playBtn").addEventListener("click",()=>{ if(playing) stop(); else start(); });
+function renderMetro(){ const on=cfg.metro==="on"; $("metroBtn").textContent="🎵 メトロノーム："+(on?"ON":"OFF"); $("metroBtn").classList.toggle("on",on); }
+$("metroBtn").addEventListener("click",()=>{ cfg.metro=cfg.metro==="on"?"count":"on"; renderMetro(); save(); if(playing){ stop(); start(); } toast(cfg.metro==="on"?"メトロノームを鳴らします":"メトロノームを止めました（はじめの1小節のカウントだけ鳴ります）"); });
+$("loopBtn").addEventListener("click",()=>{ loop=!loop; $("loopBtn").classList.toggle("on",loop); toast(loop?"🔁 くりかえします（とめるまで）":"1回だけ鳴らします"); });
+function setTempo(v){ cfg.tempo=Math.max(60,Math.min(160,v)); $("tempoNow").textContent=cfg.tempo; $("tempo").value=cfg.tempo; $("tempoV").textContent=cfg.tempo; save(); if(playing){ stop(); start(); } }
+$("tempoDn").addEventListener("click",()=>setTempo(cfg.tempo-4)); $("tempoUp").addEventListener("click",()=>setTempo(cfg.tempo+4));
+document.querySelectorAll("#hearSeg button").forEach(b=>b.addEventListener("click",()=>{ hear=b.dataset.h; document.querySelectorAll("#hearSeg button").forEach(x=>x.classList.toggle("on",x===b)); save(); if(playing){ stop(); start(); } toast(hear==="both"?"AとBの両方を鳴らします":hear+"だけ鳴らします（もう1人は自分で打ってみよう）"); }));
+function renderRange(){ ["rngFrom","rngTo"].forEach((id,k)=>{ const sel=$(id); sel.innerHTML=""; for(let m=1;m<=meas;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); } rng[k]=Math.min(Math.max(1,rng[k]),meas); sel.value=rng[k]; }); if(rng[0]>rng[1]){ rng[1]=rng[0]; $("rngTo").value=rng[1]; } }
+["rngFrom","rngTo"].forEach((id,k)=>$(id).addEventListener("change",()=>{ rng[k]=Number($(id).value); if(rng[0]>rng[1]){ if(k===0) rng[1]=rng[0]; else rng[0]=rng[1]; } renderRange(); save(); if(playing){ stop(); start(); } }));
+document.querySelectorAll("#lenSeg button").forEach(b=>b.addEventListener("click",async()=>{
+  const m=Number(b.dataset.m); if(m===meas) return;
+  if(m===4 && (parts.A.some(n=>n.s>=32)||parts.B.some(n=>n.s>=32)) && !(await ask("5〜8小節のリズムは消えます。4小節にしますか？",{ok:"4小節にする"}))) return;
+  meas=m; parts.A=parts.A.filter(n=>n.s<meas*SPM); parts.B=parts.B.filter(n=>n.s<meas*SPM); rng=[1,meas];
+  document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none"; build();
+}));
+$("copyBtn").addEventListener("click",async()=>{ if(meas!==8) return; if(!parts.A.length&&!parts.B.length){ toast("まず1〜4小節に入れてね"); return; }
+  if((parts.A.some(n=>n.s>=32)||parts.B.some(n=>n.s>=32)) && !(await ask("5〜8小節を、1〜4小節と同じにします。いまの5〜8小節は消えます。",{ok:"コピーする"}))) return;
+  ["A","B"].forEach(p=>{ parts[p]=parts[p].filter(n=>n.s<32).concat(parts[p].filter(n=>n.s<32).map(n=>Object.assign({},n,{s:n.s+32}))); }); afterEdit(); toast("前半をコピーしました。5〜8小節のどこかを変えてみよう（反復と変化）"); });
+$("clearBtn").addEventListener("click",async()=>{ if(!parts.A.length&&!parts.B.length) return; if(!(await ask("AとBのリズムをぜんぶ消しますか？",{ok:"消す"}))) return; parts={A:[],B:[]}; afterEdit(); });
+$("exBtn").addEventListener("click",async()=>{
+  if((parts.A.length||parts.B.length) && !(await ask("例のリズムを入れます。いまのリズムは消えます。",{ok:"入れる"}))) return;
+  // 例：前半は同じリズム（会話）→後半はちがうリズムを重ねて盛り上がる
+  const H=(s,l,two)=>({s,len:l,two:two?1:0,snd:"h"}), F=(s,l,two)=>({s,len:l,two:two?1:0,snd:"f"});
+  meas=FULL?8:4; rng=[1,meas]; document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none";
+  const P={a:[[0,1],[1,1],[2,2],[4,1],[5,1],[6,2]],b:[[0,1,1],[1,1,1],[2,2],[4,1,1],[5,1,1],[6,2]],c:[[0,2],[3,1],[4,2]],d:[[0,1],[1,1],[3,1],[4,2]],e:[[0,2],[2,2],[4,1],[5,2],[7,1]],f:[[2,2],[6,1],[7,1]]};
+  const put=(arr,m,key,sn)=>P[key].forEach(([s,l,two])=>arr.push({s:m*8+s,len:l,two:two?1:0,snd:sn}));
+  parts.A=[]; parts.B=[];
+  put(parts.A,0,"a","h"); put(parts.B,0,"a","h");          // 1・2小節：同じリズムを重ねる（会話のはじまり）
+  put(parts.A,1,"a","h"); put(parts.B,1,"a","f");
+  put(parts.A,2,"c","h"); put(parts.B,3,"c","f");          // 3・4小節：掛け合い（A→B）
+  if(!FULL){ img=""; build(); toast("例：同じリズム → 音を変えて同じリズム → 掛け合い（教科書のパターン a・c）"); return; }
+  put(parts.A,4,"e","h"); put(parts.B,4,"d","f");          // 5・6小節：ちがうリズムを重ねる
+  put(parts.A,5,"e","h"); put(parts.B,5,"d","f");
+  put(parts.A,6,"b","h"); put(parts.B,6,"b","f");          // 7・8小節：同じリズム（16分）で盛り上げて終わる
+  put(parts.A,7,"f","h"); put(parts.B,7,"f","h");
+  img="A"; $("imgSel").value="A"; $("imgTxt").style.display="none"; build(); toast("例：同じリズム → 掛け合い → ちがうリズムを重ねる → 最後は2人で同じリズム（教科書のパターン a〜f を使っています）");
+});
+$("imgSel").addEventListener("change",()=>{ img=$("imgSel").value; $("imgTxt").style.display=img==="X"?"":"none"; save(); renderLabels(); });
+$("imgTxt").addEventListener("input",()=>{ imgTxt=$("imgTxt").value; save(); renderLabels(); });
+$("kufuBtn").addEventListener("click",()=>{ const b=$("kufuBox"); b.style.display=b.style.display==="none"?"":"none"; if(b.style.display!=="none"){ b.scrollIntoView({behavior:"smooth",block:"end"}); $("kufuIn").focus(); } });
+$("fsBtn").addEventListener("click",()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else document.exitFullscreen(); });
+
+/* ---------- 楽譜（③なまえ：記号で見る） ---------- */
+function staffSvg(opts){
+  opts=opts||{}; const systems=meas/4, W=opts.width||960, L=60, R=20, mW=(W-L-R)/4, partH=74, sysH=partH*2+40, top=30;
+  const H=top+systems*sysH+16; const st=[]; const push=x=>st.push(x);
+  push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="'M PLUS Rounded 1c','Hiragino Maru Gothic ProN',sans-serif">`);
+  push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
+  for(let sy=0;sy<systems;sy++){
+    ["A","B"].forEach((part,pi)=>{
+      const y=top+sy*sysH+pi*partH+30;   // 1本線の位置
+      push(`<text x="${L-30}" y="${y+6}" font-size="18" font-weight="800" fill="${part==="A"?"#2f6fbf":"#b83f73"}">${part}</text>`);
+      push(`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#333" stroke-width="1.3"/>`);
+      if(sy===0) push(`<text x="${L+4}" y="${y-8}" font-size="15" font-weight="800" fill="#333">4</text><text x="${L+4}" y="${y+14}" font-size="15" font-weight="800" fill="#333">4</text>`);
+      for(let k=0;k<4;k++){ const m=sy*4+k, x0=L+18+k*mW;
+        push(`<line x1="${x0+mW-2}" y1="${y-16}" x2="${x0+mW-2}" y2="${y+16}" stroke="#333" stroke-width="${k===3&&sy===systems-1?3:1.2}"/>`);
+        if(pi===0) push(`<text x="${x0+2}" y="${y-24}" font-size="11" fill="#7f8f96">${m+1}</text>`);
+        const ns=inM(part,m); const slotX=sl=>x0+12+sl*((mW-28)/8); let slot=0;
+        if(!ns.length){ push(`<rect x="${x0+mW/2-8}" y="${y-8}" width="16" height="6" fill="#333"/>`); continue; }   // 全休符
+        const stemTop=y-30;
+        const head=(x,fill,big)=>push(`<ellipse cx="${x}" cy="${y}" rx="${big?7:6}" ry="4.4" transform="rotate(-20 ${x} ${y})" fill="${fill?"#333":"#fff"}" stroke="#333" stroke-width="1.6"/>`);
+        const stem=x=>push(`<line x1="${x+5.5}" y1="${y}" x2="${x+5.5}" y2="${stemTop}" stroke="#333" stroke-width="1.5"/>`);
+        const lab=(x,n)=>push(`<text x="${x}" y="${y+22}" text-anchor="middle" font-size="11" font-weight="700" fill="${n.snd==="f"?"#3b8a55":"#c96f22"}">${n.snd==="f"?"足":"手"}</text>`);
+        const beam=(x1,x2,dbl)=>{ push(`<line x1="${x1+5.5}" y1="${stemTop}" x2="${x2+5.5}" y2="${stemTop}" stroke="#333" stroke-width="3.5"/>`); if(dbl) push(`<line x1="${x1+5.5}" y1="${stemTop+6}" x2="${x2+5.5}" y2="${stemTop+6}" stroke="#333" stroke-width="3.5"/>`); };
+        while(slot<8){
+          const n=ns.find(q=>q.s-m*SPM===slot);
+          if(n){ const x=slotX(slot);
+            if(n.two){ const w16=(mW-28)/16, nx=ns.find(q=>q.s-m*SPM===slot+1&&q.two&&slot%2===0);
+              if(nx){ const xs=[x,x+w16,x+2*w16,x+3*w16]; xs.forEach(xx=>{ head(xx,1); stem(xx); }); beam(x,x+3*w16,true); lab(x,n); lab(x+w16,n); lab(x+2*w16,nx); lab(x+3*w16,nx); slot+=2; continue; }
+              const x2=x+w16; head(x,1); head(x2,1); stem(x); stem(x2); beam(x,x2,true); lab(x,n); lab(x2,n); slot+=1; continue; }
+            if(n.len===1){ const nx=ns.find(q=>q.s-m*SPM===slot+1&&q.len===1&&slot%2===0);
+              head(x,1); stem(x); lab(x,n);
+              if(nx){ const x2=slotX(slot+1); head(x2,1); stem(x2); if(nx.two){ /* 8分＋16分×2 */ } beam(x,x2,false); lab(x2,nx); slot+=2; continue; }
+              push(`<path d="M${x+5.5} ${stemTop} q9 8 4 18" stroke="#333" stroke-width="1.8" fill="none"/>`); slot+=1; continue; }
+            head(x,n.len<4,n.len===8); if(n.len!==8) stem(x); if(n.len===3) push(`<circle cx="${x+11}" cy="${y-4}" r="2" fill="#333"/>`); lab(x,n); slot+=n.len; continue; }
+          const cov=ns.find(q=>q.s-m*SPM<slot&&q.s-m*SPM+q.len>slot); if(cov){ slot++; continue; }
+          const x=slotX(slot); const nextN=ns.find(q=>q.s-m*SPM>slot); const gap=(nextN?nextN.s-m*SPM:8)-slot;
+          if(slot%2===0&&gap>=4&&slot%4===0){ push(`<rect x="${x-2}" y="${y-6}" width="14" height="6" fill="#333"/>`); slot+=4; }         // 2分休符
+          else if(slot%2===0&&gap>=2){ push(`<path transform="translate(${x-4},${y-14}) scale(0.62)" d="M6 3l8 10-6 8 7 9c-5-3-9-1-8 4-4-5-3-9 2-11l-6-8 6-8z" fill="#333"/>`); slot+=2; }
+          else { push(`<g transform="translate(${x-4},${y-12}) scale(0.55)"><circle cx="5" cy="14" r="3.2" fill="#333"/><path d="M5 14c4 3 8 3 11 0L9 34" stroke="#333" stroke-width="2.4" fill="none"/></g>`); slot+=1; }
+        }
+      }
+    });
+    // 重なり方
+    if(cfg.advice==="on"){ const ov=overlayAll(); for(let k=0;k<4;k++){ const o=ov[sy*4+k]; if(!o.t) continue; const x0=L+18+k*mW; push(`<text x="${x0+mW/2}" y="${top+sy*sysH+partH*2+22}" text-anchor="middle" font-size="11" font-weight="700" fill="${o.k==="same"?"#2f6fbf":o.k==="call"?"#b8741c":o.k==="diff"?"#7a3fb5":"#7f8f96"}">${o.t}</text>`); } }
+  }
+  const s=summaryText(); if(cfg.advice==="on"&&s.seq) push(`<text x="${W-R}" y="${H-4}" text-anchor="end" font-size="12" fill="#7f8f96">構成：${s.seq}</text>`);
+  push("</svg>"); return st.join("");
+}
+$("staffBtn").addEventListener("click",()=>{ if(!parts.A.length&&!parts.B.length){ toast("まず、リズムを入れてね"); return; } $("staffBox").innerHTML=staffSvg(); $("staffOv").style.display="flex"; });
+$("staffClose").addEventListener("click",()=>$("staffOv").style.display="none");
+$("staffOv").addEventListener("click",e=>{ if(e.target===$("staffOv")) $("staffOv").style.display="none"; });
+function svgToPng(svgText,w,h,name){ const im=new Image(); const url=URL.createObjectURL(new Blob([svgText],{type:"image/svg+xml;charset=utf-8"}));
+  im.onload=()=>{ const c=document.createElement("canvas"); c.width=w*2; c.height=h*2; const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url); downloadCanvas(c,name); };
+  im.src=url; }
+function downloadCanvas(c,name){ const a=document.createElement("a"); a.download=name; a.href=c.toDataURL("image/png"); document.body.appendChild(a); a.click(); a.remove(); toast("画像をほぞんしました（ダウンロードに入っています）"); }
+function dateTag(){ const d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+$("staffSave").addEventListener("click",()=>{ const svg=staffSvg({width:1400}); const m=svg.match(/height="(\d+)"/); svgToPng(svg,1400,Number(m[1]),"kasanete_score_"+dateTag()+".png"); });
+
+/* ---------- 📷 記録（ワークシート画像） ---------- */
+$("cardBtn").addEventListener("click",async()=>{
+  if(!parts.A.length&&!parts.B.length){ toast("まず、リズムを入れてね"); return; }
+  const nm=await ask("2人の名前（空でもOK）",{input:true,placeholder:"例：山田・佐藤",ok:"ほぞん"}); if(nm===null) return;
+  const W=1400, systems=meas/4, sysH=300, H=170+systems*sysH+(kufu?110:20)+40;
+  const c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+  const F='"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic",sans-serif';
+  g.fillStyle="#fffdf8"; g.fillRect(0,0,W,H);
+  g.fillStyle="#2f6fbf"; g.font="bold 34px "+F; g.fillText("かさねてリズム — リズムアンサンブル", 40, 56);
+  const d=new Date(); g.fillStyle="#7f8f96"; g.font="20px "+F;
+  g.fillText((nm?nm+"　":"")+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"　♩="+cfg.tempo, 40, 92);
+  g.fillStyle="#33474F"; g.font="bold 22px "+F; g.fillText("ア イメージ："+(img?(img==="X"?(imgTxt||"自分たちで考えた"):img+"　"+IMGS[img]):"（未選択）"), 40, 130);
+  const left=90, gw=W-left-40, ov=overlayAll(), fm=analyzeForm();
+  for(let sy=0;sy<systems;sy++){
+    const top=160+sy*sysH, rowH=64, cw=gw/32;
+    for(let k=0;k<4;k++){ g.fillStyle="#f2ede0"; g.fillRect(left+k*gw/4+2,top,gw/4-4,26); g.fillStyle="#7f8f96"; g.font="bold 16px "+F; g.textAlign="center"; g.fillText((sy*4+k+1)+"小節", left+k*gw/4+gw/8, top+19); g.textAlign="left"; }
+    ["A","B"].forEach((part,pi)=>{ const y=top+34+pi*(rowH+8);
+      g.fillStyle=part==="A"?"#f5f9ff":"#fff5f9"; g.fillRect(left,y,gw,rowH); g.fillStyle=part==="A"?"#2f6fbf":"#b83f73"; g.font="bold 26px "+F; g.fillText(part, left-40, y+rowH/2+9);
+      for(let s=0;s<=32;s++){ g.beginPath(); g.lineWidth=s%8===0?2.5:(s%2===0?1:0.5); g.strokeStyle=s%8===0?"#8a8a8a":"#ddd"; g.moveTo(left+s*cw,y); g.lineTo(left+s*cw,y+rowH); g.stroke(); }
+      parts[part].filter(n=>n.s>=sy*32&&n.s<sy*32+32).forEach(n=>{ const s0=n.s-sy*32, x=left+s0*cw+2, w=n.len*cw-4;
+        g.fillStyle=n.snd==="f"?"#5fb37a":"#f2994a"; g.beginPath(); g.roundRect(x,y+5,w,rowH-10,8); g.fill();
+        g.fillStyle="#fff"; g.font="bold 15px "+F; g.textAlign="center"; g.fillText((n.snd==="f"?"足":"手")+(n.two?"♬":n.len===1?"♪":n.len===2?"♩":n.len===3?"♩.":n.len===4?"𝅗𝅥":"𝅝"), x+w/2, y+rowH/2+6); g.textAlign="left"; }); });
+    const ly=top+34+2*(rowH+8)+6; g.font="bold 15px "+F; g.textAlign="center";
+    for(let k=0;k<4;k++){ const o=ov[sy*4+k], f=fm[sy*4+k]; g.fillStyle=o.k==="same"?"#2f6fbf":o.k==="call"?"#b8741c":o.k==="diff"?"#7a3fb5":"#7f8f96"; g.fillText(o.t||"", left+k*gw/4+gw/8, ly+16);
+      g.fillStyle="#7f8f96"; g.fillText(f.label?(f.label+(f.txt?"　"+f.txt:"")):"", left+k*gw/4+gw/8, ly+40); }
+    g.textAlign="left";
+  }
+  const s=summaryText(); let yy=160+systems*sysH+8; g.fillStyle="#33474F"; g.font="bold 20px "+F;
+  g.fillText("使った重なり方："+(s.used.join("・")||"—")+(s.seq?"　構成："+s.seq:""), 40, yy); yy+=32;
+  if(kufu){ g.font="bold 20px "+F; g.fillText("エ 工夫した点：", 40, yy); yy+=28; g.font="18px "+F; wrapText(g,kufu,40,yy,W-80,26); }
+  g.fillStyle="#8a99a3"; g.font="16px "+F; g.fillText("© けいてぃの音楽ツールズ", 40, H-16);
+  downloadCanvas(c,"kasanete_"+dateTag()+".png");
+});
+function wrapText(g,text,x,y,maxW,lh){ let line=""; for(const ch of text){ if(ch==="\n"||g.measureText(line+ch).width>maxW){ g.fillText(line,x,y); y+=lh; line=ch==="\n"?"":ch; } else line+=ch; } if(line) g.fillText(line,x,y); }
+
+/* ---------- 🔗 リンク ---------- */
+async function makeLink(){
+  if(!parts.A.length&&!parts.B.length){ toast("まず、リズムを入れてね"); return; }
+  const base=(location.protocol==="file:"&&HOSTED_URL)?HOSTED_URL:location.href.split("#")[0];
+  let url=base+"#s="+await packTok(songObj());
+  if(window.__teacherOpen||document.activeElement===$("setBtn")) {}
+  const withCfg=await ask("先生の設定（テンポ・使える音符・カード・ヒント・ロック）もリンクに入れますか？\n生徒に配るリンクなら「入れる」、作品の提出用なら「入れない」。",{ok:"入れる",cancel:"入れない"});
+  if(withCfg) url+="&c="+b64uBytes(new TextEncoder().encode(JSON.stringify(teacherCfgObj())));
+  const done=()=>toast("リンクをコピーしました。ロイロノート・Classroomに貼ってください");
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done,()=>ask("このリンクをコピーしてください",{input:true,value:url,ok:"とじる"})); else ask("このリンクをコピーしてください",{input:true,value:url,ok:"とじる"});
+}
+$("linkBtn").addEventListener("click",makeLink);
+async function loadFromHash(){
+  const h=location.hash||""; const m=h.match(/[#&]s=([^&]+)/); if(!m) return false;
+  try{ const o=await unpackTok(m[1]); applySong(o);
+    const c=h.match(/[#&]c=([^&]+)/); if(c){ try{ const t=JSON.parse(new TextDecoder().decode(ub64Bytes(c[1]))); Object.assign(cfg,t); }catch(e){} }
+    rng=[1,meas]; return true; }catch(e){ console.warn(e); toast("リンクの読み込みに失敗しました"); return false; }
+}
+
+/* ---------- ⚙ 先生設定・ロック ---------- */
+const bind=(id,key,disp)=>{ const el=$(id); el.value=cfg[key]; if(disp) $(disp).textContent=cfg[key];
+  el.addEventListener("input",()=>{ cfg[key]=el.type==="range"?Number(el.value):el.value; if(disp) $(disp).textContent=el.value; save(); if(key==="advice") renderLabels(); if(key==="inputMode"){ buildTools(); const h=document.querySelector("#rcardBar .hint"); if(h) h.textContent=cfg.inputMode==="cards"?"カードをえらんで、入れたい小節（AかB）をタップ。手拍子／足踏みは左でえらぶ":"えらんで、入れたい小節（AかB）をタップ"; } if(key==="tempo") $("tempoNow").textContent=cfg.tempo; }); };
+function renderToolPick(){ const box=$("toolPick"); box.innerHTML=""; LENORDER.forEach(k=>{ const l=document.createElement("label"); l.className="chk"; l.innerHTML='<input type="checkbox" '+(cfg.tools[k]?"checked":"")+'> <span style="font-size:20px;line-height:1;display:inline-flex">'+LENS[k].g+'</span> '+LENS[k].n; l.querySelector("input").addEventListener("change",e=>{ cfg.tools[k]=e.target.checked?1:0; if(!LENORDER.some(x=>cfg.tools[x])){ cfg.tools[k]=1; e.target.checked=true; toast("1つは残してください"); } save(); buildTools(); }); box.appendChild(l); }); }
+function renderCardList(){ const box=$("cardList"); box.innerHTML=""; allCards().forEach(c=>{ const l=document.createElement("label"); l.className="chk"; l.style.margin="3px 10px 3px 0"; l.innerHTML='<input type="checkbox" '+((cfg.hiddenCards||[]).includes(c.id)?"":"checked")+'>'+(c.tag?'<span class="tag">'+c.tag+'</span>':' ')+'<span style="display:inline-flex;align-items:center">'+cardSvg(c)+'</span>'+(c.id.startsWith("c")?' <button class="btn ghost small" style="min-height:26px;padding:2px 8px;font-size:11px">削除</button>':"");
+    l.querySelector("input").addEventListener("change",e=>{ cfg.hiddenCards=cfg.hiddenCards||[]; if(e.target.checked) cfg.hiddenCards=cfg.hiddenCards.filter(x=>x!==c.id); else if(!cfg.hiddenCards.includes(c.id)) cfg.hiddenCards.push(c.id); save(); buildCards(); });
+    const del=l.querySelector("button"); if(del) del.addEventListener("click",e=>{ e.preventDefault(); const i=Number(c.id.slice(1)); cfg.customCards.splice(i,1); cfg.hiddenCards=(cfg.hiddenCards||[]).filter(x=>!x.startsWith("c")); save(); renderCardList(); buildCards(); });
+    box.appendChild(l); }); }
+async function openSettings(){
+  if(cfg.pin){ const a=await ask("先生用のパスワード（4けた）",{input:true,inputmode:"numeric",type:"password",ok:"ひらく"}); if(a===null) return; if(String(a).trim()!==cfg.pin){ toast("パスワードがちがいます"); return; } }
+  window.__teacherOpen=true; renderToolPick(); renderCardList(); $("pin").value=cfg.pin||""; $("hideGear").checked=!!cfg.hideGear; $("showAddCard").checked=!!cfg.showAddCard; $("ov").classList.add("open"); buildCards();
+}
+$("setBtn").addEventListener("click",openSettings);
+$("closeSet").addEventListener("click",()=>{ $("ov").classList.remove("open"); }); $("ov").addEventListener("click",e=>{ if(e.target===$("ov")) $("ov").classList.remove("open"); });
+$("pin").addEventListener("input",()=>{ cfg.pin=$("pin").value.replace(/[^0-9]/g,"").slice(0,4); $("pin").value=cfg.pin; save(); });
+$("hideGear").addEventListener("change",()=>{ cfg.hideGear=$("hideGear").checked; save(); applyGear(); });
+$("cardsAll").addEventListener("click",()=>{ cfg.hiddenCards=[]; save(); renderCardList(); buildCards(); });
+$("cardsNone").addEventListener("click",()=>{ cfg.hiddenCards=allCards().map(c=>c.id); save(); renderCardList(); buildCards(); });
+$("showAddCard").addEventListener("change",()=>{ cfg.showAddCard=$("showAddCard").checked; save(); buildCards(); });
+function applyGear(){ $("setBtn").style.display=cfg.hideGear?"none":""; }
+(function(){ let t=null; const lg=document.querySelector(".logo"); lg.addEventListener("pointerdown",()=>{ t=setTimeout(()=>{ openSettings(); },1500); }); ["pointerup","pointerleave","pointercancel"].forEach(ev=>lg.addEventListener(ev,()=>clearTimeout(t))); })();
+
+/* ---------- 演出 ---------- */
+function sparkle(){
+  const cv=$("spark"), g=cv.getContext("2d"); cv.width=innerWidth; cv.height=innerHeight;
+  const ps=[]; for(let i=0;i<80;i++) ps.push({x:innerWidth/2+(Math.random()-.5)*300,y:innerHeight*0.4,vx:(Math.random()-.5)*9,vy:-Math.random()*9-3,c:["#ff7a59","#f2c94c","#5fb37a","#4a90e2","#e0669a"][i%5],r:4+Math.random()*5,l:1});
+  let t0=performance.now();
+  (function fr(t){ const dt=(t-t0)/1000; t0=t; g.clearRect(0,0,cv.width,cv.height); let alive=false;
+    ps.forEach(p=>{ p.vy+=22*dt; p.x+=p.vx*60*dt; p.y+=p.vy*60*dt; p.l-=dt*0.6; if(p.l>0){ alive=true; g.globalAlpha=Math.max(0,p.l); g.fillStyle=p.c; g.beginPath(); g.arc(p.x,p.y,p.r,0,7); g.fill(); } });
+    g.globalAlpha=1; if(alive) requestAnimationFrame(fr); else g.clearRect(0,0,cv.width,cv.height); })(performance.now());
+}
+
+
+/* ---------- 体験版／フル版の切り分け ---------- */
+function openCta(){ $("cta").style.display="flex"; }
+$("ctaClose").addEventListener("click",()=>$("cta").style.display="none");
+$("cta").addEventListener("click",e=>{ if(e.target===$("cta")) $("cta").style.display="none"; });
+$("ctaGo").href=LP_URL;
+if(!FULL){
+  $("fullBtn").style.display=""; $("fullBtn").addEventListener("click",openCta);
+  const lock=(id,label)=>{ const b=$(id); if(!b) return; const nb=b.cloneNode(true); if(label) nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); };
+  lock("staffBtn","🎼 楽譜 🔒"); lock("linkBtn","🔗 リンク 🔒"); lock("cardBtn","📷 記録 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒"); lock("kufuBtn","📝 工夫した点 🔒"); lock("copyBtn");
+  const seg8=document.querySelector('#lenSeg button[data-m="8"]'); const n8=seg8.cloneNode(true); n8.innerHTML="8小節 🔒"; seg8.parentNode.replaceChild(n8,seg8); n8.addEventListener("click",openCta);
+  document.querySelectorAll('#hearSeg button:not([data-h="both"])').forEach(b=>{ const nb=b.cloneNode(true); nb.innerHTML+=" 🔒"; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
+  ["rngFrom","rngTo","imgSel"].forEach(id=>{ $(id).disabled=true; }); $("imgTxt").style.display="none";
+  cfg.inputMode="free"; cfg.pin=""; cfg.hideGear=false; cfg.advice="on"; cfg.tools={"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1};
+  if(meas===8){ meas=4; parts.A=parts.A.filter(n=>n.s<32); parts.B=parts.B.filter(n=>n.s<32); } rng=[1,4]; hear="both";
+  const tb=document.createElement("div"); tb.id="trialBar"; tb.style.cssText="background:#fff3c4;color:#6b4a00;font-size:12.5px;padding:6px 14px;text-align:center;line-height:1.6";
+  tb.innerHTML='🧪 <b>体験版</b>：4小節・手拍子と足踏みで「2人のリズムを置いて、重なり方を聞く」を体験できます。授業で使う機能（8小節・リズムカード a〜f・Aだけ／Bだけの練習・楽譜・記録・リンク・先生の設定 など）は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> に入っています。';
+  document.querySelector(".bar2").insertAdjacentElement("afterend",tb);
+}
+
+/* ---------- 起動 ---------- */
+(async function init(){
+  restore();
+  const fromLink=await loadFromHash();
+  bind("tempo","tempo","tempoV"); bind("vol","vol","volV"); bind("advice","advice"); bind("inputMode","inputMode");
+  $("tempoNow").textContent=cfg.tempo; $("imgSel").value=img; $("imgTxt").value=imgTxt; $("imgTxt").style.display=img==="X"?"":"none";
+  document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none";
+  document.querySelectorAll("#hearSeg button").forEach(x=>x.classList.toggle("on",x.dataset.h===hear));
+  if(cfg.metro==="off") cfg.metro="count"; renderMetro(); buildTools(); build(); applyGear(); if(cfg.inputMode==="cards"){ const h=document.querySelector("#rcardBar .hint"); if(h) h.textContent="カードをえらんで、入れたい小節（AかB）をタップ。手拍子／足踏みは左でえらぶ"; }
+  if(fromLink){ history.replaceState(null,"",location.pathname+location.search); toast("リンクからリズムをひらきました"); save(); }
+})();
+
+</script>
+</body>
+</html>

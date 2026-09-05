@@ -135,4 +135,14 @@
     <lastmod>2026-09-05</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://ktteacher.net/tools/kasanete/</loc>
+    <lastmod>2026-09-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ktteacher.net/tools/kasanete/full/</loc>
+    <lastmod>2026-09-05</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>

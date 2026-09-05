@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かさねてリズム フル版｜手拍子と足踏みで、2人のリズムアンサンブルをつくる</title>
+<link rel="canonical" href="https://ktteacher.net/tools/kasanete/full/">
+<meta name="description" content="手拍子と足踏みで、2人で演奏する8小節のリズムアンサンブルをつくるツール。「同じリズムを重ねる」「掛け合い」「ちがうリズムを重ねる」と、反復・変化・対照がその場で見える。中学校の音楽づくり「音の特徴や重なり方、構成を工夫して」に。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="かさねてリズム｜手拍子と足踏みで、2人のリズムアンサンブルをつくる">
+<meta property="og:description" content="重なり方（同じ・掛け合い・ちがう）と構成（反復・変化・対照）が、つくりながら見える。Aだけ・Bだけで聞いて、ペアで練習できる。">
+<meta property="og:url" content="https://ktteacher.net/tools/kasanete/full/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F2F6F8;--ink:#1E2B33;--sub:#5A6B75;--blue:#5B8DEF;--blue-soft:#DCE8FD;--coral:#FF7A59;--coral-soft:#FFE6DC;--good:#2FB380;--line:#D8E2E8;--radius:18px;}
+  *{box-sizing:border-box;margin:0;padding:0} html{scroll-behavior:smooth}
+  body{font-family:"BIZ UDPGothic",sans-serif;background:var(--paper);color:var(--ink);line-height:2}
+  h1,h2,h3,.btn,.price-num{font-family:"Zen Maru Gothic",sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:0 18px}
+  .hero{padding:44px 0 30px;text-align:center}
+  .eyebrow{font-size:.8rem;color:var(--sub);letter-spacing:.14em}
+  .hero h1{font-size:clamp(1.5rem,4.6vw,2.4rem);font-weight:900;letter-spacing:.04em;margin:10px 0 4px;line-height:1.6}
+  .hero h1 em{font-style:normal;color:var(--coral)}
+  .hero .lead{font-size:.95rem;color:var(--sub);max-width:640px;margin:10px auto 0}
+  .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:999px;padding:15px 30px;font-size:1.02rem;transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.buy{background:var(--coral);color:#fff;box-shadow:0 12px 26px -12px rgba(255,122,89,.95)}
+  .btn.demo{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+  section{padding:38px 0}
+  section h2{font-size:clamp(1.2rem,3.4vw,1.55rem);text-align:center;letter-spacing:.05em;margin-bottom:6px}
+  section .sub{font-size:.88rem;color:var(--sub);text-align:center;margin-bottom:26px}
+  .bridge{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .bridge p{max-width:640px;margin:0 auto;font-size:1rem} .bridge p+p{margin-top:16px}
+  .cmp{width:100%;border-collapse:collapse;background:#fff;font-size:.9rem;border-radius:var(--radius);overflow:hidden}
+  .cmp th,.cmp td{border:1px solid var(--line);padding:11px 12px;text-align:center}
+  .cmp td:first-child{text-align:left;font-weight:700}
+  .cmp thead th.free{background:var(--blue-soft)} .cmp thead th.full{background:var(--coral);color:#fff}
+  .cmp .ok{color:var(--good);font-weight:700} .cmp .no{color:#B9C4CB}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px}
+  .feat .ico{font-size:1.8rem} .feat h3{font-size:1.02rem;margin:8px 0 6px} .feat p{font-size:.86rem;color:var(--sub)}
+  .pricing{text-align:center}
+  .pbox{max-width:520px;margin:0 auto;background:#fff;border:2px solid var(--coral);border-radius:22px;padding:30px 26px;box-shadow:0 20px 44px -26px rgba(255,122,89,.7)}
+  .pbox .pname{font-weight:700;font-size:.95rem}
+  .price-num{font-size:3rem;font-weight:900;color:var(--coral);line-height:1.2} .price-num small{font-size:1.1rem}
+  .pbox ul{list-style:none;font-size:.88rem;margin:14px 0 6px;text-align:left;display:inline-block}
+  .pbox li{padding-left:1.5em;position:relative;margin-bottom:6px}
+  .pbox li::before{content:"✔";color:var(--good);position:absolute;left:0;font-weight:700}
+  .pnote{font-size:.78rem;color:var(--sub);margin-top:12px}
+  details{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;padding:4px 18px}
+  summary{cursor:pointer;font-weight:700;font-size:.92rem;padding:10px 0}
+  details p{font-size:.88rem;color:var(--sub);padding:0 4px 14px}
+  footer{font-size:.76rem;color:var(--sub);text-align:center;line-height:1.9;padding:30px 0 46px} footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="hero wrap">
+  <div class="eyebrow">けいてぃの音楽ツールズ｜かさねてリズム</div>
+  <h1>手拍子と足踏みで、<em>2人のリズムアンサンブル</em>を<br>つくりながら鳴らせる。</h1>
+  <p class="lead">「音の特徴や重なり方、構成を工夫してリズムアンサンブルをつくろう」（中学校の音楽づくり）のためのツールです。<br>
+  A・B 2つのパートにリズムを置くと、その場で手拍子と足踏みの音で鳴ります。「同じリズムを重ねる」「掛け合い」「ちがうリズムを重ねる」と、反復・変化・対照のラベルが小節ごとに自動でつくので、〔共通事項〕がつくりながら見えます。</p>
+  <div class="btns">
+    <a class="btn buy" href="#price">内容と価格を見る</a>
+    <a class="btn demo" href="../">まず体験版でさわってみる</a>
+  </div>
+</div>
+<section class="bridge"><div class="wrap">
+  <p>リズムアンサンブルの単元で起きがちなのは、「ワークシートに書いたリズムが、鳴らしてみると思っていたのと違う」「2人で合わせるところまでいかない」「重なり方を2つ以上、と言われても違いがピンとこない」の3つです。</p>
+  <p>かさねてリズムは、置いた瞬間に2人ぶんの音が鳴り、重なり方の名前が小節の下に出ます。「Aだけ」「Bだけ」で聞けば、相手のパートを機械に任せて自分のパートを練習できる。ペアの片方が休んでいる日でも、練習が止まりません。</p>
+</div></section>
+<section class="wrap" id="flow">
+  <h2>授業での流れ（3時間の例）</h2>
+  <p class="sub">教科書の Warming up → つくる → 中間発表 → 完成、の順にそのまま乗ります</p>
+  <div class="grid">
+    <div class="feat"><div class="ico">1</div><h3>重なり方を「聞き分ける」</h3><p>電子黒板で、同じ小節をA・Bに「同じリズム」「掛け合い」「ちがうリズム」の3通りで入れて聞き比べます。感じの違いを言葉にしてから、ラベルの名前を渡します。</p></div>
+    <div class="feat"><div class="ico">2</div><h3>イメージを決めて8小節をつくる</h3><p>「だんだん盛り上がる」「会話」「競走」からイメージを選び、ペアで8小節に。前半をコピーして後半を変えると、反復と変化が自動でラベルになります。</p></div>
+    <div class="feat"><div class="ico">3</div><h3>Aだけ・Bだけで練習して発表</h3><p>自分のパートをミュートして相手のパートに合わせる練習ができます。楽譜に書きなおして、工夫した点と一緒に画像で提出。中間発表→手直し→完成の流れがそのまま回せます。</p></div>
+  </div>
+</section>
+<section class="wrap">
+  <h2>できること</h2>
+  <p class="sub">つくる・気づく・練習する・記録する、を1つの画面で</p>
+  <div class="grid">
+    <div class="feat"><div class="ico">👏</div><h3>手拍子と足踏みの音で鳴る</h3><p>音符ごとに手拍子か足踏みかを選べます。Aは左、Bは右から聞こえるので、2人の重なりが耳で分かります。テンポは♩=60〜160。</p></div>
+    <div class="feat"><div class="ico">🔀</div><h3>重なり方のラベルが自動でつく</h3><p>小節ごとに「同じリズムを重ねる」「掛け合い」「ちがうリズムを重ねる」「Aだけ・Bだけ」を判定。課題の「2つ以上使う」ができているかが一目で分かります。</p></div>
+    <div class="feat"><div class="ico">🔁</div><h3>反復・変化・対照が見える</h3><p>同じ小節は「反復（1と同じ）」、少し変えた小節は「変化」、新しい小節は「対照」。A A′ B B の形が下に出るので、ふりかえりの発問がそのまま出せます。</p></div>
+    <div class="feat"><div class="ico">🎧</div><h3>Aだけ・Bだけ・小節を指定して練習</h3><p>片方のパートだけ鳴らして、もう片方を自分で打つ。「5〜6小節だけ」「くりかえし」もできるので、ペア練習がそのまま成立します。</p></div>
+    <div class="feat"><div class="ico">🃏</div><h3>リズムカード（教科書の a〜f）</h3><p>教科書の「リズムパターンの例」a〜f の6種類を1タップで小節に。ワークシートのイと同じ記号なので、画面と紙がそのまま対応します。先生が自分のカードを追加したり、使わせたいカードだけ出すこともできます。</p></div>
+    <div class="feat"><div class="ico">🎼</div><h3>楽譜に書きなおす</h3><p>A・Bの2段のリズム譜になります。音符の下に「手」「足」、小節の下に重なり方。画像で保存できます。</p></div>
+    <div class="feat"><div class="ico">📷</div><h3>ワークシートを画像で記録</h3><p>イメージ・8小節・重なり方・構成・「工夫した点」を1枚に。名前と日付入りなので、そのまま評価の記録になります。</p></div>
+    <div class="feat"><div class="ico">🔗</div><h3>リンクで配る・提出させる</h3><p>先生の設定（テンポ・使える音符・カード・ヒント・ロック）が入ったリンクを配れば、生徒の端末でも同じ条件で。生徒が作ったリンクを提出させれば、先生の端末でそのまま鳴らせます。</p></div>
+    <div class="feat"><div class="ico">🔐</div><h3>先生ロック・入力の制限・ヒントのオンオフ</h3><p>「リズムカードだけ」にすれば、生徒は教科書のa〜fから選んで組み合わせることに集中できます。設定にパスワード、⚙を隠す、ラベルを消して自分で気づかせる、も。段階に合わせて縛りを変えられます。</p></div>
+  </div>
+</section>
+<section class="pricing wrap" id="price">
+  <h2>価格</h2>
+  <p class="sub">リズムアンサンブルの単元1回ぶんの準備時間で、毎年使えます</p>
+  <div class="pbox">
+    <div class="pname">かさねてリズム（買い切り・個人ライセンス）</div>
+    <div class="price-num"><span data-price>—</span><small> 円（税込）</small></div>
+    <ul>
+      <li>本体（kasanete-full.html）と購入者ページへのアクセス</li>
+      <li>アップデートの無料配布（購入者ページから）</li>
+      <li>担当する授業・学級の生徒端末への配布OK</li>
+      <li>購入後の個別サポート（使い方・設定のご相談に対応）</li>
+    </ul>
+    <div class="btns"><a class="btn buy" data-buy href="#" rel="noopener">noteで購入する →</a></div>
+    <p class="pnote">🏫 学校・教育委員会でのご導入は<a href="../../utamie/school/" style="color:var(--coral);font-weight:700">スクールライセンス</a>をご覧ください（フル版ツールがすべて含まれます）。<br>
+    決済はnoteの安全なシステムで行われます。<br>
+    ※購入者ページ・アップデートの提供は、予告のうえ将来終了する場合があります。ダウンロード済みの本体は買い切りのため、終了後もそのままお使いいただけます。<br>
+    ご利用条件のくわしくは<a href="../../utamie/terms/" style="color:var(--sub)">利用規約</a>をご覧ください。<br><span data-scarcity></span></p>
+  </div>
+</section>
+<section class="wrap">
+  <h2>よくある質問</h2>
+  <p class="sub"></p>
+  <details><summary>体験版とフル版のちがいは？</summary><p>体験版は4小節・手拍子と足踏みで「2人のリズムを置いて、重なり方を聞く」ところまで無料で使えます。8小節と構成ラベル、リズムカード a〜f、Aだけ／Bだけ・小節指定・くりかえしの練習モード、イメージとヒント、楽譜、記録画像、リンク配布・提出、先生の設定とロックはフル版です。</p></details>
+  <details><summary>マイクは必要ですか？</summary><p>いりません。タップしてリズムを置き、ボタンで鳴らすツールです。手をたたいた音を判定する機能はありません（教室のざわつきで誤判定しやすいため、入れていません）。</p></details>
+  <details><summary>どの端末で動きますか？</summary><p>Chrome・Edge・Safari（iPad含む）の最新版で動作します。電子黒板での投影（全画面ボタン）と、GIGA端末でのタッチ操作の両方に対応しています。</p></details>
+  <details><summary>生徒の端末で使えますか？</summary><p>はい。先生の設定を入れたリンクをロイロノート・Classroomに貼るだけで、生徒はタップして使えます。他の先生への共有やSNS等での再配布はご遠慮ください。</p></details>
+  <details><summary>作った作品はどう集めますか？</summary><p>「🔗 リンク」で作品入りのURLを提出させるか、「📷 記録」の画像を提出させてください。リンクは先生の端末で開くとそのまま鳴らせます。</p></details>
+  <details><summary>3人以上のグループでも使えますか？</summary><p>パートはA・Bの2つです。3人なら「A＝2人・B＝1人」のように分けるか、Bのパートを2人で手拍子と足踏みに分担する使い方ができます。</p></details>
+</section>
+<footer>
+  <a href="../../waonnosete/">わおんにのせて</a>｜<a href="../../utamie/full/">うたミエ フル版</a>｜<a href="../../yubimie/full/">ゆびミエ フル版</a>｜<a href="../../utamie/school/">学校・自治体での導入</a>｜<a href="../../utamie/terms/">利用規約</a>｜<a href="https://ktteacher.net/tools/">けいてぃの音楽ツールズ</a>｜<a href="https://lin.ee/n3WhXbP" target="_blank" rel="noopener">公式LINE</a><br>
+  © けいてぃの音楽ツールズ（合同会社LyricFlow）
+</footer>
+<script>
+"use strict";
+/* ================= 設定（ここだけ差し替え） =================
+   PURCHASE_URL: 販売note記事のURL（公開後に差し替え。空のあいだは「発売準備中」表示）
+   PRICE      : noteで設定した税込価格（数字のみ）
+   SCARCITY   : 限定文。実際に設定した部数・期限がある場合のみ記入（捏造しない） */
+var PURCHASE_URL = "";
+var PRICE = "5,980";
+var SCARCITY = "";
+/* ============================================================ */
+document.querySelectorAll("[data-buy]").forEach(function(a){
+  if(PURCHASE_URL){ a.href=PURCHASE_URL; }
+  else { a.textContent="発売準備中（公式LINEでお知らせします）"; a.href="https://lin.ee/n3WhXbP"; a.style.background="#9aa9b1"; a.style.boxShadow="none"; }
+});
+document.querySelectorAll("[data-price]").forEach(function(e){ e.textContent=PRICE; });
+var sc=document.querySelector("[data-scarcity]"); if(sc&&SCARCITY) sc.textContent=SCARCITY;
+</script>
+</body>
+</html>
