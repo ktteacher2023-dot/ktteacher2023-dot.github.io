@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カノンであそぼう｜パッヘルベルのカノンを、追いかける様子を見ながら聞く・ずらす・つくる</title>
+<link rel="canonical" href="https://ktteacher.net/tools/canon/">
+<meta name="description" content="3つのグループが4小節ずつずれて追いかけるカノンを、レーン表示で見ながら聞けるツール。間かくを0・1・2・4・8小節に変えて「なぜ4小節なのか」に気づく。自分のグループを消して練習、自分のせん律をカノンにして鳴らす。小学校の器楽「せん律の動きや重なりをきき合って演奏しよう」に。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="カノンであそぼう｜追いかける様子を見ながら聞く・ずらす・つくる">
+<meta property="og:description" content="3グループのカノンが「同じ形がずれて重なる」として見える。間かくを変えて、なぜ4小節なのかに気づく。自分のせん律もカノンに。">
+<meta property="og:url" content="https://ktteacher.net/tools/canon/">
+<meta property="og:image" content="https://ktteacher.net/ogp.png">
+<meta property="og:site_name" content="けいてぃの音楽ツールズ">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F2F6F8;--ink:#1E2B33;--sub:#5A6B75;--blue:#5B8DEF;--blue-soft:#DCE8FD;--coral:#FF7A59;--coral-soft:#FFE6DC;--good:#2FB380;--line:#D8E2E8;--radius:18px;}
+  *{box-sizing:border-box;margin:0;padding:0} html{scroll-behavior:smooth}
+  body{font-family:"BIZ UDPGothic",sans-serif;background:var(--paper);color:var(--ink);line-height:2}
+  h1,h2,h3,.btn,.price-num{font-family:"Zen Maru Gothic",sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:0 18px}
+  .hero{padding:44px 0 30px;text-align:center}
+  .eyebrow{font-size:.8rem;color:var(--sub);letter-spacing:.14em}
+  .hero h1{font-size:clamp(1.5rem,4.6vw,2.4rem);font-weight:900;letter-spacing:.04em;margin:10px 0 4px;line-height:1.6}
+  .hero h1 em{font-style:normal;color:var(--coral)}
+  .hero .lead{font-size:.95rem;color:var(--sub);max-width:640px;margin:10px auto 0}
+  .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:999px;padding:15px 30px;font-size:1.02rem;transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.buy{background:var(--coral);color:#fff;box-shadow:0 12px 26px -12px rgba(255,122,89,.95)}
+  .btn.demo{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+  section{padding:38px 0}
+  section h2{font-size:clamp(1.2rem,3.4vw,1.55rem);text-align:center;letter-spacing:.05em;margin-bottom:6px}
+  section .sub{font-size:.88rem;color:var(--sub);text-align:center;margin-bottom:26px}
+  .bridge{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .bridge p{max-width:640px;margin:0 auto;font-size:1rem} .bridge p+p{margin-top:16px}
+  .cmp{width:100%;border-collapse:collapse;background:#fff;font-size:.9rem;border-radius:var(--radius);overflow:hidden}
+  .cmp th,.cmp td{border:1px solid var(--line);padding:11px 12px;text-align:center}
+  .cmp td:first-child{text-align:left;font-weight:700}
+  .cmp thead th.free{background:var(--blue-soft)} .cmp thead th.full{background:var(--coral);color:#fff}
+  .cmp .ok{color:var(--good);font-weight:700} .cmp .no{color:#B9C4CB}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px}
+  .feat .ico{font-size:1.8rem} .feat h3{font-size:1.02rem;margin:8px 0 6px} .feat p{font-size:.86rem;color:var(--sub)}
+  .pricing{text-align:center}
+  .pbox{max-width:520px;margin:0 auto;background:#fff;border:2px solid var(--coral);border-radius:22px;padding:30px 26px;box-shadow:0 20px 44px -26px rgba(255,122,89,.7)}
+  .pbox .pname{font-weight:700;font-size:.95rem}
+  .price-num{font-size:3rem;font-weight:900;color:var(--coral);line-height:1.2} .price-num small{font-size:1.1rem}
+  .pbox ul{list-style:none;font-size:.88rem;margin:14px 0 6px;text-align:left;display:inline-block}
+  .pbox li{padding-left:1.5em;position:relative;margin-bottom:6px}
+  .pbox li::before{content:"✔";color:var(--good);position:absolute;left:0;font-weight:700}
+  .pnote{font-size:.78rem;color:var(--sub);margin-top:12px}
+  details{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;padding:4px 18px}
+  summary{cursor:pointer;font-weight:700;font-size:.92rem;padding:10px 0}
+  details p{font-size:.88rem;color:var(--sub);padding:0 4px 14px}
+  footer{font-size:.76rem;color:var(--sub);text-align:center;line-height:1.9;padding:30px 0 46px} footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="hero wrap">
+  <div class="eyebrow">けいてぃの音楽ツールズ｜カノンであそぼう</div>
+  <h1>カノンが「同じ形が、ずれて重なる」<em>絵として見える。</em></h1>
+  <p class="lead">パッヘルベルの「カノン」（小学校の器楽「せん律の動きや重なりをきき合って演奏しよう」）のためのツールです。<br>
+  3つのグループが4小節ずつずれて追いかける様子を、3本のレーンに音の高さつきで表示しながら鳴らします。間かくを0・1・2・4・8小節に変えて「なぜ4小節なのか」に気づき、自分のグループだけ消して合わせる練習をし、最後は自分のせん律をカノンにして鳴らせます。</p>
+  <div class="btns">
+    <a class="btn buy" href="#price">内容と価格を見る</a>
+    <a class="btn demo" href="#flow">授業での流れを見る</a>
+  </div>
+</div>
+<section class="bridge"><div class="wrap">
+  <p>カノンの単元で子どもがつまずくのは、吹くことより「自分のグループがどこにいるのか分からなくなる」ことです。4小節休んで入る、8小節休んで入る。入ったあとも、ほかのグループが別のところを吹いているので、耳だけでは迷子になります。</p>
+  <p>カノンであそぼうは、3グループのせん律を3本のレーンに並べて、いま鳴っているところを光らせながら流します。同じ形が4小節ずつずれて並んでいるのが一目で分かるので、「追いかける」がどういうことか、聞く前に見えます。</p>
+</div></section>
+<section class="wrap" id="flow">
+  <h2>授業での流れ（例）</h2>
+  <p class="sub">聞く・見る → ずらして気づく → 自分のグループを練習する → じぶんのカノンをつくる</p>
+  <div class="grid">
+    <div class="feat"><div class="ico">1</div><h3>聞く・見る</h3><p>「▶ きく」で3グループとばん奏（チェンバロ・チェロ風）が流れます。レーンの上を光が進み、鳴っている音が光ります。「2グループ、どこから入る？」がレーンを見れば言えます。</p></div>
+    <div class="feat"><div class="ico">2</div><h3>ずらして気づく</h3><p>間かくを1小節や2小節にして聞くと、ばん奏とぶつかる音に赤い印がつき、「あっている音 72%」のように出ます。4小節や8小節に戻すと100%。「ばん奏が4小節でくり返しているから」に、子どもが自分でたどり着けます。</p></div>
+    <div class="feat"><div class="ico">3</div><h3>自分のグループを練習する</h3><p>「2グループ」をタップして消し、ほかの2グループとばん奏に合わせて自分たちが吹く。相手のグループを機械に任せられるので、グループごとの練習が同時に進みます。</p></div>
+    <div class="feat"><div class="ico">4</div><h3>じぶんのカノンをつくる</h3><p>ばん奏の和音の上に8小節（または12小節）のせん律を置くと、それが3グループのカノンになって鳴ります。和音の音のマスに色がついているので、置いた音がなぜ合うのかも見えます。</p></div>
+  </div>
+</section>
+<section class="wrap">
+  <h2>できること</h2>
+  <p class="sub"></p>
+  <div class="grid">
+    <div class="feat"><div class="ico">🎼</div><h3>教科書と同じ入り方</h3><p>1グループ：ア→イ→ウ→エ→オ、2グループ：4小節休み→ア→イ→ウ→オ、3グループ：8小節休み→ア→イ→オ。ばん奏は4小節のくり返しのあと、最後の和音。教科書の「演奏の仕方」どおりに並びます。</p></div>
+    <div class="feat"><div class="ico">📊</div><h3>3本のレーンと音の高さ</h3><p>ア・イ・ウ・エ・オの帯の上に、音の高さつきで音が並びます。同じ形が4小節ずつずれているのが見えます。イの「二つに分かれる」は2段で表示。</p></div>
+    <div class="feat"><div class="ico">🖐</div><h3>自分の手でずらす・けす・途中から</h3><p>帯をドラッグすると、そのグループだけ開始をずらせます。帯をタップすると、ア・イ…の部分ごとに消せます（「2グループのイだけ聞く」ができる）。小節番号をタップすると、そこから聞けます。試した状態はリンクで配れます。</p></div>
+    <div class="feat"><div class="ico">↔️</div><h3>間かくを変える</h3><p>0・1・2・4・8小節。ぶつかる音の赤い印と「あっている音◯%」で、なぜ4小節なのかが数字と目で分かります（ヒントは先生が消せます）。</p></div>
+    <div class="feat"><div class="ico">🎧</div><h3>グループごとに消す</h3><p>1・2・3グループとばん奏を、それぞれタップで消したり戻したり。1グループは左、2は中央、3は右から聞こえます。テンポは♩=52〜104。</p></div>
+    <div class="feat"><div class="ico">✏️</div><h3>じぶんのカノン</h3><p>ド〜ドの8段グリッドに♩𝅗𝅥𝅝を置く。和音の音のマスに色。8小節・12小節。「おてほん」入り。3グループのカノンとして再生し、📷で画像に記録。</p></div>
+    <div class="feat"><div class="ico">🔗</div><h3>リンクで配る・提出させる</h3><p>作ったせん律と先生の設定（テンポ・ヒント・ロック）が入ったURLを、ロイロノート・Classroomに貼るだけ。</p></div>
+  </div>
+</section>
+<section class="pricing wrap" id="price">
+  <h2>価格</h2>
+  <p class="sub">カノンの単元1回ぶんの準備時間で、毎年使えます</p>
+  <div class="pbox">
+    <div class="pname">カノンであそぼう（買い切り・個人ライセンス）</div>
+    <div class="price-num"><span data-price>—</span><small> 円（税込）</small></div>
+    <ul>
+      <li>本体（canon-full.html）と購入者ページへのアクセス</li>
+      <li>アップデートの無料配布（購入者ページから）</li>
+      <li>担当する授業・学級の児童端末への配布OK</li>
+      <li>購入後の個別サポート（使い方・設定のご相談に対応）</li>
+    </ul>
+    <div class="btns"><a class="btn buy" data-buy href="#" rel="noopener">noteで購入する →</a></div>
+    <p class="pnote">🏫 学校・教育委員会でのご導入は<a href="../utamie/school/" style="color:var(--coral);font-weight:700">スクールライセンス</a>をご覧ください（フル版ツールがすべて含まれます）。<br>
+    決済はnoteの安全なシステムで行われます。<br>
+    ※購入者ページ・アップデートの提供は、予告のうえ将来終了する場合があります。ダウンロード済みの本体は買い切りのため、終了後もそのままお使いいただけます。<br>
+    ※このツールは<b>授業内利用限定</b>です（教科書の楽譜に合わせた音のため。授業以外での演奏・録音・公開はできません）。<br>
+    ご利用条件のくわしくは<a href="../utamie/terms/" style="color:var(--sub)">利用規約</a>をご覧ください。<br><span data-scarcity></span></p>
+  </div>
+</section>
+<section class="wrap">
+  <h2>よくある質問</h2>
+  <p class="sub"></p>
+  <details><summary>教科書の楽譜と同じ音ですか？</summary><p>はい。ア〜オのせん律（イの楽器1・楽器2も）、ばん奏の分散和音とチェロ、最後の和音まで、教育出版の楽譜（東山正流編曲・ハ長調）に合わせています。グループの入り方（演奏の仕方）も教科書どおりです。楽譜を見ながら「いま鳴っているところ」を光で追えます。</p></details>
+  <details><summary>授業以外でも使えますか？</summary><p>本ツールのせん律・ばん奏は、教科書（教育出版・東山正流編曲）の楽譜に合わせた音を、教科書を使った授業の補助として鳴らすものです。<b>授業内利用限定</b>です。発表会・動画・配信など授業以外での演奏や録音、画面の公開、ファイル・URLの再配布はできません。</p></details>
+  <details><summary>無料版はありますか？</summary><p>ありません。授業で使う機能をひとまとめにした買い切り版だけです。同じ考え方の「わおんにのせて」「かさねてリズム」には体験版があるので、操作感はそちらで確かめられます。</p></details>
+  <details><summary>マイクは必要ですか？</summary><p>いりません。聞く・見る・ずらす・置く、のツールです。</p></details>
+  <details><summary>どの端末で動きますか？</summary><p>Chrome・Edge・Safari（iPad含む）の最新版で動作します。電子黒板での投影（全画面ボタン）と、GIGA端末でのタッチ操作の両方に対応しています。</p></details>
+  <details><summary>子どもの端末で使えますか？</summary><p>はい。URLをロイロノート・Classroomに貼るだけで、タップして使えます。他の先生への共有やSNS等での再配布はご遠慮ください。</p></details>
+</section>
+<footer>
+  <a href="../waonnosete/">わおんにのせて</a>｜<a href="../kasanete/">かさねてリズム</a>｜<a href="../utamie/full/">うたミエ フル版</a>｜<a href="../yubimie/full/">ゆびミエ フル版</a>｜<a href="../utamie/school/">学校・自治体での導入</a>｜<a href="../utamie/terms/">利用規約</a>｜<a href="https://ktteacher.net/tools/">けいてぃの音楽ツールズ</a>｜<a href="https://lin.ee/n3WhXbP" target="_blank" rel="noopener">公式LINE</a><br>
+  © けいてぃの音楽ツールズ（合同会社LyricFlow）
+</footer>
+<script>
+"use strict";
+var PURCHASE_URL = "";
+var PRICE = "5,980";
+var SCARCITY = "";
+document.querySelectorAll("[data-buy]").forEach(function(a){ if(PURCHASE_URL){ a.href=PURCHASE_URL; } else { a.textContent="発売準備中（公式LINEでお知らせします）"; a.href="https://lin.ee/n3WhXbP"; a.style.background="#9aa9b1"; a.style.boxShadow="none"; } });
+document.querySelectorAll("[data-price]").forEach(function(e){ e.textContent=PRICE; });
+var sc=document.querySelector("[data-scarcity]"); if(sc&&SCARCITY) sc.textContent=SCARCITY;
+</script>
+</body>
+</html>
