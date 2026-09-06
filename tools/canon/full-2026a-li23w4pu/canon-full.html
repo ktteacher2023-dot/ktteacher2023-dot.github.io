@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>カノンであそぼう｜けいてぃの音楽ツールズ</title>
+<title>カノンであそぼう フル版｜けいてぃの音楽ツールズ</title>
 <meta name="description" content="パッヘルベルのカノンを、3つのグループが4小節ずつずれて追いかける様子を見ながら聞けるツール。間かくを変えて「なぜ4小節なのか」に気づき、自分のせん律をカノンにして鳴らせます。小学校の器楽・音楽づくりに。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +104,7 @@
   <span class="seg" id="modeSeg"><button data-mode="listen" class="on">📖 教科書のカノン</button><button data-mode="make">✏️ じぶんのカノン</button></span>
   <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
   <button class="btn ghost small" id="setBtn">⚙</button>
+  <button class="btn small" id="fullBtn" style="background:#fff3c4;color:#8a5a00;display:none">🔓 フル版</button>
   <button class="btn ghost small" id="fsBtn">⛶</button>
 </header>
 <div class="bar2">
@@ -135,8 +136,22 @@
     <div class="mk" id="mkArea"></div>
   </section>
 </main>
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-4</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-5</footer>
 <div id="toast"></div><canvas id="spark"></canvas>
+<div id="cta" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60">
+  <div style="background:#fff;border-radius:22px;padding:22px 24px;width:min(540px,92vw);max-height:90vh;overflow:auto">
+    <h2 style="margin:0 0 6px;font-size:19px;color:#2f6fbf">🔓 フル版でできること</h2>
+    <p style="font-size:13px;color:#7f8f96;margin:0 0 10px;line-height:1.7">体験版は「教科書のカノンを、3グループがずれて重なる様子を見ながら聞く（間かく0・4小節）」ところまで。授業で使う機能はフル版にまとめてあります。</p>
+    <ul style="font-size:14px;line-height:1.9;padding-left:1.3em;margin:0 0 10px">
+      <li><b>間かく1・2・8小節</b>：ずらし方を変えて「ぶつかる音」を見つける。ハーモニー判定（赤い点・あっている割合）</li>
+      <li><b>帯をタップ・ドラッグ</b>：ア・イ…を部分ごとに消す、グループごとに開始をずらす。<b>小節番号タップ</b>でそこから聞く。鳴らしながら操作</li>
+      <li><b>じぶんのカノン</b>：和音の上に8・12小節のせん律を置いて、3グループで追いかける。おてほん・記録画像</li>
+      <li><b>配布リンク</b>（設定つき）・くりかえし再生・<b>先生ロック</b>・ヒントの表示切り替え・白いマスの制限</li>
+    </ul>
+    <p style="font-size:12.5px;color:#7f8f96;margin:0 0 12px;line-height:1.7">買い切り・税込5,980円。購入者ページから今後のアップデートも受け取れます。せん律は教科書（教育出版）の楽譜に合わせた音のため、授業内利用限定です。</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn ghost" id="ctaClose">とじる</button><a class="btn on" id="ctaGo" href="#" style="text-decoration:none">フル版のくわしい内容 →</a></div>
+  </div>
+</div>
 <div id="dlg"><div class="box"><div class="msg" id="dlgMsg"></div><input id="dlgIn" type="text"><div class="bt"><button class="btn ghost" id="dlgNo">やめる</button><button class="btn on" id="dlgOk">OK</button></div></div></div>
 <div id="ov"><div class="panel">
   <h2>⚙ せってい（先生用）</h2>
@@ -153,7 +168,7 @@
 </div></div>
 
 <script>
-const HOSTED_URL="https://ktteacher.net/tools/canon/full-2026a-li23w4pu/canon-full.html";
+const FULL=true; const HOSTED_URL="https://ktteacher.net/tools/canon/full-2026a-li23w4pu/canon-full.html"; const LP_URL="../full/";
 const $=id=>document.getElementById(id);
 /* ===== 音楽データ（教育出版『小学音楽』p.28-29「カノン」東山正流編曲に合わせた音。ハ長調・4/4） ===== */
 const CHORDS=[ {n:"C",root:60,arp:[67,72,76],tones:[0,4,7],label:"ド・ミ・ソ"},{n:"G",root:55,arp:[67,71,74],tones:[7,11,2],label:"ソ・シ・レ"},{n:"Am",root:57,arp:[64,69,72],tones:[9,0,4],label:"ラ・ド・ミ"},{n:"Em",root:52,arp:[64,67,71],tones:[4,7,11],label:"ミ・ソ・シ"},
@@ -375,6 +390,7 @@ function afterLaneChange(){ save(); syncOffSeg(); reschedule(); drawLanes(playin
 function shiftGroup(gi,d){ const nb=Math.max(0,Math.min(24,gStart[gi]+d)); if(nb===gStart[gi]) return; gStart[gi]=nb; afterLaneChange(); toast((gi+1)+"グループ："+(nb===0?"1小節目から":nb+"小節休んでから")+"始まります"); }
 function setPlayFrom(bar){ const tb=totalBars(); if(bar<0||bar>=tb) return; playFrom=(bar===playFrom)?0:bar; if(playing) reschedule(null,playFrom*4); afterLaneChange(); toast(playFrom===0?"はじめから聞きます":(playFrom+1)+"小節目から聞きます（もう一度タップではじめから）"); }
 $("laneCanvas").addEventListener("pointerdown",e=>{ const {x,y}=laneXY(e); const tb=totalBars(); const gi=Math.floor((y-LANE.top)/LANE.laneH);
+  if(!FULL){ if(gi>=0&&gi<3&&x<LANE.left&&y<=LANE.top+gi*LANE.laneH+LANE.laneH/2+2){ mute[gi]=!mute[gi]; renderChips(); afterLaneChange(); } else openCta(); return; }
   if(y<LANE.top){ const bar=Math.floor((x-LANE.left)/LANE.bw); if(x>=LANE.left&&bar<tb) setPlayFrom(bar); return; }
   if(gi>=0&&gi<3&&x<LANE.left){ const y0=LANE.top+gi*LANE.laneH; if(y>y0+LANE.laneH/2+2){ shiftGroup(gi,x<44?-1:1); } else { mute[gi]=!mute[gi]; renderChips(); afterLaneChange(); } return; }
   let sc=null; if(gi>=0&&gi<3){ const bar=(x-LANE.left)/LANE.bw; sc=groupEvents(gi).secs.find(s=>bar>=s.bar&&bar<s.bar+s.bars)||null; }
@@ -486,8 +502,26 @@ $("fsBtn").addEventListener("click",()=>{ if(!document.fullscreenElement){ docum
 function sparkle(){ const cv=$("spark"), g=cv.getContext("2d"); cv.width=innerWidth; cv.height=innerHeight; const ps=[]; for(let i=0;i<80;i++) ps.push({x:innerWidth/2+(Math.random()-.5)*300,y:innerHeight*0.4,vx:(Math.random()-.5)*9,vy:-Math.random()*9-3,c:["#ff7a59","#f2c94c","#5fb37a","#4a90e2","#e0669a"][i%5],r:4+Math.random()*5,l:1}); let t0=performance.now();
   (function fr(t){ const dt=(t-t0)/1000; t0=t; g.clearRect(0,0,cv.width,cv.height); let alive=false; ps.forEach(p=>{ p.vy+=22*dt; p.x+=p.vx*60*dt; p.y+=p.vy*60*dt; p.l-=dt*0.6; if(p.l>0){ alive=true; g.globalAlpha=Math.max(0,p.l); g.fillStyle=p.c; g.beginPath(); g.arc(p.x,p.y,p.r,0,7); g.fill(); } }); g.globalAlpha=1; if(alive) requestAnimationFrame(fr); else g.clearRect(0,0,cv.width,cv.height); })(performance.now()); }
 
+/* ===== 体験版 ===== */
+function openCta(){ $("cta").style.display="flex"; }
+$("ctaClose").addEventListener("click",()=>$("cta").style.display="none");
+$("cta").addEventListener("click",e=>{ if(e.target===$("cta")) $("cta").style.display="none"; });
+$("ctaGo").href=LP_URL;
+if(!FULL){
+  $("fullBtn").style.display=""; $("fullBtn").addEventListener("click",openCta);
+  const lock=(id,label)=>{ const b=$(id); if(!b) return; const nb=b.cloneNode(true); if(label) nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); };
+  lock("linkBtn","🔗 リンク 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒");
+  const mk=document.querySelector('#modeSeg button[data-mode="make"]'); const nmk=mk.cloneNode(true); nmk.innerHTML="✏️ じぶんのカノン 🔒"; mk.parentNode.replaceChild(nmk,mk); nmk.addEventListener("click",openCta);
+  document.querySelectorAll('#offSeg button').forEach(b=>{ const o=Number(b.dataset.off); if(o===0||o===4) return; const nb=b.cloneNode(true); nb.innerHTML=o+"🔒"; nb.style.fontSize="11px"; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
+  const hl=document.querySelector(".hintline"); if(hl) hl.innerHTML='<span>レーン左の①②③をタップ→そのグループを消す／もどす</span><span style="color:#8a5a00">帯のタップ・ドラッグ、小節番号から聞く、間かく1・2・8は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> で</span>';
+  const tb=document.createElement("div"); tb.id="trialBar"; tb.style.cssText="background:#fff3c4;color:#6b4a00;font-size:12.5px;padding:6px 14px;text-align:center;line-height:1.6";
+  tb.innerHTML='🧪 <b>体験版</b>：教科書のカノンを、3グループが4小節ずつずれて重なる様子を見ながら聞けます（間かく0・4小節、グループごとに消す）。授業で使う機能（間かく1・2・8とハーモニー判定・帯をタップして部分ごとに消す・ずらす・途中から聞く・じぶんのカノン・リンク・先生の設定 など）は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> に入っています。';
+  document.querySelector(".bar2").insertAdjacentElement("afterend",tb);
+}
+
 /* ===== 起動 ===== */
-restore(); const fromLink=loadFromHash();
+restore(); const fromLink=FULL?loadFromHash():false;
+if(!FULL){ if(![0,4].includes(offBars)) offBars=4; syncStartFromOff(); secMute=new Set(); playFrom=0; mode="listen"; loop=false; cfg.pin=""; cfg.hideGear=false; cfg.advice="on"; cfg.strict="on"; }
 bind("tempo","tempo","tempoV"); bind("melVol","melVol","melVolV"); bind("accVol","accVol","accVolV"); bind("count","count"); bind("advice","advice"); bind("names","names"); bind("strict","strict");
 $("tempoNow").textContent=cfg.tempo; syncOffSeg(); document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===mkBars));
 renderChips(); applyGear(); applyStrict(); setMode(mode);
