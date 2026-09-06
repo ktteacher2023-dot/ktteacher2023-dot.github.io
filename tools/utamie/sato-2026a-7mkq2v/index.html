@@ -227,7 +227,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.05-1（8分の6拍子の修正・地球星歌の追加・結果に日時表示）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.06-1（8分の6拍子の修正・地球星歌の追加・結果に日時表示）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -1902,9 +1902,10 @@ restoreSong();
     </div>
     <div id="presetTeacher">
       ⚙ <b>先生向け:</b> 追加した曲はこの端末（ブラウザ）にだけ保存されます。
-      「組み込み用コード」を押すと、この曲をファイル本体に永久収録するためのコードがコピーされます。
-      utamie-full.html をテキストエディタで開き、<b>PRESETS の並びの中</b>に貼り付けて保存すると、
-      配布したどの端末でも最初から曲が入った状態になります。
+      下のボタンを押すと、<b>この端末に保存した曲をぜんぶ入れた utamie-full.html</b> がダウンロードされます。
+      そのファイルを配れば、どの端末でも最初から曲が入った状態で開けます（テキストエディタは不要です）。
+      <div style="margin-top:6px"><button id="exportEmbedBtn" class="blue">📥 曲を入れたファイルを書き出す</button></div>
+      <small style="display:block;margin-top:4px;color:var(--sub)">※「組み込み用コード」は手作業で貼りたい先生向けです。ふだんは使いません。</small>
     </div>
     <button id="presetClose">とじる</button>
   </div>
@@ -2072,6 +2073,31 @@ restoreSong();
     arr.push(songPayload(songMeta));
     devSave(arr); renderLists();
   });
+
+  /* ====== ②a 曲を入れたファイルの書き出し（ワンボタン） ====== */
+  var EMBED_MARK="/* ★組み込み用コードは、この行の上に貼り付け";
+  function exportEmbeddedFile(){
+    var arr=devLoad();
+    if(!arr.length){ alert("この端末に保存した曲がまだありません。楽譜を読み込んで「📌 追加」してから押してください"); return; }
+    if(location.protocol==="file:"){ alert("この機能は、ネット上のページ（ktteacher.net の購入者用URL）で開いたときに使えます。\nそちらで曲を追加してから、このボタンを押してください"); return; }
+    var btn=$("exportEmbedBtn"); btn.disabled=true; btn.textContent="作成中…";
+    fetch(location.href.split("#")[0], {cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); }).then(function(src){
+      var at=src.indexOf(EMBED_MARK); if(at<0) throw new Error("貼り付け位置が見つかりません");
+      var head=src.slice(0,at), tail=src.slice(at);
+      var added=0, skipped=[];
+      arr.forEach(function(p){
+        var o=songPayload(p); o.origin=""; o.cls=true;
+        if(head.indexOf('"title":'+JSON.stringify(o.title||""))>=0){ skipped.push(o.title); return; }   // すでに入っている曲は飛ばす
+        head=head.replace(/\s*$/,"")+"\n    ,"+JSON.stringify(o)+"\n    "; added++;
+      });
+      if(!added){ alert("保存した曲は、すでにこのファイルに入っています（"+skipped.join("・")+"）"); return; }
+      var blob=new Blob([head+tail],{type:"text/html"}); var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="utamie-full.html";
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
+      alert(added+"曲を入れた utamie-full.html をダウンロードしました。\nこのファイルを開けば、どの端末でも曲が入った状態で使えます"+(skipped.length?"\n（すでに入っていた曲："+skipped.join("・")+"）":""));
+    }).catch(function(e){ alert("ファイルを作れませんでした："+e.message+"\nネット上のページで開いているか確認してください"); })
+    .then(function(){ btn.disabled=false; btn.textContent="📥 曲を入れたファイルを書き出す"; });
+  }
+  $("exportEmbedBtn").addEventListener("click", exportEmbeddedFile);
 
   /* ====== ② 組み込み用コードのコピー ====== */
   function copyEmbed(p){
