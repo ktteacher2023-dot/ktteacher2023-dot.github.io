@@ -136,12 +136,12 @@
     <div class="mk" id="mkArea"></div>
   </section>
 </main>
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-5</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-6</footer>
 <div id="toast"></div><canvas id="spark"></canvas>
 <div id="cta" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60">
   <div style="background:#fff;border-radius:22px;padding:22px 24px;width:min(540px,92vw);max-height:90vh;overflow:auto">
     <h2 style="margin:0 0 6px;font-size:19px;color:#2f6fbf">🔓 フル版でできること</h2>
-    <p style="font-size:13px;color:#7f8f96;margin:0 0 10px;line-height:1.7">体験版は「教科書のカノンを、3グループがずれて重なる様子を見ながら聞く（間かく0・4小節）」ところまで。授業で使う機能はフル版にまとめてあります。</p>
+    <p style="font-size:13px;color:#7f8f96;margin:0 0 10px;line-height:1.7">体験版は「教科書のカノンを、3グループがずれて重なる様子を見ながら聞く（16小節・アまで、間かく0・4小節）」ところまで。授業で使う機能はフル版にまとめてあります。</p>
     <ul style="font-size:14px;line-height:1.9;padding-left:1.3em;margin:0 0 10px">
       <li><b>間かく1・2・8小節</b>：ずらし方を変えて「ぶつかる音」を見つける。ハーモニー判定（赤い点・あっている割合）</li>
       <li><b>帯をタップ・ドラッグ</b>：ア・イ…を部分ごとに消す、グループごとに開始をずらす。<b>小節番号タップ</b>でそこから聞く。鳴らしながら操作</li>
@@ -168,7 +168,7 @@
 </div></div>
 
 <script>
-const FULL=true; const HOSTED_URL="https://ktteacher.net/tools/canon/full-2026a-li23w4pu/canon-full.html"; const LP_URL="../full/";
+const FULL=true; const HOSTED_URL="https://ktteacher.net/tools/canon/full-2026a-li23w4pu/canon-full.html"; const LP_URL="../full/"; const TRIAL_BEATS=64;
 const $=id=>document.getElementById(id);
 /* ===== 音楽データ（教育出版『小学音楽』p.28-29「カノン」東山正流編曲に合わせた音。ハ長調・4/4） ===== */
 const CHORDS=[ {n:"C",root:60,arp:[67,72,76],tones:[0,4,7],label:"ド・ミ・ソ"},{n:"G",root:55,arp:[67,71,74],tones:[7,11,2],label:"ソ・シ・レ"},{n:"Am",root:57,arp:[64,69,72],tones:[9,0,4],label:"ラ・ド・ミ"},{n:"Em",root:52,arp:[64,67,71],tones:[4,7,11],label:"ミ・ソ・シ"},
@@ -289,7 +289,8 @@ function buildEvents(noLead, fromBeat){   // fromBeat: この拍から（省略�
     if(accOn) accEvents(tb,null).forEach(e=>raw.push({beat:e.t,len:e.dur,type:"acc",midi:e.midi,kind:e.kind,f:0.95}));
   }
   const fb=fromBeat!=null?fromBeat:(mode==="listen"?playFrom*4:0);
-  raw.forEach(r=>{ if(r.beat<fb) return; ev.push(Object.assign({},r,{t:off+(r.beat-fb)*bs,dur:r.len*bs*r.f})); });
+  if(!FULL&&mode==="listen") totalBeats=Math.min(totalBeats,TRIAL_BEATS);   // 体験版：ア（16小節）まで
+  raw.forEach(r=>{ if(r.beat<fb) return; if(!FULL&&mode==="listen"&&r.beat>=TRIAL_BEATS) return; ev.push(Object.assign({},r,{t:off+(r.beat-fb)*bs,dur:r.len*bs*r.f})); });
   ev.sort((a,b)=>a.t-b.t); return {ev,total:off+(totalBeats-fb)*bs,off,beats:totalBeats-fb,fb};
 }
 function playEv(e,t){ const mv=cfg.melVol/100, av=cfg.accVol/100;
@@ -365,6 +366,8 @@ function drawLanes(beat){
   });
   // 小節線
   for(let b=0;b<=tb;b++){ const x=LANE.left+b*LANE.bw; g.strokeStyle=b%4===0?"#b7b0a0":"#eee5d0"; g.lineWidth=b%4===0?1.5:1; g.beginPath(); g.moveTo(x,LANE.top); g.lineTo(x,LANE.top+3*LANE.laneH); g.stroke(); }
+  // 体験版：17小節目以降はロック
+  if(!FULL){ const x=LANE.left+(TRIAL_BEATS/4)*LANE.bw; if(x<LANE.W){ g.fillStyle="rgba(255,255,255,.78)"; g.fillRect(x,LANE.top,LANE.W-x,3*LANE.laneH); g.strokeStyle="#e0b84a"; g.lineWidth=2; g.setLineDash([6,4]); g.beginPath(); g.moveTo(x,LANE.top); g.lineTo(x,LANE.top+3*LANE.laneH); g.stroke(); g.setLineDash([]); g.fillStyle="#8a5a00"; g.font="bold 13px "+F; g.textAlign="left"; g.fillText("🔒 17小節目からは、フル版で聞けます",x+10,LANE.top+3*LANE.laneH/2+5); } }
   // ▶ ここから
   if(playFrom>0){ const x=LANE.left+playFrom*LANE.bw; g.fillStyle="#ff7a59"; g.beginPath(); g.moveTo(x-6,2); g.lineTo(x+6,2); g.lineTo(x,12); g.closePath(); g.fill(); g.strokeStyle="#ff7a59"; g.lineWidth=1.5; g.setLineDash([4,4]); g.beginPath(); g.moveTo(x,LANE.top); g.lineTo(x,LANE.top+3*LANE.laneH); g.stroke(); g.setLineDash([]); g.font="bold 10px "+F; g.textAlign="left"; g.fillStyle="#ff7a59"; g.fillText("ここから",x+8,LANE.top+3*LANE.laneH-4); }
   // ばん奏レーン（下）
@@ -515,7 +518,7 @@ if(!FULL){
   document.querySelectorAll('#offSeg button').forEach(b=>{ const o=Number(b.dataset.off); if(o===0||o===4) return; const nb=b.cloneNode(true); nb.innerHTML=o+"🔒"; nb.style.fontSize="11px"; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
   const hl=document.querySelector(".hintline"); if(hl) hl.innerHTML='<span>レーン左の①②③をタップ→そのグループを消す／もどす</span><span style="color:#8a5a00">帯のタップ・ドラッグ、小節番号から聞く、間かく1・2・8は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> で</span>';
   const tb=document.createElement("div"); tb.id="trialBar"; tb.style.cssText="background:#fff3c4;color:#6b4a00;font-size:12.5px;padding:6px 14px;text-align:center;line-height:1.6";
-  tb.innerHTML='🧪 <b>体験版</b>：教科書のカノンを、3グループが4小節ずつずれて重なる様子を見ながら聞けます（間かく0・4小節、グループごとに消す）。授業で使う機能（間かく1・2・8とハーモニー判定・帯をタップして部分ごとに消す・ずらす・途中から聞く・じぶんのカノン・リンク・先生の設定 など）は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> に入っています。';
+  tb.innerHTML='🧪 <b>体験版</b>：教科書のカノンを、3グループが4小節ずつずれて重なる様子を見ながら聞けます（<b>16小節・アまで</b>、間かく0・4小節、グループごとに消す）。授業で使う機能（間かく1・2・8とハーモニー判定・帯をタップして部分ごとに消す・ずらす・途中から聞く・じぶんのカノン・リンク・先生の設定 など）は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> に入っています。';
   document.querySelector(".bar2").insertAdjacentElement("afterend",tb);
 }
 
