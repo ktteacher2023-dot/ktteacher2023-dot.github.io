@@ -214,7 +214,7 @@
   <section class="stage" id="stage"></section>
 </main>
 
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-13</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-14</footer>
 
 <div id="toast"></div>
 <canvas id="spark"></canvas>
@@ -489,7 +489,7 @@ function tapCell(part,s){
   if(rcard!==null){ applyCard(part,m); return; }
   if(cfg.inputMode==="cards"){
     const cov=parts[part].find(n=>n.s<=s&&n.s+n.len>s);
-    if(lenKey==="erase"){ if(inM(part,m).length){ parts[part]=parts[part].filter(n=>Math.floor(n.s/SPM)!==m); afterEdit(); toast((m+1)+"小節目の"+part+"を消しました"); } return; }
+    if(lenKey==="erase"){ if(inM(part,m).length){ parts[part]=parts[part].filter(n=>Math.floor(n.s/SPM)!==m); afterEdit(); lenKey=LENORDER.find(k=>cfg.tools[k])||"4"; buildTools(); toast((m+1)+"小節目の"+part+"を消しました（「消す」は解除されました）"); } else toast((m+1)+"小節目の"+part+"は空です"); return; }
     if(cov){ if(cov.snd!==snd){ cov.snd=snd; preview(snd); afterEdit(); } else toast("カードだけモードです。消すときは左の「消す」で小節ごと消えます"); return; }
     toast("リズムカードをえらんでから、小節をタップしてください"); return;
   }
@@ -519,7 +519,7 @@ function buildTools(){
   const firstLen=LENORDER.find(k=>cfg.tools[k])||"4"; if(lenKey!=="erase"&&!cfg.tools[lenKey]) lenKey=firstLen;   // 使える音符が変わっても無限ループしない
   if(cfg.inputMode==="cards"){ if(lenKey!=="erase") lenKey=firstLen; const info=document.createElement("div"); info.className="ttl"; info.style.cssText="font-size:10px;line-height:1.5;letter-spacing:0;margin-top:4px;color:#8a5a00"; info.textContent="カードで入れます"; box.appendChild(info); }
   LENORDER.filter(k=>cfg.tools[k]&&cfg.inputMode!=="cards").forEach(k=>{ const b=document.createElement("button"); b.className="tool"+(k===lenKey?" on":""); b.dataset.len=k; b.innerHTML='<span class="g">'+LENS[k].g+'</span><span class="n">'+LENS[k].n+'</span>'; b.addEventListener("click",()=>{ lenKey=k; rcard=null; buildCards(); buildTools(); }); box.appendChild(b); });
-  const e=document.createElement("button"); e.className="tool"+(lenKey==="erase"?" on":""); e.innerHTML='<span class="g">'+SVG.erase+'</span><span class="n">'+(cfg.inputMode==="cards"?"小節を消す":"消す")+'</span>'; e.addEventListener("click",()=>{ lenKey="erase"; rcard=null; buildCards(); buildTools(); }); box.appendChild(e);
+  const e=document.createElement("button"); e.className="tool"+(lenKey==="erase"?" on":""); e.innerHTML='<span class="g">'+SVG.erase+'</span><span class="n">'+(cfg.inputMode==="cards"?"小節を消す":"消す")+'</span>'; e.title="もう一度押すと解除"; e.addEventListener("click",()=>{ if(lenKey==="erase"){ lenKey=firstLen; toast("「消す」を解除しました"); } else { lenKey="erase"; rcard=null; buildCards(); } buildTools(); }); box.appendChild(e);
 }
 document.querySelectorAll(".tool.snd").forEach(b=>b.addEventListener("click",()=>{ snd=b.dataset.snd; document.querySelectorAll(".tool.snd").forEach(x=>x.classList.toggle("on",x===b)); ensureAudio(); preview(snd); }));
 function allCards(){ return RCARDS.map((c,i)=>Object.assign({id:"b"+i},c)).concat((cfg.customCards||[]).map((c,i)=>Object.assign({id:"c"+i},c))); }
@@ -536,7 +536,7 @@ function buildCards(){
   const box=$("rcards"); if(!box) return; box.innerHTML="";
   visibleCards().forEach(c=>{ const b=document.createElement("button"); b.className="rcard"+(rcard===c.id?" on":""); b.dataset.id=c.id;
     if(!FULL){ b.innerHTML=(c.tag?'<span class="tag">'+c.tag+'</span>':"")+cardSvg(c)+' <span style="font-size:12px">🔒</span>'; b.style.opacity=".75"; b.addEventListener("click",openCta); box.appendChild(b); return; } b.innerHTML=(c.tag?'<span class="tag">'+c.tag+'</span>':"")+cardSvg(c); b.title=c.name||"";
-    b.addEventListener("click",()=>{ rcard=(rcard===c.id)?null:c.id; addCardMode=false; buildCards(); updatePick(); if(rcard!==null){ ensureAudio(); previewCard(c); toast("入れたい小節（AかB）をタップしてください。音は左の「手拍子／足踏み」で決まります"); } });
+    b.addEventListener("click",()=>{ rcard=(rcard===c.id)?null:c.id; addCardMode=false; if(rcard!==null&&lenKey==="erase"){ lenKey=LENORDER.find(k=>cfg.tools[k])||"4"; buildTools(); } buildCards(); updatePick(); if(rcard!==null){ ensureAudio(); previewCard(c); toast("入れたい小節（AかB）をタップしてください。音は左の「手拍子／足踏み」で決まります"); } });
     box.appendChild(b); });
   if(cfg.showAddCard||window.__teacherOpen){ const ab=document.createElement("button"); ab.className="rcard add"+(addCardMode?" on":""); ab.id="rcardAdd"; ab.textContent="＋ 自分のリズム"; ab.addEventListener("click",()=>{ addCardMode=!addCardMode; rcard=null; buildCards(); updatePick(); if(addCardMode) toast("カードにしたい小節の番号（上の「◯小節」）をタップしてください。Aのリズムがカードになります"); }); box.appendChild(ab); }
 }
