@@ -79,6 +79,9 @@
   .cells{position:relative;display:grid;grid-template-columns:repeat(32,1fr);height:clamp(56px,8.5vh,80px);margin:2px 0;border-radius:10px;overflow:hidden;border:2px solid #ddd6c4;}
   .cells.a{background:#f5f9ff;} .cells.b{background:#fff5f9;}
   .cell{border-right:1px dashed #eee5d0;position:relative;}
+  .cell.outrng{background:repeating-linear-gradient(45deg,#f1ede4 0 5px,#e9e4d8 5px 10px);cursor:not-allowed;}
+  .mhead div.outrng{opacity:.45;}
+  .imgtag{color:#b8741c;font-weight:900;}
   .cell.m0{border-left:2px solid #b7b0a0;}
   .cell.beat{border-right:1px solid #e3ddcc;}
   .cell.b0::after{content:"";position:absolute;left:2px;top:3px;width:4px;height:4px;border-radius:50%;background:#d9d2bf;}
@@ -160,6 +163,7 @@
   <button class="btn ghost" id="clearBtn">ぜんぶ消す</button>
   <button class="btn ghost small" id="staffBtn">🎼 楽譜</button>
   <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
+  <button class="btn ghost small" id="submitBtn" title="作品のリンクをコピーして、先生に送る">📤 ていしゅつ</button>
   <button class="btn ghost small" id="cardBtn">📷 記録</button>
   <button class="btn small" id="fullBtn" style="background:#fff3c4;color:#8a5a00;display:none">🔓 フル版</button>
   <button class="btn ghost small" id="setBtn">⚙</button>
@@ -169,7 +173,7 @@
   <span>きく：</span>
   <span class="seg" id="hearSeg"><button data-h="both" class="on">両方</button><button data-h="A">Aだけ</button><button data-h="B" class="b">Bだけ</button></span>
   <button class="btn ghost small" id="metroBtn" title="メトロノーム（1小節のカウントは常に鳴ります）">🎵 メトロノーム：ON</button>
-  <span style="margin-left:6px">小節</span>
+  <span style="margin-left:6px" title="作る小節・きく小節。この外には音符を置けません">小節</span>
   <select id="rngFrom"></select><span>〜</span><select id="rngTo"></select>
   <span class="spacer"></span>
   <span>イメージ：</span>
@@ -185,6 +189,16 @@
     <option value="X">自分たちで考えた</option>
   </select>
   <input type="text" id="imgTxt" placeholder="どんな音楽？（自由に）" maxlength="30" style="display:none">
+  <span id="img2Wrap" style="display:none"><span>→ 後半：</span><select id="imgSel2">
+    <option value="">（前半と同じ）</option>
+    <option value="J">喜（うれしい）</option>
+    <option value="D">怒（おこっている）</option>
+    <option value="S">哀（かなしい）</option>
+    <option value="R">楽（たのしい）</option>
+    <option value="A">A だんだん盛り上がる</option>
+    <option value="B">B 会話している</option>
+    <option value="C">C 競走している</option>
+  </select></span>
   <button class="btn ghost small" id="kufuBtn">📝 工夫した点</button>
 </div>
 
@@ -199,7 +213,7 @@
   <section class="stage" id="stage"></section>
 </main>
 
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-12</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-13</footer>
 
 <div id="toast"></div>
 <canvas id="spark"></canvas>
@@ -214,7 +228,7 @@
       <li><b>練習モード</b>：Aだけ／Bだけで鳴らす・小節を指定・くりかえし（ペア練習に）</li>
       <li><b>イメージ</b>（盛り上がる・会話・競走）に合わせたヒントと「工夫した点」の記入</li>
       <li><b>🎼 楽譜</b>（A・B 2段のリズム譜・画像保存）と<b>📷 記録</b>（ワークシート画像・名前と日付入り）</li>
-      <li><b>🔗 リンク</b>で配る・提出させる（先生の設定つき）・<b>先生ロック</b>・使える音符の設定</li>
+      <li><b>🔗 リンク</b>で配る（先生の設定つき）・<b>📤 ていしゅつ</b>で作品のリンクを先生に送る（先生が開くとそのまま鳴らせます）・<b>先生ロック</b>・使える音符の設定</li>
       <li>今後のアップデートを購入者ページから無料で受け取れる</li>
     </ul>
     <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
@@ -286,10 +300,14 @@ let meas=8;
 let parts={A:[],B:[]};     // note: {s:slot, len, two:0|1, snd:"h"|"f"}
 let snd="h", lenKey="4", rcard=null, addCardMode=false;
 let hear="both", rng=[1,8], loop=false;
-let img="", imgTxt="", kufu="";
+let img="", img2="", imgTxt="", kufu="";
+const IMGS_S={A:"盛り上がる",B:"会話",C:"競走",J:"喜",D:"怒",S:"哀",R:"楽",X:"自分たち"};
+function imgName(k){ return k==="X"?(imgTxt||"自分たちで考えた"):(IMGS[k]||""); }
+function imgLabel(){ if(!img) return ""; if(meas===8&&img2&&img2!==img) return "前半（1〜4小節）"+imgName(img)+" → 後半（5〜8小節）"+imgName(img2); return imgName(img); }
+function syncImg2(){ const w=$("img2Wrap"); if(!w) return; w.style.display=(FULL&&meas===8&&img)?"":"none"; $("imgSel2").value=img2; }
 const cfg={tempo:100,vol:80,metro:"on",advice:"on",inputMode:"free",tools:{"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1},hiddenCards:[],customCards:[],pin:"",hideGear:false,showAddCard:false};
 const store={ get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
-function save(){ store.set("kasanete_v1", JSON.stringify({meas,parts,img,imgTxt,kufu,cfg,hear,rng})); }
+function save(){ store.set("kasanete_v1", JSON.stringify({meas,parts,img,img2,imgTxt,kufu,cfg,hear,rng})); }
 
 /* ---------- 小物 ---------- */
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2600); }
@@ -309,11 +327,11 @@ async function packTok(obj){ const bytes=new TextEncoder().encode(JSON.stringify
   return "j."+b64uBytes(bytes); }
 async function unpackTok(tok){ if(tok.startsWith("z.")){ const buf=await new Response(new Blob([ub64Bytes(tok.slice(2))]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer(); return JSON.parse(new TextDecoder().decode(buf)); }
   if(tok.startsWith("j.")) tok=tok.slice(2); return JSON.parse(new TextDecoder().decode(ub64Bytes(tok))); }
-function songObj(){ const enc=arr=>arr.map(n=>[n.s,n.len,n.two?1:0,n.snd==="f"?1:0]); return {v:1,meas,img,imgTxt,kufu,A:enc(parts.A),B:enc(parts.B)}; }
-function applySong(o){ const dec=arr=>(arr||[]).map(a=>({s:a[0],len:a[1],two:a[2]?1:0,snd:a[3]?"f":"h"})); meas=o.meas===4?4:8; parts={A:dec(o.A),B:dec(o.B)}; img=o.img||""; imgTxt=o.imgTxt||""; kufu=o.kufu||""; }
+function songObj(){ const enc=arr=>arr.map(n=>[n.s,n.len,n.two?1:0,n.snd==="f"?1:0]); return {v:1,meas,img,img2,imgTxt,kufu,A:enc(parts.A),B:enc(parts.B)}; }
+function applySong(o){ const dec=arr=>(arr||[]).map(a=>({s:a[0],len:a[1],two:a[2]?1:0,snd:a[3]?"f":"h"})); meas=o.meas===4?4:8; parts={A:dec(o.A),B:dec(o.B)}; img=o.img||""; img2=o.img2||""; imgTxt=o.imgTxt||""; kufu=o.kufu||""; }
 function teacherCfgObj(){ return {tempo:cfg.tempo,metro:cfg.metro,advice:cfg.advice,inputMode:cfg.inputMode||"free",tools:cfg.tools,hiddenCards:cfg.hiddenCards||[],customCards:cfg.customCards||[],pin:cfg.pin||"",hideGear:!!cfg.hideGear,showAddCard:false}; }
 function restore(){
-  try{ const j=JSON.parse(store.get("kasanete_v1")||"null"); if(j&&j.parts){ meas=j.meas===4?4:8; parts=j.parts; img=j.img||""; imgTxt=j.imgTxt||""; kufu=j.kufu||""; Object.assign(cfg,j.cfg||{}); hear=j.hear||"both"; rng=j.rng||[1,meas]; if(!cfg.tools) cfg.tools={"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1}; } }catch(e){}
+  try{ const j=JSON.parse(store.get("kasanete_v1")||"null"); if(j&&j.parts){ meas=j.meas===4?4:8; parts=j.parts; img=j.img||""; img2=j.img2||""; imgTxt=j.imgTxt||""; kufu=j.kufu||""; Object.assign(cfg,j.cfg||{}); hear=j.hear||"both"; rng=j.rng||[1,meas]; if(!cfg.tools) cfg.tools={"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1}; } }catch(e){}
 }
 
 /* ---------- 分析（②きづく）---------- */
@@ -392,7 +410,7 @@ function build(){
     g.querySelector(".formrow").innerHTML='<div></div><div></div><div></div><div></div>';
     st.appendChild(g);
   }
-  const sm=document.createElement("div"); sm.id="summary"; st.appendChild(sm);
+  const sm=document.createElement("div"); sm.id="summary"; st.appendChild(sm); maskRange();
   const kb=document.createElement("div"); kb.id="kufuBox"; kb.style.display=(FULL&&kufu)?"":"none"; kb.innerHTML='<label>📝 イメージを表すために、音の出し方や重ね方、構成を工夫した点</label><textarea id="kufuIn" maxlength="200" placeholder="例：前半は2人が同じリズムで、5小節目からちがうリズムを重ねて盛り上げた"></textarea>'; st.appendChild(kb);
   $("kufuIn").value=kufu; $("kufuIn").addEventListener("input",()=>{ kufu=$("kufuIn").value; save(); });
   buildCards(); renderAll(); renderRange();
@@ -431,12 +449,13 @@ function renderRhythm(){
 function renderLabels(){
   const ov=overlayAll(), fm=analyzeForm(), show=cfg.advice==="on";
   document.querySelectorAll(".sys").forEach(g=>{ const sy=Number(g.dataset.sy);
+    const tagK=(sy===1&&img2)?img2:img; const first=g.querySelector(".mhead div"); if(first){ let t=first.querySelector(".imgtag"); if(!t){ t=document.createElement("span"); t.className="imgtag"; first.appendChild(t); } t.textContent=(img&&(meas===4||!img2||img2===img?sy===0:true))?"　"+(IMGS_S[tagK]||"")+(meas===8&&img2&&img2!==img?(sy===0?"（前半）":"（後半）"):""):""; }
     g.querySelectorAll(".ovrow div").forEach((d,k)=>{ const o=ov[sy*4+k]; d.className=show?(o.k||""):""; d.textContent=show?o.t:""; });
     g.querySelectorAll(".formrow div").forEach((d,k)=>{ const f=fm[sy*4+k]; if(!FULL){ d.innerHTML=""; return; } d.className=show?f.cls:""; d.innerHTML=show&&f.label?`<span style="font-size:1.2em">${f.label}</span>${f.txt?`<small style="display:block;font-weight:700;opacity:.85">${f.txt}</small>`:""}`:""; });
   });
   const s=summaryText(); const el=$("summary");
   if(!show){ el.style.display="none"; return; } el.style.display="";
-  const imgLine=img?("めざすイメージ：<b>"+(img==="X"?(imgTxt||"自分たちで考えた"):IMGS[img])+"</b>　"):"";
+  const imgLine=img?("めざすイメージ：<b>"+imgLabel()+"</b>　"):"";
   const usedLine=s.used.length?("使っている重なり方：<b>"+s.used.join("・")+"</b>"+(s.ok?" ✔（2つ以上）":" （課題は2つ以上）")):"重なり方：まだ2人とも入っている小節がありません";
   const formLine=(FULL&&s.seq)?("　構成：<b>"+s.seq+"</b>"+(s.rep?"　反復"+s.rep:"")+(s.vr?"　変化"+s.vr:"")+(s.con?"　対照"+s.con:"")):"";
   const hint=FULL?adviceFor(s):(parts.A.length&&parts.B.length?"重なり方を変えると、感じはどう変わる？（8小節・リズムカード・Aだけで練習は、フル版で）":"AとBの両方にリズムを置いて「▶ きく」を押してみよう");
@@ -445,6 +464,7 @@ function renderLabels(){
 function adviceFor(s){
   const total=parts.A.length+parts.B.length; if(!total) return "まず、カードを1枚えらんで1小節目のAに入れてみよう。次にBに何を重ねる？";
   if(!parts.B.length) return "Bが空です。同じリズムを重ねる？ すきまに掛け合いで入れる？";
+  if(meas===8&&img2&&img2!==img&&"JDSR".includes(img)&&"JDSR".includes(img2)){ const T={J:"2人が同じリズムでそろう・手拍子多め",D:"足踏みを増やす・ちがうリズムをぶつける",S:"休みを多く・音を減らす",R:"掛け合い・16分音符でにぎやかに"}; const fs=analyzeForm(); const con=fs.some((f,i)=>i>=4&&f.cls==="con"); if(!con) return "前半「"+imgName(img)+"」→ 後半「"+imgName(img2)+"」。前半は"+T[img]+"、後半は"+T[img2]+"。5小節目からは前半とちがうリズム（対照）にすると、気持ちが変わったのが伝わります"; }
   if(img==="A"&&meas===8){ const late=onsets("A",6).size+onsets("B",6).size+onsets("A",7).size+onsets("B",7).size, early=onsets("A",0).size+onsets("B",0).size+onsets("A",1).size+onsets("B",1).size; if(late<=early) return "「だんだん盛り上がる」なら、後半（7・8小節）の音を前半より多くしたり、2人が同じリズムになるところを作ってみよう"; }
   if(img==="B"&&!s.used.includes("掛け合い")) return "「会話」なら、掛け合い（Aが打つときBは休む）を入れると会話らしくなります";
   if(img==="C"&&!s.used.includes("ちがうリズムを重ねる")) return "「競走」なら、ちがうリズムを同時に重ねると競っている感じが出ます";
@@ -459,8 +479,12 @@ function adviceFor(s){
 }
 
 /* ---------- 配置（①あそぶ） ---------- */
+function inRange(m){ return m>=rng[0]-1&&m<=rng[1]-1; }
+function rangeNG(m){ if(inRange(m)) return false; toast((m+1)+"小節目は「作る小節」の外です。上の「小節 "+rng[0]+"〜"+rng[1]+"」を広げると置けます"); return true; }
+function maskRange(){ document.querySelectorAll("#stage .cell").forEach(d=>{ d.classList.toggle("outrng",!inRange(Math.floor(Number(d.dataset.s)/SPM))); }); document.querySelectorAll("#stage .mhead div").forEach(d=>d.classList.toggle("outrng",!inRange(Number(d.dataset.m)))); }
 function tapCell(part,s){
   const m=Math.floor(s/SPM), L=LENS[lenKey];
+  if(lenKey!=="erase"&&rangeNG(m)) return;
   if(rcard!==null){ applyCard(part,m); return; }
   if(cfg.inputMode==="cards"){
     const cov=parts[part].find(n=>n.s<=s&&n.s+n.len>s);
@@ -482,7 +506,7 @@ function tapCell(part,s){
 }
 function afterEdit(){ renderAll(); }
 function applyCard(part,m){
-  const c=allCards().find(x=>x.id===rcard); if(!c) return;
+  const c=allCards().find(x=>x.id===rcard); if(!c) return; if(rangeNG(m)) return;
   parts[part]=parts[part].filter(n=>Math.floor(n.s/SPM)!==m);
   c.p.forEach(([s,l,two])=>parts[part].push({s:m*SPM+s,len:l,two:two?1:0,snd}));
   rcard=null; buildCards(); afterEdit(); toast((m+1)+"小節目の"+part+"に入れました（"+(snd==="f"?"足踏み":"手拍子")+"）。手・足を変えたいときは、そのマスをタップ"); previewCard(c);
@@ -600,12 +624,12 @@ function setTempo(v){ cfg.tempo=Math.max(60,Math.min(160,v)); $("tempoNow").text
 $("tempoDn").addEventListener("click",()=>setTempo(cfg.tempo-4)); $("tempoUp").addEventListener("click",()=>setTempo(cfg.tempo+4));
 document.querySelectorAll("#hearSeg button").forEach(b=>b.addEventListener("click",()=>{ hear=b.dataset.h; document.querySelectorAll("#hearSeg button").forEach(x=>x.classList.toggle("on",x===b)); save(); if(playing){ stop(); start(); } toast(hear==="both"?"AとBの両方を鳴らします":hear+"だけ鳴らします（もう1人は自分で打ってみよう）"); }));
 function renderRange(){ ["rngFrom","rngTo"].forEach((id,k)=>{ const sel=$(id); sel.innerHTML=""; for(let m=1;m<=meas;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m; sel.appendChild(o); } rng[k]=Math.min(Math.max(1,rng[k]),meas); sel.value=rng[k]; }); if(rng[0]>rng[1]){ rng[1]=rng[0]; $("rngTo").value=rng[1]; } }
-["rngFrom","rngTo"].forEach((id,k)=>$(id).addEventListener("change",()=>{ rng[k]=Number($(id).value); if(rng[0]>rng[1]){ if(k===0) rng[1]=rng[0]; else rng[0]=rng[1]; } renderRange(); save(); if(playing){ stop(); start(); } }));
+["rngFrom","rngTo"].forEach((id,k)=>$(id).addEventListener("change",()=>{ rng[k]=Number($(id).value); if(rng[0]>rng[1]){ if(k===0) rng[1]=rng[0]; else rng[0]=rng[1]; } renderRange(); maskRange(); save(); if(playing){ stop(); start(); } }));
 document.querySelectorAll("#lenSeg button").forEach(b=>b.addEventListener("click",async()=>{
   const m=Number(b.dataset.m); if(m===meas) return;
   if(m===4 && (parts.A.some(n=>n.s>=32)||parts.B.some(n=>n.s>=32)) && !(await ask("5〜8小節のリズムは消えます。4小節にしますか？",{ok:"4小節にする"}))) return;
   meas=m; parts.A=parts.A.filter(n=>n.s<meas*SPM); parts.B=parts.B.filter(n=>n.s<meas*SPM); rng=[1,meas];
-  document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none"; build();
+  document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none"; syncImg2(); build();
 }));
 $("copyBtn").addEventListener("click",async()=>{ if(meas!==8) return; if(!parts.A.length&&!parts.B.length){ toast("まず1〜4小節に入れてね"); return; }
   if((parts.A.some(n=>n.s>=32)||parts.B.some(n=>n.s>=32)) && !(await ask("5〜8小節を、1〜4小節と同じにします。いまの5〜8小節は消えます。",{ok:"コピーする"}))) return;
@@ -629,17 +653,19 @@ $("exBtn").addEventListener("click",async()=>{
   put(parts.A,7,"f","h"); put(parts.B,7,"f","h");
   img="A"; $("imgSel").value="A"; $("imgTxt").style.display="none"; build(); toast("例：同じリズム → 掛け合い → ちがうリズムを重ねる → 最後は2人で同じリズム（教科書のパターン a〜f を使っています）");
 });
-$("imgSel").addEventListener("change",()=>{ img=$("imgSel").value; $("imgTxt").style.display=img==="X"?"":"none"; save(); renderLabels(); });
+$("imgSel").addEventListener("change",()=>{ img=$("imgSel").value; $("imgTxt").style.display=img==="X"?"":"none"; syncImg2(); save(); renderLabels(); });
+$("imgSel2").addEventListener("change",()=>{ img2=$("imgSel2").value; save(); renderLabels(); if(img2&&img2!==img) toast("前半「"+imgName(img)+"」→ 後半「"+imgName(img2)+"」。5小節目で感じが変わるように作ってみよう"); });
 $("imgTxt").addEventListener("input",()=>{ imgTxt=$("imgTxt").value; save(); renderLabels(); });
 $("kufuBtn").addEventListener("click",()=>{ const b=$("kufuBox"); b.style.display=b.style.display==="none"?"":"none"; if(b.style.display!=="none"){ b.scrollIntoView({behavior:"smooth",block:"end"}); $("kufuIn").focus(); } });
 $("fsBtn").addEventListener("click",()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else document.exitFullscreen(); });
 
 /* ---------- 楽譜（③なまえ：記号で見る） ---------- */
 function staffSvg(opts){
-  opts=opts||{}; const systems=meas/4, W=opts.width||960, L=60, R=20, mW=(W-L-R)/4, partH=74, sysH=partH*2+40, top=30;
+  opts=opts||{}; const systems=meas/4, W=opts.width||960, L=60, R=20, mW=(W-L-R)/4, partH=74, sysH=partH*2+40, ttl=imgLabel(), top=ttl?58:30;
   const H=top+systems*sysH+16; const st=[]; const push=x=>st.push(x);
   push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="'M PLUS Rounded 1c','Hiragino Maru Gothic ProN',sans-serif">`);
   push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
+  if(ttl) push(`<text x="${L-30}" y="30" font-size="17" font-weight="800" fill="#b8741c">イメージ：${ttl.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</text>`);
   for(let sy=0;sy<systems;sy++){
     ["A","B"].forEach((part,pi)=>{
       const y=top+sy*sysH+pi*partH+30;   // 1本線の位置
@@ -702,7 +728,7 @@ $("cardBtn").addEventListener("click",async()=>{
   g.fillStyle="#2f6fbf"; g.font="bold 34px "+F; g.fillText("かさねてリズム — リズムアンサンブル", 40, 56);
   const d=new Date(); g.fillStyle="#7f8f96"; g.font="20px "+F;
   g.fillText((nm?nm+"　":"")+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"　♩="+cfg.tempo, 40, 92);
-  g.fillStyle="#33474F"; g.font="bold 22px "+F; g.fillText("ア イメージ："+(img?(img==="X"?(imgTxt||"自分たちで考えた"):img+"　"+IMGS[img]):"（未選択）"), 40, 130);
+  g.fillStyle="#33474F"; g.font="bold 22px "+F; g.fillText("ア イメージ："+(img?imgLabel():"（未選択）"), 40, 130);
   const left=90, gw=W-left-40, ov=overlayAll(), fm=analyzeForm();
   for(let sy=0;sy<systems;sy++){
     const top=160+sy*sysH, rowH=64, cw=gw/32;
@@ -738,6 +764,10 @@ async function makeLink(){
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done,()=>ask("このリンクをコピーしてください",{input:true,value:url,ok:"とじる"})); else ask("このリンクをコピーしてください",{input:true,value:url,ok:"とじる"});
 }
 $("linkBtn").addEventListener("click",makeLink);
+async function makeSubmit(){ if(!parts.A.length&&!parts.B.length){ toast("まず、リズムを入れてね"); return; } const base=(location.protocol==="file:"&&HOSTED_URL)?HOSTED_URL:location.href.split("#")[0]; const url=base+"#s="+await packTok(songObj());
+  const done=()=>toast("作品のリンクをコピーしました。ロイロノートの提出箱やClassroomに貼って、先生に送ってね（先生はそのリンクを開くと、そのまま鳴らせます）");
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done,()=>ask("このリンクを先生に送ってください",{input:true,value:url,ok:"とじる"})); else ask("このリンクを先生に送ってください",{input:true,value:url,ok:"とじる"}); }
+$("submitBtn").addEventListener("click",makeSubmit);
 async function loadFromHash(){
   const h=location.hash||""; const m=h.match(/[#&]s=([^&]+)/); if(!m) return false;
   try{ const o=await unpackTok(m[1]); applySong(o);
@@ -786,7 +816,7 @@ $("ctaGo").href=LP_URL;
 if(!FULL){
   $("fullBtn").style.display=""; $("fullBtn").addEventListener("click",openCta);
   const lock=(id,label)=>{ const b=$(id); if(!b) return; const nb=b.cloneNode(true); if(label) nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); };
-  lock("staffBtn","🎼 楽譜 🔒"); lock("linkBtn","🔗 リンク 🔒"); lock("cardBtn","📷 記録 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒"); lock("kufuBtn","📝 工夫した点 🔒"); lock("copyBtn");
+  lock("staffBtn","🎼 楽譜 🔒"); lock("linkBtn","🔗 リンク 🔒"); lock("submitBtn","📤 ていしゅつ 🔒"); lock("cardBtn","📷 記録 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒"); lock("kufuBtn","📝 工夫した点 🔒"); lock("copyBtn");
   const seg8=document.querySelector('#lenSeg button[data-m="8"]'); const n8=seg8.cloneNode(true); n8.innerHTML="8小節 🔒"; seg8.parentNode.replaceChild(n8,seg8); n8.addEventListener("click",openCta);
   document.querySelectorAll('#hearSeg button:not([data-h="both"])').forEach(b=>{ const nb=b.cloneNode(true); nb.innerHTML+=" 🔒"; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
   ["rngFrom","rngTo","imgSel"].forEach(id=>{ $(id).disabled=true; }); $("imgTxt").style.display="none";
@@ -802,7 +832,7 @@ if(!FULL){
   restore();
   const fromLink=await loadFromHash();
   bind("tempo","tempo","tempoV"); bind("vol","vol","volV"); bind("advice","advice"); bind("inputMode","inputMode");
-  $("tempoNow").textContent=cfg.tempo; $("imgSel").value=img; $("imgTxt").value=imgTxt; $("imgTxt").style.display=img==="X"?"":"none";
+  $("tempoNow").textContent=cfg.tempo; $("imgSel").value=img; $("imgTxt").value=imgTxt; $("imgTxt").style.display=img==="X"?"":"none"; syncImg2();
   document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none";
   document.querySelectorAll("#hearSeg button").forEach(x=>x.classList.toggle("on",x.dataset.h===hear));
   if(cfg.metro==="off") cfg.metro="count"; renderMetro(); buildTools(); build(); applyGear(); if(cfg.inputMode==="cards"){ const h=document.querySelector("#rcardBar .hint"); if(h) h.textContent="カードをえらんで、入れたい小節（AかB）をタップ。手拍子／足踏みは左でえらぶ"; }
