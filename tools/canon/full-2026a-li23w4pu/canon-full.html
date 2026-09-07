@@ -103,6 +103,7 @@
   <span id="tempoBar" style="display:inline-flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:999px;padding:2px 6px 2px 10px;font-weight:800;font-size:13px;background:#fff"><span style="color:var(--muted)">♩=</span><button class="btn small" id="tempoDn" style="min-height:30px;padding:3px 9px">−</button><span id="tempoNow" style="min-width:34px;text-align:center">72</span><button class="btn small" id="tempoUp" style="min-height:30px;padding:3px 9px">＋</button></span>
   <span class="seg" id="modeSeg"><button data-mode="listen" class="on">📖 教科書のカノン</button><button data-mode="make">✏️ じぶんのカノン</button></span>
   <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
+  <button class="btn ghost small" id="yubiBtn" title="教科書のカノン／じぶんのカノンを、ゆびミエの曲入りリンクにする">🎵 ゆびミエ</button>
   <button class="btn ghost small" id="setBtn">⚙</button>
   <button class="btn small" id="fullBtn" style="background:#fff3c4;color:#8a5a00;display:none">🔓 フル版</button>
   <button class="btn ghost small" id="fsBtn">⛶</button>
@@ -136,7 +137,7 @@
     <div class="mk" id="mkArea"></div>
   </section>
 </main>
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-6</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ 原曲：パッヘルベル「カノン」／音は教科書（教育出版・東山正流編曲）の楽譜に合わせています ｜ 🏫 授業内利用限定（授業以外での演奏・録音・公開はできません） ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.08-1</footer>
 <div id="toast"></div><canvas id="spark"></canvas>
 <div id="cta" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60">
   <div style="background:#fff;border-radius:22px;padding:22px 24px;width:min(540px,92vw);max-height:90vh;overflow:auto">
@@ -162,6 +163,8 @@
   <div class="row2"><label>ヒント表示</label><select id="advice"><option value="on" selected>出す（ぶつかる音・あっている割合）</option><option value="off">出さない（自分で気づかせたいとき）</option></select></div>
   <div class="row2"><label>白いマス</label><select id="strict"><option value="on" selected>置けない（和音の音だけでつくる）</option><option value="off">置ける（和音にない音もためせる）</option></select></div>
   <div class="row2"><label>音の名前</label><select id="names"><option value="on" selected>グリッドに音の名前を出す</option><option value="off">出さない</option></select></div>
+  <div class="row2"><label>ゆびミエ フル版のURL</label><input type="text" id="yubimieUrl" placeholder="購入者ページの「ブラウザで開く」のURL" style="flex:1;min-width:200px;font-family:inherit;font-size:13px;border:2px solid var(--line);border-radius:10px;padding:6px 8px"></div>
+  <div class="help" style="margin-top:-4px">「🎵 ゆびミエ」で、教科書のカノン（ア／イ楽器1／イ楽器2／ウ／エ／1グループ通し）や、じぶんのカノン（✏️の画面で押すと、いま作っているせん律）をゆびミエの曲入りリンクにするときに使います。ゆびミエは低い音も自動でオクターブ上に合わせるので、リコーダーでもけんばんハーモニカでも練習できます。</div>
   <div class="row2"><label>先生ロック</label><input type="password" id="pin" inputmode="numeric" placeholder="4けたの数字（空なら無し）" maxlength="4" style="width:200px"><label class="chk"><input type="checkbox" id="hideGear"> ⚙を隠す</label></div>
   <div class="help">数字を入れると、⚙を開くときにその数字をきかれます。⚙を隠したときは、左上の「カノンであそぼう」を1.5秒長押しで開けます。配布リンクには先生の設定（テンポ・ヒント・白いマス・ロック）が入ります。「白いマス」を「置ける」にすると、和音にない音を置いて「ぶつかる」体験ができます。</div>
   <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn on" id="closeSet">とじる</button></div>
@@ -236,7 +239,7 @@ function b64uBytes(bytes){ let bin=""; for(let i=0;i<bytes.length;i++) bin+=Stri
 function ub64Bytes(str){ str=str.replace(/-/g,"+").replace(/_/g,"/"); while(str.length%4) str+="="; const bin=atob(str); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
 const store={ get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
 const NAMES={60:"ド",62:"レ",64:"ミ",65:"ファ",67:"ソ",69:"ラ",71:"シ",72:"ド",74:"レ",76:"ミ",77:"ファ",79:"ソ",81:"ラ",83:"シ",84:"ド"};
-const cfg={tempo:72,melVol:80,accVol:60,count:"on",advice:"on",names:"on",strict:"on",pin:"",hideGear:false};
+const cfg={tempo:72,melVol:80,accVol:60,count:"on",advice:"on",names:"on",strict:"on",yubimieUrl:"",pin:"",hideGear:false};
 let mode="listen", mute=[false,false,false], accOn=true, loop=false;
 /* つくる */
 let mkBars=8, mkNotes=[], mkLen=1;   // mkNotes: {s:拍(0..), len:1|2, p:0..7}
@@ -492,6 +495,43 @@ async function makeLink(){ const base=(location.protocol==="file:"&&HOSTED_URL)?
 $("linkBtn").addEventListener("click",makeLink);
 function loadFromHash(){ const m=(location.hash||"").match(/[#&]s=([^&]+)/); if(!m) return false; try{ const o=JSON.parse(new TextDecoder().decode(ub64Bytes(m[1]))); if(o.c) Object.assign(cfg,o.c); offBars=[0,1,2,4,8].includes(o.offBars)?o.offBars:4; syncStartFromOff(); if(Array.isArray(o.gs)&&o.gs.length===3&&o.gs.every(b=>Number.isInteger(b)&&b>=0&&b<=24)) gStart=o.gs.slice(); secMute=new Set(Array.isArray(o.sm)?o.sm:[]); playFrom=0; mkBars=o.mkBars===12?12:8; mkNotes=(o.n||[]).map(a=>({s:a[0],len:a[1],p:a[2]})); mode=o.mode==="make"?"make":"listen"; return true; }catch(e){ return false; } }
 
+/* ===== 🎵 ゆびミエへ送る（教科書のカノンを曲入りリンクに） ===== */
+function yubiMeasures(notes){   // [t,l,m,fl] → ゆびミエ v2 の e（小節ごとの [midi,拍]。休みは null）
+  const bars=Math.ceil(Math.max(...notes.map(n=>n[0]+n[1]))/4); const e=[]; for(let b=0;b<bars;b++) e.push([]);
+  notes.slice().sort((a,b)=>a[0]-b[0]).forEach(([t,l,m])=>{ let pos=t, rem=l; while(rem>0){ const b=Math.floor(pos/4); const room=(b+1)*4-pos; const d=Math.min(rem,room); e[b].push([m===null?null:m,d]); pos+=d; rem-=d; } });
+  return e;
+}
+function yubiMkMeasures(){   // じぶんのカノン {s,len,p}（拍・行）→ ゆびミエ v2 の e（すき間は休み null）
+  const total=mkBars*4; const e=[]; for(let b=0;b<mkBars;b++) e.push([]);
+  const ns=mkNotes.slice().sort((a,b)=>a.s-b.s); let pos=0;
+  const put=(m,from,len)=>{ let p=from, rem=len; while(rem>0){ const b=Math.floor(p/4); const room=(b+1)*4-p; const d=Math.min(rem,room); const bar=e[b]; if(m===null&&bar.length&&bar[bar.length-1][0]===null) bar[bar.length-1][1]+=d; else bar.push([m,d]); p+=d; rem-=d; } };
+  ns.forEach(n=>{ if(n.s>pos) put(null,pos,n.s-pos); put(ROWS[n.p],n.s,n.len); pos=n.s+n.len; });
+  if(pos<total) put(null,pos,total-pos);
+  return e;
+}
+function yubiPayloadMake(nm){ return {v:2,title:"じぶんのカノン"+(nm?"（"+nm+"）":""),parts:[{n:"じぶんのカノン（"+mkBars+"小節）",t:4,k:0,e:yubiMkMeasures()}]}; }
+function yubiPayload(){
+  const P=[]; const add=(n,notes)=>P.push({n,t:4,k:0,e:yubiMeasures(notes)});
+  add("ア（16小節）",SEC.A.notes); add("イ 楽器1",SEC.B.notes); add("イ 楽器2",SEC.B.notes2); add("ウ",SEC.C.notes); add("エ",SEC.D.notes);
+  const all=[]; let off=0; [["A",SEC.A.notes],["B",SEC.B.notes],["C",SEC.C.notes],["D",SEC.D.notes]].forEach(([k,ns])=>{ ns.forEach(([t,l,m])=>all.push([off+t,l,m])); off+=SEC[k].bars*4; }); all.push([off,4,E_NOTE[0]]);
+  add("1グループ 通し（ア→イ1→ウ→エ→オ）",all);
+  return {v:2,title:"カノン（教科書）",parts:P};
+}
+async function sendToYubimie(){
+  const url=(cfg.yubimieUrl||"").trim();
+  if(!url){ const go=await ask("ゆびミエ フル版のURLが未設定です。⚙ せってい で、購入者ページの「ブラウザで開く」のURLを入れてください。\nフル版をお持ちでない方は、ゆびミエの紹介ページをひらきます。",{ok:"紹介ページをひらく",cancel:"とじる"}); if(go) window.open("https://ktteacher.net/tools/yubimie/full/","_blank"); return; }
+  let payload, doneMsg;
+  if(mode==="make"){ if(!mkNotes.length){ toast("まず、せん律を入れてね"); return; } const nm=await ask("じぶんのカノンをゆびミエに送ります。なまえ（空でもOK）",{input:true,placeholder:"なまえ",ok:"リンクを作る"}); if(nm===null) return; payload=yubiPayloadMake(String(nm).trim()); doneMsg="ゆびミエの曲入りリンクをコピーしました。ひらくと、じぶんのカノンをリコーダーで練習できます"; }
+  else { payload=yubiPayload(); doneMsg="ゆびミエの曲入りリンクをコピーしました。ひらくと「パートをえらぶ」（ア・イ・ウ・エ・通し）が出ます。授業内でお使いください"; }
+  const bytes=new TextEncoder().encode(JSON.stringify(payload)); let tok=null;
+  if(window.CompressionStream){ try{ const buf=await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer(); tok="z."+b64uBytes(new Uint8Array(buf)); }catch(e){} }
+  if(!tok) tok=b64uBytes(bytes);
+  const link=url.split("#")[0]+"#s="+tok;
+  const done=()=>toast(doneMsg);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done,()=>ask("このリンクをコピーしてください",{input:true,value:link,ok:"とじる"})); else ask("このリンクをコピーしてください",{input:true,value:link,ok:"とじる"});
+}
+$("yubiBtn").addEventListener("click",sendToYubimie);
+
 /* ===== ⚙ 設定・ロック ===== */
 const bind=(id,key,disp)=>{ const el=$(id); el.value=cfg[key]; if(disp) $(disp).textContent=cfg[key]; el.addEventListener("input",()=>{ const ob=60/cfg.tempo; cfg[key]=el.type==="range"?Number(el.value):el.value; if(disp) $(disp).textContent=el.value; save(); if(key==="tempo"){ $("tempoNow").textContent=cfg.tempo; reschedule(ob); } if(key==="advice"||key==="names"){ if(mode==="listen"){ drawLanes(-1); renderSummary(); } else { renderMkNotes(); renderMkSummary(); } } if(key==="strict"){ applyStrict(); if(mode==="make") buildMake(); } }); };
 function applyStrict(){ document.body.classList.toggle("strict",cfg.strict!=="off"); }
@@ -513,7 +553,7 @@ $("ctaGo").href=LP_URL;
 if(!FULL){
   $("fullBtn").style.display=""; $("fullBtn").addEventListener("click",openCta);
   const lock=(id,label)=>{ const b=$(id); if(!b) return; const nb=b.cloneNode(true); if(label) nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); };
-  lock("linkBtn","🔗 リンク 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒");
+  lock("linkBtn","🔗 リンク 🔒"); lock("yubiBtn","🎵 ゆびミエ 🔒"); lock("setBtn","⚙ 🔒"); lock("loopBtn","🔁 🔒");
   const mk=document.querySelector('#modeSeg button[data-mode="make"]'); const nmk=mk.cloneNode(true); nmk.innerHTML="✏️ じぶんのカノン 🔒"; mk.parentNode.replaceChild(nmk,mk); nmk.addEventListener("click",openCta);
   document.querySelectorAll('#offSeg button').forEach(b=>{ const o=Number(b.dataset.off); if(o===0||o===4) return; const nb=b.cloneNode(true); nb.innerHTML=o+"🔒"; nb.style.fontSize="11px"; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
   const hl=document.querySelector(".hintline"); if(hl) hl.innerHTML='<span>レーン左の①②③をタップ→そのグループを消す／もどす</span><span style="color:#8a5a00">帯のタップ・ドラッグ、小節番号から聞く、間かく1・2・8は <a href="'+LP_URL+'" style="color:#b0471c;font-weight:800">フル版</a> で</span>';
@@ -525,7 +565,7 @@ if(!FULL){
 /* ===== 起動 ===== */
 restore(); const fromLink=FULL?loadFromHash():false;
 if(!FULL){ if(![0,4].includes(offBars)) offBars=4; syncStartFromOff(); secMute=new Set(); playFrom=0; mode="listen"; loop=false; cfg.pin=""; cfg.hideGear=false; cfg.advice="on"; cfg.strict="on"; }
-bind("tempo","tempo","tempoV"); bind("melVol","melVol","melVolV"); bind("accVol","accVol","accVolV"); bind("count","count"); bind("advice","advice"); bind("names","names"); bind("strict","strict");
+bind("tempo","tempo","tempoV"); bind("melVol","melVol","melVolV"); bind("accVol","accVol","accVolV"); bind("count","count"); bind("advice","advice"); bind("names","names"); bind("strict","strict"); bind("yubimieUrl","yubimieUrl");
 $("tempoNow").textContent=cfg.tempo; syncOffSeg(); document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===mkBars));
 renderChips(); applyGear(); applyStrict(); setMode(mode);
 if(fromLink){ history.replaceState(null,"",location.pathname+location.search); toast("リンクからひらきました"); save(); }
