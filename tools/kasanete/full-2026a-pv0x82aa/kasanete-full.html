@@ -214,7 +214,7 @@
   <section class="stage" id="stage"></section>
 </main>
 
-<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-14</footer>
+<footer>🔒 音はこの端末の中だけで鳴らしています ｜ © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.06-15</footer>
 
 <div id="toast"></div>
 <canvas id="spark"></canvas>
@@ -254,6 +254,7 @@
   <div class="row2" style="align-items:flex-start"><label>使えるカード</label><div style="flex:1"><div style="margin-bottom:4px"><button class="btn ghost small" id="cardsAll" style="min-height:28px;padding:2px 10px;font-size:12px">すべて</button> <button class="btn ghost small" id="cardsNone" style="min-height:28px;padding:2px 10px;font-size:12px">すべて外す</button></div><div id="cardList"></div>
     <div style="margin-top:6px"><label class="chk" style="font-size:13.5px;min-width:0;white-space:nowrap"><input type="checkbox" id="showAddCard"> 生徒の画面にも「＋自分のリズム」を出す</label></div>
     <div class="help">チェックしたカードだけが生徒の画面に出ます（「リズムカードだけ」のときは、ここで選んだカードだけでつくることになります）。「＋自分のリズム」は、いま入っている小節（Aのリズム）をカードにします。</div></div></div>
+  <div class="row2"><label>💡助言</label><select id="imgHint"><option value="off" selected>出さない（イメージ・構成の「こうすると…」は出さない）</option><option value="on">出す（イメージに合わせた助言を💡で出す）</option></select></div>
   <div class="row2"><label>ヒント表示</label><select id="advice"><option value="on" selected>出す（重なり方・構成のラベル）</option><option value="off">出さない（自分で気づかせたいとき）</option></select></div>
   <div class="row2" style="align-items:flex-start"><label>使える音符</label><div id="toolPick" style="flex:1"></div></div>
   <div class="help">チェックした音符だけが、左の「長さ」に出ます（消すボタンは常に出ます）。配布リンクにも入ります。</div>
@@ -306,7 +307,7 @@ const IMGS_S={A:"盛り上がる",B:"会話",C:"競走",J:"喜",D:"怒",S:"哀",
 function imgName(k){ return k==="X"?(imgTxt||"自分たちで考えた"):(IMGS[k]||""); }
 function imgLabel(){ if(!img) return ""; if(meas===8&&img2&&img2!==img) return "前半（1〜4小節）"+imgName(img)+" → 後半（5〜8小節）"+imgName(img2); return imgName(img); }
 function syncImg2(){ const w=$("img2Wrap"); if(!w) return; w.style.display=(FULL&&meas===8&&img)?"":"none"; $("imgSel2").value=img2; }
-const cfg={tempo:100,vol:80,metro:"on",advice:"on",inputMode:"free",tools:{"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1},hiddenCards:[],customCards:[],pin:"",hideGear:false,showAddCard:false};
+const cfg={tempo:100,vol:80,metro:"on",advice:"on",imgHint:"off",inputMode:"free",tools:{"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1},hiddenCards:[],customCards:[],pin:"",hideGear:false,showAddCard:false};
 const store={ get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
 function save(){ store.set("kasanete_v1", JSON.stringify({meas,parts,img,img2,imgTxt,kufu,cfg,hear,rng})); }
 
@@ -330,7 +331,7 @@ async function unpackTok(tok){ if(tok.startsWith("z.")){ const buf=await new Res
   if(tok.startsWith("j.")) tok=tok.slice(2); return JSON.parse(new TextDecoder().decode(ub64Bytes(tok))); }
 function songObj(){ const enc=arr=>arr.map(n=>[n.s,n.len,n.two?1:0,n.snd==="f"?1:0]); return {v:1,meas,img,img2,imgTxt,kufu,A:enc(parts.A),B:enc(parts.B)}; }
 function applySong(o){ const dec=arr=>(arr||[]).map(a=>({s:a[0],len:a[1],two:a[2]?1:0,snd:a[3]?"f":"h"})); meas=o.meas===4?4:8; parts={A:dec(o.A),B:dec(o.B)}; img=o.img||""; img2=o.img2||""; imgTxt=o.imgTxt||""; kufu=o.kufu||""; }
-function teacherCfgObj(){ return {tempo:cfg.tempo,metro:cfg.metro,advice:cfg.advice,inputMode:cfg.inputMode||"free",tools:cfg.tools,hiddenCards:cfg.hiddenCards||[],customCards:cfg.customCards||[],pin:cfg.pin||"",hideGear:!!cfg.hideGear,showAddCard:false}; }
+function teacherCfgObj(){ return {tempo:cfg.tempo,metro:cfg.metro,advice:cfg.advice,imgHint:cfg.imgHint||"off",inputMode:cfg.inputMode||"free",tools:cfg.tools,hiddenCards:cfg.hiddenCards||[],customCards:cfg.customCards||[],pin:cfg.pin||"",hideGear:!!cfg.hideGear,showAddCard:false}; }
 function restore(){
   try{ const j=JSON.parse(store.get("kasanete_v1")||"null"); if(j&&j.parts){ meas=j.meas===4?4:8; parts=j.parts; img=j.img||""; img2=j.img2||""; imgTxt=j.imgTxt||""; kufu=j.kufu||""; Object.assign(cfg,j.cfg||{}); hear=j.hear||"both"; rng=j.rng||[1,meas]; if(!cfg.tools) cfg.tools={"16":1,"8":1,"4":1,"4d":1,"2":1,"1":1}; } }catch(e){}
 }
@@ -459,7 +460,7 @@ function renderLabels(){
   const imgLine=img?("めざすイメージ：<b>"+imgLabel()+"</b>　"):"";
   const usedLine=s.used.length?("使っている重なり方：<b>"+s.used.join("・")+"</b>"+(s.ok?" ✔（2つ以上）":" （課題は2つ以上）")):"重なり方：まだ2人とも入っている小節がありません";
   const formLine=(FULL&&s.seq)?("　構成：<b>"+s.seq+"</b>"+(s.rep?"　反復"+s.rep:"")+(s.vr?"　変化"+s.vr:"")+(s.con?"　対照"+s.con:"")):"";
-  const hint=FULL?adviceFor(s):(parts.A.length&&parts.B.length?"重なり方を変えると、感じはどう変わる？（8小節・リズムカード・Aだけで練習は、フル版で）":"AとBの両方にリズムを置いて「▶ きく」を押してみよう");
+  const hint=FULL?(cfg.imgHint==="on"?adviceFor(s):""):(parts.A.length&&parts.B.length?"重なり方を変えると、感じはどう変わる？（8小節・リズムカード・Aだけで練習は、フル版で）":"AとBの両方にリズムを置いて「▶ きく」を押してみよう");
   el.innerHTML=imgLine+usedLine+formLine+(hint?'<div style="color:#b8741c;margin-top:2px">💡 '+hint+'</div>':"");
 }
 function adviceFor(s){
@@ -655,7 +656,7 @@ $("exBtn").addEventListener("click",async()=>{
   img="A"; $("imgSel").value="A"; $("imgTxt").style.display="none"; build(); toast("例：同じリズム → 掛け合い → ちがうリズムを重ねる → 最後は2人で同じリズム（教科書のパターン a〜f を使っています）");
 });
 $("imgSel").addEventListener("change",()=>{ img=$("imgSel").value; $("imgTxt").style.display=img==="X"?"":"none"; syncImg2(); save(); renderLabels(); });
-$("imgSel2").addEventListener("change",()=>{ img2=$("imgSel2").value; save(); renderLabels(); if(img2&&img2!==img) toast("前半「"+imgName(img)+"」→ 後半「"+imgName(img2)+"」。5小節目で感じが変わるように作ってみよう"); });
+$("imgSel2").addEventListener("change",()=>{ img2=$("imgSel2").value; save(); renderLabels(); if(img2&&img2!==img&&cfg.imgHint==="on") toast("前半「"+imgName(img)+"」→ 後半「"+imgName(img2)+"」。5小節目で感じが変わるように作ってみよう"); });
 $("imgTxt").addEventListener("input",()=>{ imgTxt=$("imgTxt").value; save(); renderLabels(); });
 $("kufuBtn").addEventListener("click",()=>{ const b=$("kufuBox"); b.style.display=b.style.display==="none"?"":"none"; if(b.style.display!=="none"){ b.scrollIntoView({behavior:"smooth",block:"end"}); $("kufuIn").focus(); } });
 $("fsBtn").addEventListener("click",()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); } else document.exitFullscreen(); });
@@ -778,7 +779,7 @@ async function loadFromHash(){
 
 /* ---------- ⚙ 先生設定・ロック ---------- */
 const bind=(id,key,disp)=>{ const el=$(id); el.value=cfg[key]; if(disp) $(disp).textContent=cfg[key];
-  el.addEventListener("input",()=>{ cfg[key]=el.type==="range"?Number(el.value):el.value; if(disp) $(disp).textContent=el.value; save(); if(key==="advice") renderLabels(); if(key==="inputMode"){ buildTools(); const h=document.querySelector("#rcardBar .hint"); if(h) h.textContent=cfg.inputMode==="cards"?"カードをえらんで、入れたい小節（AかB）をタップ。手拍子／足踏みは左でえらぶ":"えらんで、入れたい小節（AかB）をタップ"; } if(key==="tempo") $("tempoNow").textContent=cfg.tempo; }); };
+  el.addEventListener("input",()=>{ cfg[key]=el.type==="range"?Number(el.value):el.value; if(disp) $(disp).textContent=el.value; save(); if(key==="advice"||key==="imgHint") renderLabels(); if(key==="inputMode"){ buildTools(); const h=document.querySelector("#rcardBar .hint"); if(h) h.textContent=cfg.inputMode==="cards"?"カードをえらんで、入れたい小節（AかB）をタップ。手拍子／足踏みは左でえらぶ":"えらんで、入れたい小節（AかB）をタップ"; } if(key==="tempo") $("tempoNow").textContent=cfg.tempo; }); };
 function renderToolPick(){ const box=$("toolPick"); box.innerHTML=""; LENORDER.forEach(k=>{ const l=document.createElement("label"); l.className="chk"; l.innerHTML='<input type="checkbox" '+(cfg.tools[k]?"checked":"")+'> <span style="font-size:20px;line-height:1;display:inline-flex">'+LENS[k].g+'</span> '+LENS[k].n; l.querySelector("input").addEventListener("change",e=>{ cfg.tools[k]=e.target.checked?1:0; if(!LENORDER.some(x=>cfg.tools[x])){ cfg.tools[k]=1; e.target.checked=true; toast("1つは残してください"); } save(); buildTools(); }); box.appendChild(l); }); }
 function renderCardList(){ const box=$("cardList"); box.innerHTML=""; allCards().forEach(c=>{ const l=document.createElement("label"); l.className="chk"; l.style.margin="3px 10px 3px 0"; l.innerHTML='<input type="checkbox" '+((cfg.hiddenCards||[]).includes(c.id)?"":"checked")+'>'+(c.tag?'<span class="tag">'+c.tag+'</span>':' ')+'<span style="display:inline-flex;align-items:center">'+cardSvg(c)+'</span>'+(c.id.startsWith("c")?' <button class="btn ghost small" style="min-height:26px;padding:2px 8px;font-size:11px">削除</button>':"");
     l.querySelector("input").addEventListener("change",e=>{ cfg.hiddenCards=cfg.hiddenCards||[]; if(e.target.checked) cfg.hiddenCards=cfg.hiddenCards.filter(x=>x!==c.id); else if(!cfg.hiddenCards.includes(c.id)) cfg.hiddenCards.push(c.id); save(); buildCards(); });
@@ -832,7 +833,7 @@ if(!FULL){
 (async function init(){
   restore();
   const fromLink=await loadFromHash();
-  bind("tempo","tempo","tempoV"); bind("vol","vol","volV"); bind("advice","advice"); bind("inputMode","inputMode");
+  bind("tempo","tempo","tempoV"); bind("vol","vol","volV"); bind("advice","advice"); bind("imgHint","imgHint"); bind("inputMode","inputMode");
   $("tempoNow").textContent=cfg.tempo; $("imgSel").value=img; $("imgTxt").value=imgTxt; $("imgTxt").style.display=img==="X"?"":"none"; syncImg2();
   document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); $("copyBtn").style.display=meas===8?"":"none";
   document.querySelectorAll("#hearSeg button").forEach(x=>x.classList.toggle("on",x.dataset.h===hear));
