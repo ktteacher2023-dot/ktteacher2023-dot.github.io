@@ -105,6 +105,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     border-radius:var(--radius); overflow:hidden; margin-bottom:12px;
   }
   canvas{display:block; width:100%; height:340px; touch-action:none;}
+  /* 練習区間のクイック操作（ステージ右上） */
+  #qbar{position:absolute; top:8px; right:8px; display:none; gap:6px; align-items:center; z-index:3; flex-wrap:wrap; justify-content:flex-end;}
+  #qbar button{font-size:.78rem; padding:6px 11px; border-radius:999px; border:1.5px solid #FF7A59; background:#fff; color:#B3441F; font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer;}
+  #qbar button.dim{border-color:#C5D4DD; color:#5F7480;}
+  #qbar #qRange{font-size:.78rem; color:#B3441F; font-weight:700; background:#fff; border-radius:999px; padding:5px 10px; border:1.5px solid #FFD2C4;}
+  #qhint{position:absolute; left:10px; bottom:8px; font-size:.75rem; color:#5F7480; background:rgba(255,255,255,.85); border-radius:8px; padding:3px 8px; pointer-events:none; z-index:2;}
+  #stoast{position:absolute; left:50%; top:46px; transform:translateX(-50%); background:#1E2B33; color:#fff; font-size:.85rem; padding:7px 14px; border-radius:999px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:4; white-space:nowrap;}
+  #stoast.show{opacity:.95;}
+  @media(max-width:600px){ #qbar button{font-size:.72rem; padding:5px 8px;} #qhint{display:none;} }
   #emptyMsg{
     position:absolute; inset:0; display:flex; flex-direction:column; gap:8px;
     align-items:center; justify-content:center; color:var(--sub); font-size:.95rem;
@@ -195,7 +204,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     </span>
   </div>
   <div class="row" id="rangeRow" style="display:none">
-    <span class="ctl">れんしゅう区間 小節
+    <span class="ctl">れんしゅう区間 小節（画面の小節をタップしても決められます）
       <input type="number" id="rangeFrom" min="1" value="1">〜
       <input type="number" id="rangeTo" min="1" value="1">
       <button id="rangeAllBtn">全体にもどす</button>
@@ -206,6 +215,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 <div id="stage">
   <canvas id="cv"></canvas>
+  <div id="qbar"><span id="qRange"></span><button id="qFrom" title="いま見ている小節から練習する">▶ ここから</button><button id="qTo" title="いま見ている小節まで練習する">■ ここまで</button><button id="qAll" class="dim" title="曲全体にもどす">全体</button></div>
+  <div id="qhint" style="display:none">小節をタップ＝そこから　上の小節番号をなぞる＝区間</div>
+  <div id="stoast"></div>
   <div id="emptyMsg">
     <span class="big">🎼</span>
     <span>「📚 きょうざいきょく」から曲をえらんでスタート!<br>歌った声の高さが、その場で線になって見えるよ。</span>
@@ -227,7 +239,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.04-1（8分の6拍子に対応・結果に日時表示）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.08-1（練習したい小節をタップ・区間なぞり・歌い終わっても頭に戻らない）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -562,6 +574,7 @@ function applyPart(i){
   $("rangeFrom").value=firstM; $("rangeTo").value=lastM;
   $("rangeRow").style.display="flex";
   viewOffset=song.measStarts[firstM-1]*beatSec();
+  updateQbar();
   $("songTitle").innerHTML="読み込み中の曲:<b>"+escapeHtml(song.title)+"</b>("+song.notes.length+"音・"+mc+"小節・♩="+song.bpm+")";
   $("playBtn").disabled=false; $("singBtn").disabled=false;
   $("echoBtn").disabled=false; $("rewindBtn").disabled=false;
@@ -589,19 +602,70 @@ function currentT(){
 }
 
 /* 停止中・結果表示中は左右スワイプ/ドラッグで楽譜全体を見られる */
-let dragX=null, dragT0=0;
+let dragX=null, dragT0=0, dragMoved=false, rulerSel=null;
+const RULER_H=24;   // 上の小節番号の帯（ここをなぞると区間えらび）
+function measAtClientX(clientX, t){
+  const r=cv.getBoundingClientRect(); const x=clientX-r.left;
+  const tt=(t!==undefined?t:viewOffset)+(x-PLAYHEAD_X())/pps();
+  let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=tt+1e-6) mi=k;
+  return mi+1;
+}
+function measAtView(){ let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=viewOffset+1e-3) mi=k; return mi+1; }
 cv.addEventListener("pointerdown",e=>{
   if(!song||isActive()) return;
-  dragX=e.clientX; dragT0=viewOffset;
+  const r=cv.getBoundingClientRect();
+  dragX=e.clientX; dragT0=viewOffset; dragMoved=false;
+  rulerSel=(e.clientY-r.top)<RULER_H ? {a:measAtClientX(e.clientX), b:measAtClientX(e.clientX)} : null;
   cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener("pointermove",e=>{
   if(dragX===null) return;
+  if(Math.abs(e.clientX-dragX)>8) dragMoved=true;
+  if(rulerSel){ rulerSel.b=measAtClientX(e.clientX, dragT0); draw(viewOffset); return; }
   viewOffset=Math.max(0,Math.min(songDur(),dragT0-(e.clientX-dragX)/pps()));
   draw(viewOffset);
 });
-cv.addEventListener("pointerup",()=>{dragX=null;});
-cv.addEventListener("pointercancel",()=>{dragX=null;});
+function endPointer(e){
+  if(dragX===null) return;
+  const wasRuler=rulerSel, moved=dragMoved, cx=e&&e.clientX!==undefined?e.clientX:dragX;
+  dragX=null; rulerSel=null; dragMoved=false;
+  if(!song||isActive()) return;
+  if(wasRuler&&moved){ setRange(Math.min(wasRuler.a,wasRuler.b), Math.max(wasRuler.a,wasRuler.b)); return; }
+  if(!moved){ setFrom(measAtClientX(cx, dragT0)); }
+}
+cv.addEventListener("pointerup",endPointer);
+cv.addEventListener("pointercancel",()=>{ dragX=null; rulerSel=null; dragMoved=false; if(song) draw(viewOffset); });
+
+/* ---- 練習区間のクイック操作 ---- */
+function stageToast(msg,ms){ const t=$("stoast"); t.textContent=msg; t.classList.add("show"); clearTimeout(stageToast._t); stageToast._t=setTimeout(()=>t.classList.remove("show"),ms||1500); }
+function setRange(a,b,quiet){
+  if(!song) return; const mc=song.measStarts.length;
+  a=Math.max(1,Math.min(mc,a)); b=Math.max(1,Math.min(mc,b)); if(a>b)[a,b]=[b,a];
+  $("rangeFrom").value=a; $("rangeTo").value=b; onRangeChange();
+  if(!quiet) stageToast(a===b?(a+"小節目だけ"):(a+"〜"+b+"小節目を練習"));
+}
+function setFrom(m){
+  if(!song) return; const [a,b]=rangeMeas(); const last=song.lastMeas||song.measStarts.length;
+  const to=(b>=m&&b!==a)?b:last;   // 「ここまで」が手前なら曲の終わりまで
+  setRange(m, m>to?m:to, true);
+  stageToast(m+"小節目から");
+}
+function setTo(m){
+  if(!song) return; const [a]=rangeMeas();
+  setRange(Math.min(a,m), m, true); stageToast((Math.min(a,m))+"〜"+m+"小節目まで");
+}
+function updateQbar(){
+  if(!song){ $("qbar").style.display="none"; $("qhint").style.display="none"; return; }
+  $("qbar").style.display="flex";
+  const [a,b]=rangeMeas(); const full=isFullRange()||(a===(song.firstMeas||1)&&b===(song.lastMeas||song.measStarts.length));
+  $("qRange").textContent=full?"曲全体":("小節 "+a+"〜"+b);
+  $("qAll").style.display=full?"none":"";
+  let seen=false; try{ seen=localStorage.getItem("utamie_qhint")==="1"; }catch(e){}
+  $("qhint").style.display=seen?"none":"";
+}
+$("qFrom").addEventListener("click",()=>{ if(!song||isActive()) return; setFrom(measAtView()); });
+$("qTo").addEventListener("click",()=>{ if(!song||isActive()) return; setTo(measAtView()); });
+$("qAll").addEventListener("click",()=>{ if(!song||isActive()) return; $("rangeAllBtn").click(); stageToast("曲全体にもどしました"); });
 cv.addEventListener("wheel",e=>{
   if(!song||isActive()) return;
   e.preventDefault();
@@ -796,6 +860,24 @@ function draw(t){
     ctx2d.setLineDash([]);
   }
 
+  // 区間えらび中（上の帯をなぞっている間）
+  if(rulerSel&&song.measStarts){
+    const a=Math.min(rulerSel.a,rulerSel.b), b=Math.max(rulerSel.a,rulerSel.b);
+    const xa=off+song.measStarts[a-1]*beatSec()*pps();
+    const xb=off+(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*beatSec()*pps();
+    ctx2d.fillStyle="rgba(255,122,89,0.18)"; ctx2d.fillRect(xa,0,xb-xa,H);
+    ctx2d.fillStyle="#B3441F"; ctx2d.font="bold 12px sans-serif"; ctx2d.textAlign="left"; ctx2d.textBaseline="top";
+    ctx2d.fillText(a===b?(a+"小節目"):(a+"〜"+b+"小節目"), Math.max(4,xa+4), 16);
+  }
+  // ▶ ここから／ここまで■ の旗（区間を切っているとき・停止中）
+  if(song.measStarts&&!isFullRange()&&!isActive()){
+    const [fs,tsx]=rangeSec();
+    const x1=off+fs*pps(), x2=off+tsx*pps();
+    ctx2d.font="bold 11px sans-serif"; ctx2d.textBaseline="top";
+    const flag=(x,label,left)=>{ const w=ctx2d.measureText(label).width+12; const fx=left?x:x-w; ctx2d.fillStyle="#FF7A59"; roundRect(fx,H-24,w,18,6); ctx2d.fillStyle="#fff"; ctx2d.textAlign="left"; ctx2d.fillText(label,fx+6,H-21); };
+    if(x1>-40&&x1<W) flag(x1,"▶ ここから",true);
+    if(x2>0&&x2<W+40) flag(x2,"ここまで ■",false);
+  }
   // 再生ライン
   if(isActive()){
     ctx2d.strokeStyle="#1E2B33"; ctx2d.lineWidth=2;
@@ -1185,7 +1267,7 @@ function loop(){
   if(t>sessTo-sessFrom+0.4){
     if(mode==="sing"){
       finishSing();
-      viewOffset=rangeSec()[0];
+      viewOffset=sessFrom;       // 歌い始めた小節にもどる（曲の頭ではなく）
       draw(viewOffset);
       return;
     }
@@ -1200,7 +1282,7 @@ function loop(){
       return;
     }
     stopAll();
-    viewOffset=rangeSec()[0];
+    viewOffset=sessFrom;         // 聞き始めた小節にもどる
     draw(viewOffset);
     return;
   }
@@ -1781,6 +1863,8 @@ function onRangeChange(){
     viewOffset=rangeSec()[0];
     draw(viewOffset);
   }
+  try{ if(!isFullRange()) localStorage.setItem("utamie_qhint","1"); }catch(e){}
+  updateQbar();
 }
 $("rewindBtn").addEventListener("click",()=>{
   if(!song||isActive()) return;
