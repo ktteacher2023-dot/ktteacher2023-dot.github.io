@@ -117,6 +117,9 @@
     box-shadow:0 3px 8px -4px rgba(0,0,0,.4);transition:transform .08s;}
   .note.lit{background:var(--play);transform:scale(1.08);}
   .note.cur{outline:3px solid var(--play);outline-offset:1px;}
+  .note.short{font-size:clamp(9px,1.1vw,12px);letter-spacing:-.12em;padding:0;white-space:nowrap;}
+  .note.short .len{display:none;}
+  .note.short>span{transform:scaleX(.88);transform-origin:center;}
   .note .len{font-size:.7em;opacity:.85;margin-left:3px;font-family:'Noto Music','Noto Sans Symbols2','Segoe UI Symbol','Apple Symbols',sans-serif;}
   .head{position:absolute;top:0;bottom:0;width:3px;background:var(--play);box-shadow:0 0 8px var(--play);display:none;z-index:5;pointer-events:none;}
   .head.on{display:block;}
@@ -190,6 +193,8 @@
   <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
   <button class="btn ghost small" id="staffBtn"><svg viewBox="0 0 40 100" style="height:1.15em;width:auto;vertical-align:-0.2em" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="5" d="M24 0 C33 9 31 21 22 31 C10 43 3 53 8 64 C13 74 33 73 35 60 C36 49 25 42 18 47 C12 51 15 60 23 59"/><path stroke-width="8" d="M22 31 C10 43 3 53 8 64 C13 74 33 73 35 60"/><path stroke-width="5" d="M24 0 L16 88 C16 95 5 95 5 89 C5 84 12 84 12 89"/><circle cx="8.5" cy="89" r="5" fill="currentColor" stroke="none"/></svg> がくふ</button>
   <button class="btn ghost small" id="sendBtn">🎤 うたう・🎵 ふく</button>
+  <button class="btn ghost small" id="saveBtn" title="この端末に、なまえをつけてほぞん">💾 ほぞん</button>
+  <button class="btn ghost small" id="openBtn" title="ほぞんしたせんりつをひらく">📂 ひらく</button>
   <button class="btn ghost small" id="cardBtn">📷 かきのこす</button>
   <button class="btn small" id="fullBtn" style="background:#fff3c4;color:#8a5a00;display:none">🔓 フル版</button>
   <button class="btn ghost small" id="setBtn">⚙</button>
@@ -211,7 +216,7 @@
 
 <footer>
   🔒 音はこの端末の中だけで鳴らしています ｜ 和音の進み方は「茶色の小びん」と同じ Ⅰ・Ⅳ・Ⅴ・Ⅰ ｜
-  © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.05-16
+  © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.08-1
 </footer>
 
 <div id="lyricPanel" style="display:none;position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:48;background:#fff;border:2px solid var(--note-d);border-radius:18px;box-shadow:0 14px 34px -14px rgba(0,0,0,.45);padding:10px 12px;width:min(640px,96vw)">
@@ -250,6 +255,12 @@
       <button class="btn ghost" id="ctaClose">とじる</button>
       <a class="btn" id="ctaGo" href="#" style="background:#ff7a59;color:#fff;text-decoration:none">フル版のくわしい内容を見る →</a>
     </div>
+  </div>
+</div>
+<div id="saveOv" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:55">
+  <div style="background:#fff;border-radius:22px;padding:16px 18px;width:min(560px,94vw);max-height:88vh;overflow:auto">
+    <div style="display:flex;align-items:center;gap:10px"><h2 style="margin:0;font-size:18px;color:var(--note-d)">📂 ほぞんしたせんりつ</h2><span style="font-size:12px;color:var(--muted)">この端末の中だけに入っています</span><span style="flex:1"></span><button class="btn ghost small" id="saveClose">とじる</button></div>
+    <div id="saveList" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 <div id="staffOv" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:55">
@@ -410,13 +421,16 @@ function dec(str){
   }
   meas=mm; notes=out; return true;
 }
+let pendingResume=null;
 function restore(){
   const h=location.hash.match(/[#&]s=([0-9a-z.]+)/);
   if(h && dec(h[1])){
     const lt=location.hash.match(/[#&]l=([A-Za-z0-9\-_]+)/); if(lt) applyLyricTok(lt[1]);
     const ct=location.hash.match(/[#&]c=([A-Za-z0-9\-_]+)/);
     let withCfg=false; if(ct && FULL){ try{ const j=JSON.parse(store.get("waon_v1")||"null"); if(j&&j.cfg) Object.assign(cfg,j.cfg); }catch(e){} withCfg=applyTeacherCfg(ct[1]); }
-    toast(withCfg?"🔗 先生の設定つきで、せんりつをひらきました":"🔗 リンクからせんりつをひらきました"); if(withCfg) save(); return; }
+    toast(withCfg?"🔗 先生の設定つきで、せんりつをひらきました":"🔗 リンクからせんりつをひらきました");
+    try{ const j=JSON.parse(store.get("waon_v1")||"null"); if(j&&Array.isArray(j.notes)&&j.notes.length){ const mine=JSON.stringify(j.notes.map(n=>[n.s,n.len,n.p])); const link=JSON.stringify(notes.map(n=>[n.s,n.len,n.p])); if(mine!==link) pendingResume={meas:j.meas===8?8:4,notes:j.notes}; } }catch(e){}
+    if(withCfg) save(); return; }
   try{ const j=JSON.parse(store.get("waon_v1")||"null"); if(j&&Array.isArray(j.notes)){ meas=j.meas===8?8:4; notes=j.notes; const saved=j.cfg||{}; if(saved.tone&&!INST[saved.tone]) saved.tone="piano"; if(!FULL){ saved.tone="piano"; saved.chordInst="piano"; } Object.assign(cfg,saved); if(!cfg.allow||!cfg.allow.I) cfg.allow={I:[1,1,1,1,1,1,1,1],IV:[1,1,1,1,1,1,1,1],V:[1,1,1,1,1,1,1,1]}; if(!cfg.tools) cfg.tools={"1":1,"2":1,"4":1,"6":0,"8":0}; } }catch(e){}
 }
 
@@ -472,11 +486,11 @@ function renderNotes(){
   notes.forEach((n,i)=>{
     const sy=Math.floor(n.s/32); const box=document.querySelectorAll(".sys")[sy]; if(!box) return;
     const layer=box.querySelector(".notes");
-    const d=document.createElement("div"); d.className="note"; d.dataset.i=i;
+    const d=document.createElement("div"); d.className="note"+(n.len===1?" short":""); d.dataset.i=i;
     const s0=n.s-sy*32;
     d.style.left=`calc(${s0/32*100}% + 2px)`; d.style.width=`calc(${n.len/32*100}% - 4px)`;
     d.style.top=`calc(${(7-n.p)/8*100}% + 2px)`; d.style.height=`calc(${100/8}% - 4px)`;
-    d.innerHTML=n.l?`<span style="display:flex;flex-direction:column;align-items:center;line-height:1;max-height:100%;overflow:hidden"><span style="font-size:1.05em;white-space:nowrap">${n.l.replace(/[<>&]/g,"")}</span><span class="len" style="margin:0;white-space:nowrap;display:inline-flex;align-items:center;gap:1px;font-size:.7em">${ROWS[n.p]}${showNames?LENGLYPH[n.len]:""}</span></span>`:`${ROWS[n.p]}${showNames?`<span class="len">${LENGLYPH[n.len]}</span>`:""}`;
+    d.innerHTML=n.l?`<span style="display:flex;flex-direction:column;align-items:center;line-height:1;max-height:100%;overflow:hidden"><span style="font-size:1.05em;white-space:nowrap">${n.l.replace(/[<>&]/g,"")}</span><span class="len" style="margin:0;white-space:nowrap;display:inline-flex;align-items:center;gap:1px;font-size:.7em">${ROWS[n.p]}${showNames?LENGLYPH[n.len]:""}</span></span>`:`<span style="white-space:nowrap;display:inline-flex;align-items:center">${ROWS[n.p]}${showNames?`<span class="len">${LENGLYPH[n.len]}</span>`:""}</span>`;
     layer.appendChild(d);
   });
 }
@@ -782,7 +796,7 @@ $("exBtn").addEventListener("click",async()=>{
             [16,2,6],[18,2,4],[20,4,1],
             [24,2,2],[26,2,1],[28,4,0]];
   meas=4; document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===4));
-  notes=ex.map(a=>({s:a[0],len:a[1],p:a[2]})); build(); save(); toast("おてほんを入れました。▶で聴いてみよう");
+  notes=ex.map(a=>({s:a[0],len:a[1],p:a[2]})).map(n=>{ const al=cfg.allow[PROG[Math.floor(n.s/8)%4]]||[]; if(al[n.p]===0){ for(let d=1;d<8;d++){ if(al[n.p-d]===1||al[n.p-d]===undefined&&n.p-d>=0){ n.p=n.p-d; break; } if(al[n.p+d]===1||al[n.p+d]===undefined&&n.p+d<=7){ n.p=n.p+d; break; } } } return n; }); build(); save(); toast("おてほんを入れました。▶で聴いてみよう");
 });
 $("clearBtn").addEventListener("click",async()=>{ if(!notes.length){ toast("もう空です"); return; } if(await ask("ぜんぶ消しますか？",{ok:"消す"})){ notes=[]; srcM=null; rcard=null; addCardMode=false; markSrc(); updatePick(); afterEdit(); toast("ぜんぶ消しました"); } });
 
@@ -823,8 +837,10 @@ function addCardFromMeasure(m){
 function applyCard(m,p){
   ensureAudio();
   const c=allCards().find(x=>x.id===rcard); if(!c) return;
+  const ch=PROG[m%4]; const allow=cfg.allow[ch]||[];
+  if(allow[p]===0){ toast(CHORD[ch].name+"の和音のときは「"+ROWS[p]+"」は使えません（先生の設定）。使える高さのマスをタップしてね"); return; }
   const old=notes.filter(n=>Math.floor(n.s/8)===m);
-  const fresh=c.p.map(([s,l])=>{ const hit=old.find(n=>n.s<=m*8+s && m*8+s<n.s+n.len); return {s:m*8+s,len:l,p:hit?hit.p:p,l:hit?(hit.l||""):""}; });
+  const fresh=c.p.map(([s,l])=>{ const hit=old.find(n=>n.s<=m*8+s && m*8+s<n.s+n.len); const pp=(hit&&allow[hit.p]!==0)?hit.p:p; return {s:m*8+s,len:l,p:pp,l:hit?(hit.l||""):""}; });
   notes=notes.filter(n=>Math.floor(n.s/8)!==m).concat(fresh);
   rcard=null; document.querySelectorAll(".rcard").forEach(x=>x.classList.remove("on")); updatePick();
   previewNote(p,2);
@@ -975,6 +991,39 @@ function ask(msg,opt){ opt=opt||{}; return new Promise(res=>{
   $("dlgOk").onclick=()=>fin(opt.input?inp.value:true); $("dlgNo").onclick=()=>fin(opt.input?null:false);
   inp.onkeydown=e=>{ if(e.key==="Enter") fin(inp.value); };
 }); }
+/* ---------- 💾 端末にほぞん／📂 ひらく ---------- */
+const SAVES_KEY="waon_saves";
+function loadSaves(){ try{ const a=JSON.parse(store.get(SAVES_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function writeSaves(a){ store.set(SAVES_KEY, JSON.stringify(a.slice(0,30))); }
+function fmtDate(t){ const d=new Date(t); return d.getMonth()+1+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+let lastSaveName="";
+async function saveWork(){
+  if(!notes.length){ toast("まず音を入れてね"); return; }
+  const nm=await ask("なまえをつけてほぞんします（この端末の中だけ）",{input:true,value:lastSaveName||"",placeholder:"なまえ（例：たろう1）",ok:"ほぞん"});
+  if(nm===null) return; const name=(nm||"").trim()||("せんりつ "+fmtDate(Date.now()));
+  let a=loadSaves(); const same=a.findIndex(x=>x.name===name);
+  if(same>=0 && !(await ask("「"+name+"」はもうあります。上書きしますか？",{ok:"上書き"}))) return;
+  const rec={name,meas,notes:notes.map(n=>({s:n.s,len:n.len,p:n.p,l:n.l||""})),t:Date.now()};
+  if(same>=0) a[same]=rec; else a.unshift(rec);
+  writeSaves(a); lastSaveName=name; toast("「"+name+"」をこの端末にほぞんしました");
+}
+function renderSaveList(){
+  const box=$("saveList"); const a=loadSaves(); box.innerHTML="";
+  if(!a.length){ box.innerHTML='<div style="color:var(--muted);font-size:14px;padding:8px">まだありません。「💾 ほぞん」でなまえをつけて入れられます</div>'; return; }
+  a.forEach((r,i)=>{
+    const row=document.createElement("div"); row.style.cssText="display:flex;align-items:center;gap:8px;border:2px solid var(--line);border-radius:14px;padding:8px 10px";
+    const info=document.createElement("div"); info.style.flex="1"; info.innerHTML='<b style="font-size:15px">'+r.name.replace(/[<>&]/g,"")+'</b><div style="font-size:12px;color:var(--muted)">'+r.meas+'小節・'+r.notes.length+'音　'+fmtDate(r.t)+'</div>';
+    const open=document.createElement("button"); open.className="btn small"; open.textContent="ひらく";
+    open.addEventListener("click",async()=>{ if(notes.length && !(await ask("いまのせんりつを「"+r.name+"」におきかえます。いいですか？（いまのものはほぞんしていないと消えます）",{ok:"ひらく"}))) return; meas=r.meas===8?8:4; notes=r.notes.map(n=>({s:n.s,len:n.len,p:n.p,l:n.l||""})); document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); lastSaveName=r.name; build(); save(); $("saveOv").style.display="none"; toast("「"+r.name+"」をひらきました"); });
+    const del=document.createElement("button"); del.className="btn ghost small"; del.textContent="けす";
+    del.addEventListener("click",async()=>{ if(!(await ask("「"+r.name+"」をけしますか？",{ok:"けす"}))) return; const b=loadSaves(); b.splice(i,1); writeSaves(b); renderSaveList(); });
+    row.appendChild(info); row.appendChild(open); row.appendChild(del); box.appendChild(row);
+  });
+}
+$("saveBtn").addEventListener("click",()=>{ if(!FULL){ openCta(); return; } saveWork(); });
+$("openBtn").addEventListener("click",()=>{ if(!FULL){ openCta(); return; } renderSaveList(); $("saveOv").style.display="flex"; });
+$("saveClose").addEventListener("click",()=>$("saveOv").style.display="none");
+$("saveOv").addEventListener("click",e=>{ if(e.target===$("saveOv")) $("saveOv").style.display="none"; });
 /* ---------- 共有・画像 ---------- */
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2600); }
 $("linkBtn").addEventListener("click",()=>{
@@ -1100,7 +1149,7 @@ if(!FULL){
   $("fullBtn").style.display=""; $("fullBtn").addEventListener("click",openCta);
   document.querySelector('#lenSeg button[data-m="8"]').innerHTML="8小節 🔒";
   // 体験版：授業で使う機能はフル版へ（ボタンは残して🔒表示＋案内）
-  [["lyricBtn","📝 かし 🔒"],["linkBtn","🔗 リンク 🔒"],["loopBtn","🔁 🔒"],["setBtn","⚙ 🔒"]].forEach(([id,label])=>{ const b=$(id); const nb=b.cloneNode(true); nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
+  [["lyricBtn","📝 かし 🔒"],["linkBtn","🔗 リンク 🔒"],["saveBtn","💾 ほぞん 🔒"],["openBtn","📂 ひらく 🔒"],["loopBtn","🔁 🔒"],["setBtn","⚙ 🔒"]].forEach(([id,label])=>{ const b=$(id); const nb=b.cloneNode(true); nb.innerHTML=label; b.parentNode.replaceChild(nb,b); nb.addEventListener("click",openCta); });
   cfg.hideGear=false; cfg.pin="";
   const rt=document.querySelector("#rcardBar .ttl"); if(rt) rt.textContent="リズムカード 🔒";
   const tb=document.createElement("div"); tb.id="trialBar"; tb.style.cssText="background:#fff3c4;color:#6b4a00;font-size:12.5px;padding:6px 14px;text-align:center;line-height:1.6";
@@ -1134,6 +1183,7 @@ document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",N
 buildTools();
 buildCards();
 build();
+if(pendingResume){ (async()=>{ const r=pendingResume; pendingResume=null; if(await ask("前に作ったせんりつが、この端末に残っています（"+r.notes.length+"音）。つづきからにしますか？",{ok:"つづきから",cancel:"リンクの内容で"})){ meas=r.meas; notes=r.notes; document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas)); build(); toast("つづきからひらきました"); } })(); }
 applyGear();
 $("tempoNow").textContent=cfg.tempo;
 window.addEventListener("resize",()=>{ /* CSSで追従 */ });
