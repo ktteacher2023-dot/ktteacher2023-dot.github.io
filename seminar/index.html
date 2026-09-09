@@ -55,6 +55,9 @@
   .voice{background:#fff;border-left:5px solid var(--gold);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:.95rem}
   .voice small{display:block;color:var(--sub);font-size:.78rem;margin-top:4px}
   .white .voice{background:var(--paper)}
+  .voice.main{border-left-color:var(--accent);background:var(--accent-soft);font-family:"Zen Maru Gothic",sans-serif;font-size:clamp(1.15rem,3vw,1.5rem);font-weight:900;line-height:1.6;padding:20px 22px;margin-bottom:16px}
+  .voice.main small{font-family:"BIZ UDPGothic",sans-serif;font-weight:400;font-size:.82rem;margin-top:8px}
+  br.sp{display:none} @media(max-width:520px){br.sp{display:inline}}
   .note{max-width:720px;margin:18px auto 0;font-size:.95rem}
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .grid3.two{grid-template-columns:repeat(2,1fr)}
@@ -131,7 +134,7 @@
 <div class="hero wrap">
   <span class="eyebrow">自由進度学習につながる 音楽のICT活用セミナー（オンライン・ハンズオン）</span>
   <h1>音楽の授業に、<br class="pc"><em>ICTをどう入れるか。</em></h1>
-  <p class="lead">端末はある。でも、音楽の授業で何に使えばいいのか分からない。研修は聞いたけれど、自分の手ではさわっていない。そういう先生のための90分です。<b>授業の一場面に入れる → 先生の準備を軽くする → 子どもが自分で進める（自由進度学習）</b>。この順番で、無料ツールとFlat for Educationを自分の手で動かしながら進めます。ICTが苦手な方は前半から、もっと使いたい方は後半のFlatと自由進度学習が本番です。</p>
+  <p class="lead">「ICTに弱いんです。分からないから、使いこなせないから」。4月も8月も、何人もの先生がアンケートにそう書いてくださいました。端末はある。でも、音楽の授業で何に使えばいいのか分からない。そういう先生のための90分です。<b>授業の一場面に入れる → 先生の準備を軽くする → 子どもが自分で進める（自由進度学習）</b>。この順番で、無料ツールとFlat for Educationを自分の手で動かしながら進めます。ICTが苦手な方は前半から、もっと使いたい方は後半のFlatと自由進度学習が本番です。</p>
   <div class="badges">
     <span class="badge hot">先着20名（さわれる席の数）</span>
     <span class="badge">🔰 ICTが苦手でも大丈夫</span>
@@ -151,13 +154,12 @@
 
 <section class="white">
   <div class="wrap">
-    <h2>この2週間で、実際にいただいた相談です</h2>
+    <h2>実際にいただいた相談です</h2>
     <p class="sub">名前は出しません。でも全部、本当にあった話です</p>
-    <div class="voice">「先生個人としては使いたいけど、上が許してくれない」<small>Flat for Education の担当者と話したとき、いちばん多いと聞いた現場の声</small></div>
+    <div class="voice main">「ICTに弱いんです。<br class="sp">分からないから、使いこなせないから」<small>4月・8月のセミナーで、何人もの先生が書いてくださった言葉</small></div>
+    <div class="voice">「先生個人としては使いたいけど、管理職が許してくれない」</div>
     <div class="voice">児童の端末から、ロイロで配ったページが開けない。市のフィルターらしい<small>9月上旬・2人の先生から同じ相談</small></div>
-    <div class="voice">中学校の合唱祭。ピアノが弾けない、楽譜が読めない生徒が多くて（特に3年生）、パート練習をしてもなかなか上達しない<small>9月8日・中学校の先生から</small></div>
-    <div class="voice">「ICTに弱いんです。分からないから、使いこなせないから」<small>4月・8月のセミナーで、何人もの先生が書いてくださった言葉</small></div>
-    <p class="note">「ICTに弱い」は、能力の話ではないと思っています。研修で聞いた。誰かがやっているのを見た。でも、自分でログインして、音符を置いて、再生ボタンを押したことはない。そこで止まっている先生がとても多い。そしてもう1つ、<b>「何に使えばいいか」の順番</b>が誰からも示されていない。端末を配られただけで、音楽の授業のどこに入れるかは先生任せになっています。だから今回は、順番を決めて、さわる会にしました。</p>
+    <p class="note">「ICTに弱い」は、能力の話ではないと思っています。研修で聞いた。誰かがやっているのを見た。でも、そこで止まっている先生がとても多い。そしてもう1つ、<b>「何に使えばいいか」の順番</b>が、誰からも示されていない。端末は配られた。でも、音楽の授業のどこに入れるかは先生任せです。「とりあえず調べ学習」で終わっている教室を、私はたくさん見ました。だから今回は、さわる会にしました。</p>
   </div>
 </section>
 
@@ -165,9 +167,9 @@
   <h2>ICT導入の3段階。この順番で進めます</h2>
   <p class="sub">いきなり「子どもが自分で」は無理です。先生が1回さわって、授業の一場面に入れて、それから子どもに渡す</p>
   <div class="stages">
-    <div class="stage"><span class="no">第1段階</span><h3>授業の一場面に入れる</h3><p>授業の最初の5分、音楽づくり、歌の練習。まず1場面に、URLを開くだけの無料ツールを1つ。明日からできて、失敗してもダメージがない。</p><div class="tool">はくたたき／Chrome Music Lab「Song Maker」／うたミエ無料版</div></div>
+    <div class="stage"><span class="no">第1段階</span><h3>授業の一場面に入れる</h3><p>音楽づくり、歌の練習。まず1場面に、URLを開くだけの無料ツールを紹介。明日からできて、失敗してもダメージがない。</p><div class="tool">Chrome Music Lab／けいてぃの音楽ツールズ（無料）</div></div>
     <div class="stage"><span class="no">第2段階</span><h3>先生の準備を軽くする</h3><p>合奏・合唱の楽譜、パート譜、パート別の音源。拡大コピーとドレミ書きと切り貼りを、写真で取り込む → 直す → 印刷 → MP3 の5分に。</p><div class="tool">Flat for Education（共用アカウントで自分の手で）</div></div>
-    <div class="stage goal"><span class="no">第3段階</span><h3>子どもが自分で進める（自由進度学習）</h3><p>作った楽譜をうたミエに渡してリンク1本で配る。子どもは自分のペースで、先生は困っている子のところへ。「まず1つの題材だけ」の始め方と、先生の立ち位置、記録の残し方。</p><div class="tool">配布リンク／練習スタイルを子どもに選ばせる／けっかカード</div></div>
+    <div class="stage goal"><span class="no">第3段階</span><h3>子どもが自分で進める（自由進度学習）</h3><p>作った楽譜を配る。子どもは自分のペースで、先生は困っている子のところへ。「まず1つの題材だけ」の始め方と、先生の立ち位置、記録の残し方。</p><div class="tool">配布リンク／練習スタイルを子どもに選ばせる</div></div>
   </div>
   <p class="note" style="margin-top:22px">8月のセミナーで「練習スタイルを子どもに選ばせる」という話をしたら、いちばん反応があったのがそこでした。子どもがやるから、叱る必要がない。先生は楽になって、子どもは「もう1回」と言う。それを道具の側から作るのが、今回の着地点です。</p>
 </section>
@@ -178,15 +180,15 @@
   <p class="sub">青いラベルは「そのとき参加者がやること」。見ているだけの時間はほとんどありません</p>
   <div class="tt">
     <div class="tt-row"><div class="tt-time">21:00<br><small>7分</small></div><div><h3>オープニング：端末はある。音楽で、何に使う？</h3><p>いま使っているもの（使っていない理由でもOK）をチャットに。「ICT導入の3段階」の順番を先に示します。</p><span class="you">チャットに書く</span></div></div>
-    <div class="tt-row"><div class="tt-time">21:07<br><small>25分</small></div><div><h3>第1段階　授業の一場面に入れる（無料ツール・3場面×1つ）</h3><p>授業の最初の5分＝はくたたき。音楽づくり＝Chrome Music Lab「Song Maker」。歌の練習＝うたミエ無料版。それぞれ「どの場面で・何分・どう声をかけるか」まで。他の無料ツールは特典の一覧PDFで。</p><span class="you">Song Makerで8小節作って、共有リンクをチャットに貼る</span></div></div>
+    <div class="tt-row"><div class="tt-time">21:07<br><small>25分</small></div><div><h3>第1段階　授業の一場面に入れる（無料ツール・3場面×1つ）</h3><p>無料ツールを3場面×1つに絞って。授業の最初の5分＝はくたたき、音楽づくり＝Song Maker、歌の練習＝うたミエ。それぞれ「どの場面で・何分・どう声をかけるか」まで。他の無料ツールは特典の一覧PDFで。</p><span class="you">Song Makerで8小節作って、共有リンクをチャットに貼る</span></div></div>
     <div class="tt-row break"><div class="tt-time">21:32<br><small>5分</small></div><div><h3>きゅうけい</h3></div></div>
     <div class="tt-row"><div class="tt-time">21:37<br><small>30分</small></div><div><h3>第2段階　先生の準備を軽くする（Flatハンズオン）</h3><p>前日にお渡しする共用アカウントで、入った状態からスタート。4小節打ち込んで鳴らす → テンポを変えてMP3 → パート譜だけ印刷 → 写真から楽譜を取り込む → 全員で1つの楽譜に入って共同編集・コメント。「消しちゃった！」→「履歴から戻せます」まで。</p><span class="you">自分の端末でFlatを操作</span></div></div>
-    <div class="tt-row"><div class="tt-time">22:07<br><small>13分</small></div><div><h3>第3段階　子どもが自分で進める（自由進度学習）</h3><p>Flatの楽譜をうたミエに渡して配布リンクを作る。練習スタイルを子どもに選ばせる回し方、先生の立ち位置、記録の残し方（けっかカード）。「まず1つの題材だけ」の始め方。最後に2分、学校に入れる話（30日無料トライアル・ロイロ／Classroom・フィルター・管理職の通し方）。</p><span class="you">配布リンクを開いて、生徒役で体験</span></div></div>
+    <div class="tt-row"><div class="tt-time">22:07<br><small>13分</small></div><div><h3>第3段階　子どもが自分で進める（自由進度学習）</h3><p>Flatの楽譜をうたミエに渡して配布リンクを作る。練習スタイルを子どもに選ばせる回し方、先生の立ち位置、記録の残し方。「まず1つの題材だけ」の始め方。最後に2分、学校に入れる話（30日無料トライアル・ロイロ／Classroom・フィルター・管理職の通し方）。</p><span class="you">配布リンクを開いて、生徒役で体験</span></div></div>
     <div class="tt-row"><div class="tt-time">22:20<br><small>10分</small></div><div><h3>事前にいただいた質問への回答・質疑応答</h3><p><span data-early-until></span>までにお申し込みの方には、事前に「いま困っていること」をお聞きして、当日必ず触れます。</p></div></div>
   </div>
   <div class="need" style="margin-top:20px">
     <b>🖥 当日に必要なもの</b>
-    ・Zoomを見る端末（スマホでも可）と、<b>操作する端末（PCまたはタブレット・Chrome推奨）</b>。1台で両方でもできますが、2台あると楽です<br>
+    ・<b>操作する端末（PCまたはタブレット・Chrome推奨）</b><br>
     ・無料ツールは、URLを開くだけで使えます（登録・インストール不要）<br>
     ・Flatのアカウントは<b>不要</b>。共用アカウント（20個）のユーザー名とパスワードを前日にお渡しするので、20:50までにログインしておいてください（入れない方は20:50〜21:00にお手伝いします）<br>
     ・カメラは不要。マイクも使わなくて大丈夫です（第3段階のうたミエは、声を出さずに見るだけでも体験できます）。楽器も不要
@@ -225,7 +227,7 @@
       <h3>けいてぃ（井上敬史）</h3>
       <div class="role">音楽教育者／合同会社Lyric Flow 代表／Flat for Education 公式アンバサダー・販売代理店／「けいてぃの音楽ツールズ」開発</div>
       <p>小学校・中学校の音楽の授業でリコーダー・合唱・器楽合奏・鑑賞を教えてきました。いまは、音楽の先生のためのブラウザ教材「うたミエ」など15本を作りながら、全国の先生のセミナーと音楽塾をやっています。教科書の合奏曲をFlatで取り込んで、パート譜と音源を作るまでを自分で計ったら5分でした。その手順と、そこから子どもに渡すところまでをそのままお見せします。</p>
-      <p class="cap" style="margin-top:8px">※ 合同会社Lyric Flow は Flat for Education の販売代理店です。セミナー内でご紹介する学校導入のご相談は、当社経由でお受けします。</p>
+      <p class="cap" style="margin-top:8px">※ けいてぃ（合同会社Lyric Flow）は Flat for Education の販売代理店です。学校導入のご相談は当社経由でお受けします。</p>
     </div>
   </div>
 </section>
