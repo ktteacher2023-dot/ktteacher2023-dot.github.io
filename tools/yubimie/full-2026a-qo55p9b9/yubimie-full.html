@@ -296,6 +296,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   .list-hint{display:none}
   .measure{box-shadow:none;border:1.5px solid #bbb;break-inside:avoid;page-break-inside:avoid}
 }
+  .ctl.on{background:var(--gold);color:#5C4400}
 </style>
 </head>
 <body>
@@ -382,6 +383,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
       <option value="normal" selected>ふつうの速さ</option>
       <option value="fast">はやい</option>
     </select>
+    <button class="ctl" id="metroBtn" title="おてほんの前に1小節かぞえ、拍を鳴らします。れんしゅう中も押せば拍が鳴ります">🥁 カウント</button>
     <button class="ctl" id="backBtn">⏮ もどる</button>
     <button class="ctl" id="skipBtn">⏭ スキップ</button>
     <button class="ctl" id="restartBtn">🔁 さいしょから</button>
@@ -480,7 +482,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.08-2（🎼 がくふ表示／📌きょうざいきょくに追加した曲・配布リンクで音の長さが消える不具合を修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-2（🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす／楽譜のテンポを「ふつうの速さ」に反映／弱起の曲の小節番号を楽譜と合わせた／タイの誤警告修正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -1185,7 +1187,7 @@ function parseMusicXML(xmlText){
     const groups = new Map();      // "voice/staff" → {measures, tied, cur}
     const barlines = [];
     let divisions = 1;
-    let partTimeSig = null; let partFifths = null; let partBeatType = null;
+    let partTimeSig = null; let partFifths = null; let partBeatType = null; let partTempo = null;
     const addToPrevNote = (g, midi, beats) => {
       const scan = arr2 => {
         for(let k=arr2.length-1;k>=0;k--){
@@ -1194,7 +1196,8 @@ function parseMusicXML(xmlText){
         return false;
       };
       if(scan(g.cur)) return;
-      for(let mi=g.measures.length-1; mi>=0; mi--){ if(scan(g.measures[mi])) return; if(g.measures[mi].some(e=>e.m!==null)) return; }
+      /* 小節をまたぐタイは前の小節の音にまとめる。まとめた分の拍は「拍が合わない」判定から除く */
+      for(let mi=g.measures.length-1; mi>=0; mi--){ if(scan(g.measures[mi])){ g.carried[mi]=(g.carried[mi]||0)+beats; return; } if(g.measures[mi].some(e=>e.m!==null)) return; }
     };
     for(const meas of part.querySelectorAll('measure')){
       const dEl = meas.querySelector('attributes > divisions');
@@ -1203,6 +1206,11 @@ function parseMusicXML(xmlText){
       if(tsEl && !partTimeSig){ partTimeSig = parseInt(tsEl.textContent) || 4; const btEl = meas.querySelector('attributes > time > beat-type'); if(btEl) partBeatType = parseInt(btEl.textContent) || 4; }
       const ksEl = meas.querySelector('attributes > key > fifths');
       if(ksEl && partFifths===null){ partFifths = parseInt(ksEl.textContent) || 0; }
+      if(partTempo===null){
+        const so = meas.querySelector('sound[tempo]'); const pm = meas.querySelector('metronome > per-minute');
+        const tv = so ? parseFloat(so.getAttribute('tempo')) : (pm ? parseFloat(pm.textContent) : NaN);
+        if(tv>=20 && tv<=300) partTempo = Math.round(tv);
+      }
       for(const g of groups.values()) g.cur = [];
       meas.querySelectorAll(':scope > note').forEach(n=>{
         if(n.querySelector('chord')) return;                  // 和音は上の音だけ
@@ -1210,7 +1218,7 @@ function parseMusicXML(xmlText){
                   + (n.querySelector(':scope > staff')?.textContent||'1');
         let g = groups.get(key);
         if(!g){
-          g = {measures:[], tied:null, cur:[]};
+          g = {measures:[], tied:null, cur:[], carried:{}};
           while(g.measures.length < barlines.length) g.measures.push([]);   // 途中から現れた声部は前を空でそろえる
           groups.set(key, g);
         }
@@ -1269,15 +1277,15 @@ function parseMusicXML(xmlText){
       /* 変換ミスの検出：拍子より長い小節（PDF/MIDI変換で壊れたファイルの特徴） */
       const badMeasures = [];
       st.g.measures.forEach((mm,mi)=>{
-        const total = mm.reduce((s2,e)=>s2+e.d, 0);
-        if(total > ts0 + 0.02) badMeasures.push(mi+1);
+        const total = mm.reduce((s2,e)=>s2+e.d, 0) - (st.g.carried[mi]||0);
+        if(total > ts0 + 0.02) badMeasures.push(pickup>0 ? mi : mi+1);
       });
       let nm;
       const base = pname || ('パート'+(candidates.length+1));
       if(stats.length===1) nm = base;
       else if(stats.length===2) nm = (pname ? pname+'・' : '') + (gi===0 ? '上のパート' : '下のパート');
       else nm = (pname ? pname+'・' : '') + '声部'+(gi+1);
-      candidates.push({name: nm, measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: st.g.measures.length, badMeasures, fifths: partFifths||0, beatType: partBeatType||4});
+      candidates.push({name: nm, measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: st.g.measures.length, badMeasures, fifths: partFifths||0, beatType: partBeatType||4, tempo: partTempo||0});
     });
   }
   if(candidates.length===0) throw new Error('nonotes');
@@ -1301,8 +1309,10 @@ function applyPart(title, part, bundle){
   updatePartSwitchBtn();
   state.timeSig = part.timeSig || 4;
   state.beatOffset = part.pickup || 0;
+  state.songTempo = part.tempo || 0; if(typeof metroTempoLabels==='function') metroTempoLabels();
   state.fifths = part.fifths || 0; state.beatType = part.beatType || 4;
   staffInvalidate(); staffSync();
+  if(state.beatOffset>0) buildListView();                    // 弱起の小節番号を楽譜と合わせて出し直す
   if(part.rawMeasures && part.measures.length > part.rawMeasures){
     // くり返し・1番/2番かっこを開いたことを先生に知らせる（正しく読めたかの確認用）
     showToast('🔁 くり返しをひらきました（楽譜 '+part.rawMeasures+'小節 → えんそう '+part.measures.length+'小節）', 3600);
@@ -1395,6 +1405,7 @@ function setSong(title, measures, raw){
   state.notes = state.measures.flat();
   state.timeSig = 4;                                          // 拍子（MusicXMLなら applyPart が上書き）
   state.beatOffset = 0;
+  state.songTempo = 0; if(typeof metroTempoLabels==='function') metroTempoLabels();
   staffInvalidate();
   state.songTitle = title;
   els.songTitle.textContent = '♪ ' + title;
@@ -1475,7 +1486,7 @@ function staffBuild(){
   const sums = M.map(mm=>mm.reduce((a,e)=>a+e.d,0));
   // 小節の頭の x を順に決める（タイで長くなった小節は拍子ぶんで区切る）
   M.forEach((mm,mi)=>{
-    const barX = x; bars.push({x:barX, n:mi+1});
+    const barX = x; bars.push({x:barX, n: barNumber(mi)});
     let expected = sums[mi];
     const next = sums[mi+1];
     if(sums[mi] > ts+0.02 && next!==undefined && next < ts-0.02) expected = ts;   // 次の小節へタイでつながっている
@@ -1511,7 +1522,7 @@ function staffBuild(){
   const tsx = LEFT+44+ksN*9+2;
   sv.push(`<text x="${tsx}" y="${y0-2*HS-1}" font-size="19" font-weight="800" fill="#333">${ts}</text><text x="${tsx}" y="${y0-1}" font-size="19" font-weight="800" fill="#333">${state.beatType||4}</text>`);
   // 小節線・小節番号
-  bars.forEach((b,i)=>{ if(i>0) sv.push(`<line x1="${b.x-4}" y1="${y0-8*HS}" x2="${b.x-4}" y2="${y0}" stroke="#333" stroke-width="1.1"/>`); sv.push(`<text x="${b.x}" y="${y0-8*HS-9}" font-size="10" fill="#8a97a0">${b.n}</text>`); });
+  bars.forEach((b,i)=>{ if(i>0) sv.push(`<line x1="${b.x-4}" y1="${y0-8*HS}" x2="${b.x-4}" y2="${y0}" stroke="#333" stroke-width="1.1"/>`); sv.push(`<text x="${b.x}" y="${y0-8*HS-9}" font-size="10" fill="#8a97a0">${b.n>0?b.n:""}</text>`); });
   sv.push(`<line x1="${W-9}" y1="${y0-8*HS}" x2="${W-9}" y2="${y0}" stroke="#333" stroke-width="3"/>`);
   let prevNote=null;
   pieces.forEach((pc,i)=>{
@@ -1606,7 +1617,54 @@ segSetup('demoTempoSeg','demoTempo');
 /* =====================================================
    おてほん演奏（曲全体を自動演奏しながら、場所が順番に光る）
    ===================================================== */
-const DEMO_BPM = { slower: 40, slow: 58, normal: 84, fast: 108 };   // 4分音符＝この速さ
+const DEMO_BPM = { slower: 40, slow: 58, normal: 84, fast: 108 };   // 4分音符＝この速さ（テンポのない曲）
+const TEMPO_MULT = { slower: 0.5, slow: 0.7, normal: 1, fast: 1.25 };
+/* いまの「おてほんの速さ」を ♩= の数字で返す。楽譜ファイルにテンポがあればそれを「ふつう」にする */
+function currentBPM(){
+  const base = state.songTempo || 0;
+  if(base) return Math.max(30, Math.round(base * (TEMPO_MULT[state.demoTempo] || 1)));
+  return DEMO_BPM[state.demoTempo] || 84;
+}
+function metroTempoLabels(){
+  const names = { slower:'🐢 とてもゆっくり', slow:'🐢 ゆっくり', normal:'ふつうの速さ', fast:'はやい' };
+  const sel = $('tempoSel'); if(!sel) return;
+  [...sel.options].forEach(o=>{
+    const base = state.songTempo || 0;
+    const bpm = base ? Math.max(30, Math.round(base*(TEMPO_MULT[o.value]||1))) : (DEMO_BPM[o.value]||84);
+    o.textContent = names[o.value] + '（♩=' + bpm + '）';
+  });
+}
+/* =====================================================
+   メトロノーム（🥁 カウント）
+   おてほん：1小節ぶん「1・2・3・4」とカウントしてから始まり、曲の間ずっと拍を鳴らす
+   れんしゅう中：ボタンを押すと、おてほんの速さで拍が鳴りつづける（ボタンに今の拍が出る）
+   ===================================================== */
+const METRO = { on:false, timer:null, k:0, t0:0, beatMs:0, ts:4 };
+try{ METRO.on = localStorage.getItem('yubimie_metro')==='on'; }catch(e){}
+function metroBtnLabel(beat){
+  const b=$('metroBtn'); if(!b) return;
+  b.textContent = METRO.on ? ('🥁 ' + (beat ? beat : 'カウント')) : '🥁 カウント';
+  b.classList.toggle('on', METRO.on);
+}
+function metroStopFree(){ if(METRO.timer){ clearTimeout(METRO.timer); METRO.timer=null; } metroBtnLabel(); }
+function metroStartFree(){
+  metroStopFree(); if(!METRO.on || state.demoPlaying) return;
+  try{ const c = ctx(); if(c.state==='suspended') c.resume(); }catch(e){}
+  const ts = state.timeSig || 4; const beatMs = 60000 / currentBPM();
+  const t0 = performance.now(); let k = 0;
+  const tick = ()=>{
+    if(!METRO.on || state.demoPlaying){ METRO.timer=null; return; }
+    playTick(k % ts === 0); metroBtnLabel((k % ts) + 1); k++;
+    METRO.timer = setTimeout(tick, Math.max(0, t0 + k*beatMs - performance.now()));
+  };
+  tick();
+}
+function metroToggle(){
+  METRO.on = !METRO.on; try{ localStorage.setItem('yubimie_metro', METRO.on?'on':'off'); }catch(e){}
+  metroBtnLabel();
+  if(METRO.on){ if(!state.demoPlaying) metroStartFree(); showToast('🥁 カウントON：おてほんは1小節かぞえてから始まります'); }
+  else metroStopFree();
+}
 let demoTimer = null, demoReturnIndex = 0;
 function clearInstHighlight(){
   const I = INSTRUMENTS[state.instrument] || INSTRUMENTS.soprano;
@@ -1617,6 +1675,8 @@ function stopDemo(restore){
   if(demoTimer){ clearTimeout(demoTimer); demoTimer = null; }
   if(!state.demoPlaying) return;
   state.demoPlaying = false;
+  if(METRO.timer){ clearTimeout(METRO.timer); METRO.timer=null; }
+  metroBtnLabel();
   els.hearing.textContent = '';
   $('demoBtn').textContent = '▶️ おてほん';
   $('demoBtn').style.background = '';
@@ -1635,7 +1695,8 @@ function startDemo(fromNote){
   $('demoBtn').textContent = '⏹ とめる';
   $('demoBtn').style.background = 'var(--gold)';
   $('demoBtn').style.color = '#5C4400';
-  const beatMs = 60000 / (DEMO_BPM[state.demoTempo] || 84);
+  const beatMs = 60000 / currentBPM();
+  metroStopFree();
   // 拍つきイベント（休符ふくむ）。なければ全音1拍あつかい
   const events = (state.events && state.events.length) ? state.events : state.notes.map(m=>({m, d:1}));
   // 音声エンジンを先に起こしておく（1音目が遅れないように）
@@ -1688,6 +1749,31 @@ function startDemo(fromNote){
       }
     }
   };
+  /* 🥁 カウントON：小節のあたまから「1・2・3・4」と数えてから始める（弱起なら「1・2・3」で4拍目に入る）。
+     数える間ずっと、そして曲の間ずっと拍を鳴らす（休みのカウントは今までどおり） */
+  let countStart = beatPos;
+  if(METRO.on){
+    countStart = Math.floor((beatPos + 1e-6) / ts) * ts;
+    if(beatPos - countStart < 2) countStart -= ts;               // 直前が短すぎるなら1小節前から
+    elapsed = (beatPos - countStart) * beatMs;
+    const firstEv = events[ei] || null;
+    showReady(firstEv);
+    let k = 0;
+    const mtick = ()=>{
+      if(!state.demoPlaying) return;
+      const pos = countStart + k; const beat = ((pos % ts) + ts) % ts + 1;
+      playTick(beat === 1); metroBtnLabel(beat);
+      if(pos < beatPos - 1e-6){                                   // カウントイン中：大きく数字を出す
+        els.progressLabel.textContent = 'かぞえて… はじまるよ';
+        els.bigNote.innerHTML = `<span style="color:${beat===1?'var(--blue)':'var(--accent)'}">${beat}</span>`;
+        els.bigNote.classList.remove('bump'); void els.bigNote.offsetWidth; els.bigNote.classList.add('bump');
+        els.noteLetter.textContent = firstEv ? ('さいしょのおと： '+ noteName(firstEv.m).kana + (noteName(firstEv.m).high?'（高い）':'')) : '';
+      }
+      k++;
+      METRO.timer = setTimeout(mtick, Math.max(0, t0 + k*beatMs - performance.now()));
+    };
+    mtick();
+  }
   const step = ()=>{
     if(ei >= events.length){
       stopDemo(true);
@@ -1719,7 +1805,7 @@ function startDemo(fromNote){
           return;
         }
         showRestUI(remain, nextEv);
-        playTick(Math.round(beatPos) % ts === 0);            // 小節のあたまは強いティック
+        if(!METRO.on) playTick(Math.round(beatPos) % ts === 0);   // 小節のあたまは強いティック（🥁ONなら拍の方で鳴る）
         const chunk = Math.min(1, remain);                   // 1拍ずつ数える
         beatPos += chunk; elapsed += chunk * beatMs; done += chunk;
         demoTimer = setTimeout(tick, Math.max(0, t0 + elapsed - performance.now()));
@@ -1737,7 +1823,8 @@ function startDemo(fromNote){
     ei++;
     demoTimer = setTimeout(step, Math.max(0, t0 + elapsed - performance.now()));
   };
-  step();
+  if(elapsed>0) demoTimer = setTimeout(step, Math.max(0, t0 + elapsed - performance.now()));
+  else step();
 }
 $('demoBtn').addEventListener('click', ()=>{
   state.demoPlaying ? stopDemo(true) : startDemo();
@@ -1849,12 +1936,16 @@ $('instSelect').addEventListener('change', ()=>{ if(state.demoPlaying) stopDemo(
   $('fingClose').addEventListener('click', ()=>dlg.close());
 })();
 /* おてほんの速さ：ボタン横の選択と設定画面を同期 */
+$('metroBtn').addEventListener('click', metroToggle);
+metroBtnLabel();
+metroTempoLabels();
 $('tempoSel').addEventListener('change', e=>{
   state.demoTempo = e.target.value;
+  if(METRO.on && !state.demoPlaying) metroStartFree();
   $('demoTempoSeg').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.v===state.demoTempo));
 });
 $('demoTempoSeg').querySelectorAll('button').forEach(b=>{
-  b.addEventListener('click', ()=>{ $('tempoSel').value = b.dataset.v; });
+  b.addEventListener('click', ()=>{ $('tempoSel').value = b.dataset.v; if(METRO.on && !state.demoPlaying) setTimeout(metroStartFree,0); });
 });
 $('instSelect').addEventListener('change', e=>{
   state.instrument = e.target.value;
@@ -1910,6 +2001,8 @@ function staffSVG(midi){
   s += `</svg>`;
   return s;
 }
+/* 弱起の曲は最初の小節を「0小節目」として、楽譜の番号（1〜）と合わせる */
+function barNumber(mi){ return (state.beatOffset>0) ? mi : mi+1; }
 function buildListView(){
   const grid = $('listGrid');
   grid.innerHTML = '';
@@ -1917,7 +2010,7 @@ function buildListView(){
   state.measures.forEach((meas, mi)=>{
     if(meas.length===0) return;
     const row = document.createElement('div'); row.className = 'measure';
-    const num = document.createElement('div'); num.className = 'mnum'; num.textContent = mi+1;
+    const num = document.createElement('div'); num.className = 'mnum'; num.textContent = barNumber(mi);
     const wrap = document.createElement('div'); wrap.className = 'mnotes';
     meas.forEach(midi=>{
       const card = document.createElement('div'); card.className = 'ncard';
