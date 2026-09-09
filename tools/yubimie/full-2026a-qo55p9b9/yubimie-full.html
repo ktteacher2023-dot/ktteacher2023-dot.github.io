@@ -86,6 +86,10 @@ main{
 #staffScroll .np.cur .hl{opacity:1}
 #staffScroll .hl{opacity:0;fill:var(--accent);fill-opacity:.14}
 #staffScroll .np.done .hd,#staffScroll .np.done .st,#staffScroll .np.done .fl{opacity:.45}
+#staffScroll .rp{cursor:pointer}
+#staffScroll .rp.cur rect:not(.hl),#staffScroll .rp.cur path,#staffScroll .rp.cur circle{fill:var(--accent)!important;stroke:var(--accent)!important}
+#staffScroll .rp.cur path{stroke:var(--accent)!important}
+#staffScroll .rp.cur .hl{opacity:1}
 @media(max-width:760px){#staffScroll svg{height:104px} #staffHead span{display:none}}
 /* ---------- recorder ---------- */
 #recorderCard{display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden}
@@ -482,7 +486,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-2（🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす／楽譜のテンポを「ふつうの速さ」に反映／弱起の曲の小節番号を楽譜と合わせた／タイの誤警告修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-3（🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす・聴いている途中でON/OFF／がくふ：休符も赤く進む・タイでつながる小節の小節線と番号を修正・手でスクロール中は戻さない・タップでそこから聴き直し／楽譜のテンポを反映／弱起の小節番号／タイの誤警告修正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -1482,30 +1486,40 @@ function staffBuild(){
   const HS=5, y0=78, BW=30, MINW=22, LEFT=16;
   // 調号の幅
   const ksN = Math.min(7,Math.abs(f)); let x = LEFT + 44 + ksN*9 + 26;
-  const out=[]; const pieces=[]; let noteIdx=0; let bars=[]; let carry=0;
-  const sums = M.map(mm=>mm.reduce((a,e)=>a+e.d,0));
-  // 小節の頭の x を順に決める（タイで長くなった小節は拍子ぶんで区切る）
+  const out=[]; const pieces=[]; let bars=[];
+  const BARPAD = 12;                                   // 小節線と最初の音の間
+  /* 小節ごとに「拍子ぶん」に切りそろえる。タイで前の小節にまとまった音は、はみ出したぶんを次の小節へ送る
+     （→ 小節線が消えたり番号が重なったりしない）。休符にもイベント番号（ei）をつけて、おてほんで光らせる */
+  const lay=[]; let carry=[]; let noteIdx=0, ei=0;
   M.forEach((mm,mi)=>{
-    const barX = x; bars.push({x:barX, n: barNumber(mi)});
-    let expected = sums[mi];
-    const next = sums[mi+1];
-    if(sums[mi] > ts+0.02 && next!==undefined && next < ts-0.02) expected = ts;   // 次の小節へタイでつながっている
-    if(mi===0 && state.beatOffset>0) expected = Math.min(expected, ts - state.beatOffset);
-    let pos = 0;
-    mm.forEach(ev=>{
-      const total = ev.d; let placed=0; let first=true;
-      // 小節の区切りをまたぐぶんは切って、タイで次へ
-      const segs=[]; let remain=total; let p=pos;
-      while(remain>1e-6){ const room = Math.max(0.25, expected - p); const take = Math.min(remain, room>1e-6?room:remain); segs.push(take); remain-=take; p+=take; if(p>=expected-1e-6 && remain>1e-6){ expected += ts; } }
-      segs.forEach(seg=>{
-        staffSplit(seg).forEach(dv=>{
-          const w = Math.max(dv*BW, MINW);
-          const pc = {x, d:dv, m:ev.m, idx: ev.m===null?-1:noteIdx, tie:!first, wholeRest: ev.m===null && Math.abs(seg-sums[mi])<1e-6 && sums[mi]>=ts-0.02};
-          pieces.push(pc); x += w; first=false;
-        });
+    const cap = (mi===0 && state.beatOffset>0) ? Math.max(0.5, ts - state.beatOffset) : ts;
+    const items = carry.concat(mm.map(e=>({m:e.m, d:e.d, idx:(e.m===null?-1:noteIdx++), ei:ei++, tie:false})));
+    carry=[]; const evs=[]; let used=0;
+    items.forEach(it=>{
+      const room = cap - used;
+      if(it.d <= room + 1e-6){ evs.push(it); used += it.d; }
+      else if(room > 1e-6){ evs.push(Object.assign({},it,{d:room})); carry.push(Object.assign({},it,{d:it.d-room, tie:it.m!==null})); used=cap; }
+      else carry.push(it);
+    });
+    lay.push({evs, cap});
+  });
+  let guard=0;
+  while(carry.length && guard++<64){                    // 最後の小節からさらにはみ出したぶん
+    const evs=[]; let used=0; const rest=[];
+    carry.forEach(it=>{ const room=ts-used; if(it.d<=room+1e-6){ evs.push(it); used+=it.d; } else if(room>1e-6){ evs.push(Object.assign({},it,{d:room})); rest.push(Object.assign({},it,{d:it.d-room,tie:it.m!==null})); used=ts; } else rest.push(it); });
+    lay.push({evs, cap:ts}); carry=rest;
+  }
+  lay.forEach((L,mi)=>{
+    bars.push({x:x, n: barNumber(mi)});
+    x += BARPAD;
+    L.evs.forEach(ev=>{
+      let first=true;
+      staffSplit(ev.d).forEach(dv=>{
+        const w = Math.max(dv*BW, MINW);
+        const pc = {x, d:dv, m:ev.m, idx:ev.idx, ei:ev.ei, tie: first ? ev.tie : true,
+                    wholeRest: ev.m===null && L.evs.length===1 && ev.d>=ts-0.02};
+        pieces.push(pc); x += w; first=false;
       });
-      if(ev.m!==null) noteIdx++;
-      pos += total;
     });
     x += 6;
   });
@@ -1528,14 +1542,16 @@ function staffBuild(){
   pieces.forEach((pc,i)=>{
     const dv=pc.d, x=pc.x;
     if(pc.m===null){
-      // 休符
+      // 休符（おてほんで光るように番号つき）
       const yc=y0-4*HS;
+      sv.push(`<g class="rp" data-ei="${pc.ei}" data-x="${x}"><rect class="hl" x="${x-13}" y="${y0-9*HS}" width="26" height="${11*HS}" rx="6"/>`);
       if(pc.wholeRest || dv===4) sv.push(`<rect x="${x-6}" y="${y0-6*HS}" width="12" height="5" fill="#333"/>`);
       else if(dv===2||dv===3) sv.push(`<rect x="${x-6}" y="${y0-4*HS-5}" width="12" height="5" fill="#333"/>`);
       else if(dv>=1) sv.push(`<path transform="translate(${x-5},${yc-12}) scale(0.62)" d="M6 3l8 10-6 8 7 9c-5-3-9-1-8 4-4-5-3-9 2-11l-6-8 6-8z" fill="#333"/>`);
       else if(dv>=0.5) sv.push(`<g transform="translate(${x-5},${yc-10}) scale(0.55)"><circle cx="5" cy="14" r="3.2" fill="#333"/><path d="M5 14c4 3 8 3 11 0L9 34" stroke="#333" stroke-width="2.4" fill="none"/></g>`);
       else sv.push(`<g transform="translate(${x-5},${yc-10}) scale(0.55)"><circle cx="5" cy="14" r="3.2" fill="#333"/><circle cx="2" cy="24" r="3.2" fill="#333"/><path d="M5 14c4 3 8 3 11 0L6 40M2 24c4 3 8 3 11 0" stroke="#333" stroke-width="2.4" fill="none"/></g>`);
       if(dv===3||dv===1.5||dv===0.75) sv.push(`<circle cx="${x+9}" cy="${yc-3}" r="1.8" fill="#333"/>`);
+      sv.push('</g>');
       prevNote=null; return;
     }
     const sp = staffSpell(pc.m, keyAlt, f); const step=sp.step; const y=y0-step*HS;
@@ -1561,11 +1577,22 @@ function staffBuild(){
   box.innerHTML = sv.join('');
   STAFF.pieces = pieces; STAFF.svg = box.querySelector('svg');
   STAFF.svg.addEventListener('click', e=>{
-    const g = e.target.closest('.np'); if(!g) return; const idx=Number(g.dataset.idx); if(!(idx>=0)) return;
-    if(state.demoPlaying) return;
+    let g = e.target.closest('.np'); let idx = g ? Number(g.dataset.idx) : -1;
+    if(!g){
+      // 休符をタップ → その休符のあとの音から
+      const r = e.target.closest('.rp'); if(!r) return;
+      const rei = Number(r.dataset.ei); const evs = state.events||[]; let n=0;
+      for(let k=0;k<evs.length;k++){ if(k>=rei && evs[k].m!==null){ idx=n; break; } if(evs[k].m!==null) n++; }
+      if(!(idx>=0)) return;
+    }
+    if(!(idx>=0)) return;
+    STAFF.userScrollAt = 0;                                   // タップしたら自動スクロールを再開
+    if(state.demoPlaying){ stopDemo(false); state.index = idx; updateView(); startDemo(idx); return; }   // 聴いている途中：そこから聴き直す
     state.index = idx; state.combo=0; state.holdStart=0; els.holdFill.style.width='0%'; state.phase='armed';
-    updateView(); showToast((idx+1)+'番目の音から 🎵', 1400);
+    updateView(); showToast((idx+1)+'番目の音から 🎵（▶️ここから で おてほん）', 1600);
   });
+  // 手でスクロールしている間は、自動スクロールで戻さない（数秒後・タップで再開）
+  ['wheel','touchmove','pointerdown'].forEach(ev=>box.addEventListener(ev, ()=>{ STAFF.userScrollAt = performance.now(); }, {passive:true}));
 }
 function staffSync(){
   const card=$('staffCard'); if(!card) return;
@@ -1574,8 +1601,22 @@ function staffSync(){
   if(STAFF.dirty || !STAFF.svg) staffBuild();
   if(!STAFF.svg) return;
   let curX=null;
+  STAFF.svg.querySelectorAll('.rp.cur').forEach(g=>g.classList.remove('cur'));
   STAFF.svg.querySelectorAll('.np').forEach(g=>{ const idx=Number(g.dataset.idx); const cur = idx===state.index; g.classList.toggle('cur',cur); g.classList.toggle('done', idx<state.index); if(cur && curX===null) curX=Number(g.dataset.x); });
-  if(curX!==null){ const box=$('staffScroll'); const scale = STAFF.svg.getBoundingClientRect().width / STAFF.svg.viewBox.baseVal.width; const target = curX*scale - box.clientWidth*0.38; box.scrollTo({left: Math.max(0,target), behavior: Math.abs(box.scrollLeft-target)>box.clientWidth*1.5?'auto':'smooth'}); }
+  staffScrollTo(curX);
+}
+/* おてほん中：休符（ei から ej の手前まで）を赤くして、そこへスクロール */
+function staffRest(ei, ej){
+  if(!STAFF.on || !STAFF.svg) return;
+  STAFF.svg.querySelectorAll('.np.cur').forEach(g=>g.classList.remove('cur'));
+  let curX=null;
+  STAFF.svg.querySelectorAll('.rp').forEach(g=>{ const k=Number(g.dataset.ei); const cur = k>=ei && k<ej; g.classList.toggle('cur',cur); if(cur && curX===null) curX=Number(g.dataset.x); });
+  staffScrollTo(curX);
+}
+/* 見えるところへスクロール（手でスクロールした直後は動かさない） */
+function staffScrollTo(curX){
+  if(STAFF.userScrollAt && performance.now()-STAFF.userScrollAt < 4000) return;
+  if(curX!==null){ const box=$('staffScroll'); const scale = STAFF.svg.getBoundingClientRect().width / STAFF.svg.viewBox.baseVal.width; const target = curX*scale - box.clientWidth*0.38; STAFF.autoScrolling=true; clearTimeout(STAFF.asT); STAFF.asT=setTimeout(()=>STAFF.autoScrolling=false, 700); box.scrollTo({left: Math.max(0,target), behavior: Math.abs(box.scrollLeft-target)>box.clientWidth*1.5?'auto':'smooth'}); }
 }
 $('staffToggle').addEventListener('click', ()=>{
   STAFF.on = !STAFF.on; try{ localStorage.setItem('yubimie_staff', STAFF.on?'on':'off'); }catch(e){}
@@ -1662,7 +1703,8 @@ function metroStartFree(){
 function metroToggle(){
   METRO.on = !METRO.on; try{ localStorage.setItem('yubimie_metro', METRO.on?'on':'off'); }catch(e){}
   metroBtnLabel();
-  if(METRO.on){ if(!state.demoPlaying) metroStartFree(); showToast('🥁 カウントON：おてほんは1小節かぞえてから始まります'); }
+  if(state.demoPlaying){ showToast(METRO.on ? '🥁 カウントON' : '🥁 カウントOFF', 1200); return; }   // 聴いている途中：次の拍から切りかわる
+  if(METRO.on){ metroStartFree(); showToast('🥁 カウントON：おてほんは1小節かぞえてから始まります'); }
   else metroStopFree();
 }
 let demoTimer = null, demoReturnIndex = 0;
@@ -1751,19 +1793,22 @@ function startDemo(fromNote){
   };
   /* 🥁 カウントON：小節のあたまから「1・2・3・4」と数えてから始める（弱起なら「1・2・3」で4拍目に入る）。
      数える間ずっと、そして曲の間ずっと拍を鳴らす（休みのカウントは今までどおり） */
-  let countStart = beatPos;
+  let countStart = Math.floor(beatPos + 1e-6);                     // 拍のきざみに合わせる
   if(METRO.on){
     countStart = Math.floor((beatPos + 1e-6) / ts) * ts;
     if(beatPos - countStart < 2) countStart -= ts;               // 直前が短すぎるなら1小節前から
     elapsed = (beatPos - countStart) * beatMs;
+    showReady(events[ei] || null);
+  }
+  {
     const firstEv = events[ei] || null;
-    showReady(firstEv);
     let k = 0;
+    /* 拍のスケジューラは常に走らせ、🥁がONのときだけ鳴らす（→ 聴いている途中でON/OFFできる） */
     const mtick = ()=>{
       if(!state.demoPlaying) return;
       const pos = countStart + k; const beat = ((pos % ts) + ts) % ts + 1;
-      playTick(beat === 1); metroBtnLabel(beat);
-      if(pos < beatPos - 1e-6){                                   // カウントイン中：大きく数字を出す
+      if(METRO.on){ playTick(beat === 1); metroBtnLabel(beat); }
+      if(METRO.on && pos < beatPos - 1e-6){                       // カウントイン中：大きく数字を出す
         els.progressLabel.textContent = 'かぞえて… はじまるよ';
         els.bigNote.innerHTML = `<span style="color:${beat===1?'var(--blue)':'var(--accent)'}">${beat}</span>`;
         els.bigNote.classList.remove('bump'); void els.bigNote.offsetWidth; els.bigNote.classList.add('bump');
@@ -1786,6 +1831,7 @@ function startDemo(fromNote){
       let R = ev.d, j = ei + 1;
       while(j < events.length && events[j].m === null){ R += events[j].d; j++; }
       const nextEv = events[j] || null;
+      staffRest(ei, j);                                      // がくふの休符を赤く
       // 短い休み（1小節未満）：カウントは出さず、光を消して拍のぶんだけ待つ
       if(R < ts - 1e-6){
         clearInstHighlight();
