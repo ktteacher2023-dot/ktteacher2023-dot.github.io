@@ -502,7 +502,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-4（がくふ：おてほん中は赤い縦線が拍ごとに動いて「今どこ」が分かる・長い休みは今数えている小節だけ赤く／下の操作ボタンを「れんしゅう／おてほん／いどう」の3つにまとめて見やすくした／▶️おてほんは「いま光っている音から」に統一（「ここから」ボタンをなくした）／🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす・聴いている途中でON/OFF／がくふ：休符も赤く進む・タイでつながる小節の小節線と番号を修正・手でスクロール中は戻さない・タップでそこから聴き直し／楽譜のテンポを反映／弱起の小節番号／タイの誤警告修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-6（D.S.・D.C.・to Coda・Fine に対応／ジャーマン式のファ♯の運指を修正／がくふ：おてほん中は赤い縦線が拍ごとに動いて「今どこ」が分かる・長い休みは今数えている小節だけ赤く／下の操作ボタンを「れんしゅう／おてほん／いどう」の3つにまとめて見やすくした／▶️おてほんは「いま光っている音から」に統一（「ここから」ボタンをなくした）／🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす・聴いている途中でON/OFF／がくふ：休符も赤く進む・タイでつながる小節の小節線と番号を修正・手でスクロール中は戻さない・タップでそこから聴き直し／楽譜のテンポを反映／弱起の小節番号／タイの誤警告修正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -526,7 +526,7 @@ const FINGERINGS = {
     63:{t:2,h:[2,2,2,2,2,1,0]},   // レ# D#4
     64:{t:2,h:[2,2,2,2,2,0,0]},   // ミ E4
     65:{t:2,h:[2,2,2,2,0,0,0]},   // ファ F4（ジャーマン）
-    66:{t:2,h:[2,2,2,0,2,2,0]},   // ファ# F#4（ジャーマン・けいてぃ確認済み 2026-08-22）
+    66:{t:2,h:[2,2,2,0,2,2,2]},   // ファ# F#4（ジャーマン：0123_567 小指あり。教科書の運指表で確認 2026-09-09・由雅先生のご報告）
     67:{t:2,h:[2,2,2,0,0,0,0]},   // ソ G4
     68:{t:2,h:[2,2,0,2,2,1,0]},   // ソ# G#4（けいてぃ確認済み 2026-07-28）
     69:{t:2,h:[2,2,0,0,0,0,0]},   // ラ A4
@@ -1170,26 +1170,50 @@ function parseMusicXML(xmlText){
   // 楽譜のくり返し記号(リピート・1番/2番かっこ)を展開する
   //   ゆびミエはこれまでこの情報を読んでおらず、小節を書かれた順に1回ずつ
   //   流すだけだったため、くり返しのある曲が展開されずに先へ進んでいた。
-  function expandRepeats(measures, barlines){
+  function expandRepeats(measures, barlines, marks){
+    /* marks[i] = {segno, coda, fine, dacapo, dalsegno, tocoda}
+       1回めはくり返し・かっこを開き、D.C./D.S. が出たら頭かセーニョへ飛ぶ。
+       2回めはくり返しを取らずに進み、to Coda でコーダへ、Fine で終わる（ふつうの演奏の決まりどおり） */
+    marks = marks || [];
     const order=[]; let i=0, start=0, pass=1, guard=0;
-    while(i<measures.length && guard++<5000){
-      const b=barlines[i];
-      // 新しいくり返しの始まり（|:）に入ったら、そこを戻り先にして回数をリセット
-      // ※戻ってきて同じ小節を通るときはリセットしない（無限ループ防止）
-      if(b.fwd && i!==start){ start=i; pass=1; }
-      // かっこ（1番・2番…）の中で、いまの周回に関係ない小節はとばす
-      if(b.ending && b.ending.length && b.ending.indexOf(pass)<0){ i++; continue; }
-      order.push(i);
-      if(b.bwd && pass<b.bwd){ pass++; i=start; continue; }
-      if(b.bwd){
-        pass=1; start=i+1;
-      }else if(b.ending && b.ending.length){
-        const next=barlines[i+1];
-        if(!next || !next.ending){ pass=1; start=i+1; }
+    let jumped=false, jumpKind=null, usedCoda=false, usedFine=false;
+    const find = k => { for(let n=0;n<marks.length;n++){ if(marks[n] && marks[n][k]) return n; } return -1; };
+    let maxEnding=1;
+    barlines.forEach(b=>{ if(b.ending) b.ending.forEach(n=>{ if(n>maxEnding) maxEnding=n; }); });
+    while(i<measures.length && guard++<20000){
+      const b=barlines[i]||{}, mk=marks[i]||{};
+      if(!jumped){
+        // 新しいくり返しの始まり（|:）に入ったら、そこを戻り先にして回数をリセット
+        // ※戻ってきて同じ小節を通るときはリセットしない（無限ループ防止）
+        if(b.fwd && i!==start){ start=i; pass=1; }
+        // かっこ（1番・2番…）の中で、いまの周回に関係ない小節はとばす
+        if(b.ending && b.ending.length && b.ending.indexOf(pass)<0){ i++; continue; }
+        order.push(i);
+        if(b.bwd && pass<b.bwd){ pass++; i=start; continue; }
+        if(b.bwd){
+          pass=1; start=i+1;
+        }else if(b.ending && b.ending.length){
+          const next=barlines[i+1];
+          if(!next || !next.ending){ pass=1; start=i+1; }
+        }
+        // D.C.／D.S.：この小節の終わりで、曲のあたま or セーニョへ飛ぶ
+        if(mk.dacapo || mk.dalsegno){
+          let target = 0;
+          if(mk.dalsegno){ const s=find('segno'); if(s>=0) target=s; }
+          jumped=true; jumpKind = mk.dalsegno ? 'D.S.' : 'D.C.';
+          i=target; continue;
+        }
+        i++;
+      }else{
+        // 2回め：くり返しは取らない。かっこは最後の番号だけ通る
+        if(b.ending && b.ending.length && b.ending.indexOf(maxEnding)<0){ i++; continue; }
+        order.push(i);
+        if(mk.fine){ usedFine=true; break; }              // Fine で終わり
+        if(mk.tocoda){ const c=find('coda'); if(c>=0){ usedCoda=true; i=c; continue; } }
+        i++;
       }
-      i++;
     }
-    return order.map(idx=>measures[idx]);
+    return { list: order.map(idx=>measures[idx]), jump: jumpKind, coda: usedCoda, fine: usedFine };
   }
   // パート名（part-list）を拾う
   const nameMap = {};
@@ -1206,6 +1230,7 @@ function parseMusicXML(xmlText){
        独立した「パート」候補として取り出し、パートえらびに出す。 */
     const groups = new Map();      // "voice/staff" → {measures, tied, cur}
     const barlines = [];
+    const marks = [];              // 小節ごとの D.S./D.C./セーニョ/コーダ/Fine
     let divisions = 1;
     let partTimeSig = null; let partFifths = null; let partBeatType = null; let partTempo = null;
     const addToPrevNote = (g, midi, beats) => {
@@ -1275,6 +1300,27 @@ function parseMusicXML(xmlText){
         }
       });
       barlines.push({fwd,bwd,endStart,endStop});
+      /* D.S.・D.C.・to Coda・Fine・セーニョ・コーダ を読む
+         （Flat/MuseScore は <sound> の属性で書き出す。記号や文字しか無い書き出しにも保険をかける） */
+      const mk={};
+      meas.querySelectorAll(':scope > direction sound, :scope > sound').forEach(sd=>{
+        if(sd.getAttribute('dacapo')==='yes') mk.dacapo=true;
+        if(sd.getAttribute('dalsegno')) mk.dalsegno=true;
+        if(sd.getAttribute('segno'))    mk.segno=true;
+        if(sd.getAttribute('tocoda'))   mk.tocoda=true;
+        if(sd.getAttribute('coda'))     mk.coda=true;
+        if(sd.getAttribute('fine'))     mk.fine=true;
+      });
+      meas.querySelectorAll(':scope > direction direction-type > words').forEach(w=>{
+        const t=(w.textContent||'').toLowerCase().replace(/[\s.．・]/g,'');
+        if(/dacapo|^dc/.test(t)) mk.dacapo=true;
+        if(/dalsegno|^ds/.test(t)) mk.dalsegno=true;
+        if(/tocoda/.test(t)) mk.tocoda=true;
+        else if(/^fine$/.test(t)) mk.fine=true;
+      });
+      if(meas.querySelector(':scope > direction direction-type > segno')) mk.segno=true;
+      if(!mk.tocoda && meas.querySelector(':scope > direction direction-type > coda')) mk.coda=true;
+      marks.push(mk);
     }
     let activeEnding=null;
     barlines.forEach(b=>{
@@ -1288,7 +1334,8 @@ function parseMusicXML(xmlText){
       return {g, n:notes.length, avg: notes.length ? notes.reduce((s2,e)=>s2+e.m,0)/notes.length : -1};
     }).filter(st=>st.n>0).sort((a,b)=>b.avg-a.avg);
     stats.forEach((st,gi)=>{
-      const expanded = expandRepeats(st.g.measures, barlines);
+      const rp = expandRepeats(st.g.measures, barlines, marks);
+      const expanded = rp.list;
       const flat = expanded.flat().filter(e=>e.m!==null).map(e=>e.m);
       if(!flat.length) return;
       const ts0 = partTimeSig || 4;
@@ -1305,7 +1352,7 @@ function parseMusicXML(xmlText){
       if(stats.length===1) nm = base;
       else if(stats.length===2) nm = (pname ? pname+'・' : '') + (gi===0 ? '上のパート' : '下のパート');
       else nm = (pname ? pname+'・' : '') + '声部'+(gi+1);
-      candidates.push({name: nm, measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: st.g.measures.length, badMeasures, fifths: partFifths||0, beatType: partBeatType||4, tempo: partTempo||0});
+      candidates.push({name: nm, measures:expanded, flat, timeSig: ts0, pickup, rawMeasures: st.g.measures.length, badMeasures, fifths: partFifths||0, beatType: partBeatType||4, jump: rp.jump, jumpCoda: rp.coda, jumpFine: rp.fine, tempo: partTempo||0});
     });
   }
   if(candidates.length===0) throw new Error('nonotes');
@@ -1335,7 +1382,9 @@ function applyPart(title, part, bundle){
   if(state.beatOffset>0) buildListView();                    // 弱起の小節番号を楽譜と合わせて出し直す
   if(part.rawMeasures && part.measures.length > part.rawMeasures){
     // くり返し・1番/2番かっこを開いたことを先生に知らせる（正しく読めたかの確認用）
-    showToast('🔁 くり返しをひらきました（楽譜 '+part.rawMeasures+'小節 → えんそう '+part.measures.length+'小節）', 3600);
+    let w='🔁 くり返し';
+    if(part.jump) w = '🔁 くり返しと '+part.jump+(part.jumpCoda?'／to Coda':'')+(part.jumpFine?'／Fine':'');
+    showToast(w+'をひらきました（楽譜 '+part.rawMeasures+'小節 → えんそう '+part.measures.length+'小節）', 3600);
   }
   if(fit.cov<1) showToast('いまの楽器の音域にない音がふくまれています（スキップできます）');
   if(part.badMeasures && part.badMeasures.length){
