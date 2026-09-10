@@ -216,7 +216,7 @@
 
 <footer>
   🔒 音はこの端末の中だけで鳴らしています ｜ 和音の進み方は「茶色の小びん」と同じ Ⅰ・Ⅳ・Ⅴ・Ⅰ ｜
-  © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.08-1
+  © けいてぃの音楽ツールズ（体験版） ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.10-1
 </footer>
 
 <div id="lyricPanel" style="display:none;position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:48;background:#fff;border:2px solid var(--note-d);border-radius:18px;box-shadow:0 14px 34px -14px rgba(0,0,0,.45);padding:10px 12px;width:min(640px,96vw)">
@@ -806,7 +806,13 @@ const RCARDS=[ {n:"♩♩♩♩",p:[[0,2],[2,2],[4,2],[6,2]]}, {n:"♫♩♩♩"
 let rcard=null;
 function allCards(){ const list=RCARDS.map((c,i)=>Object.assign({id:"b"+i},c)).concat((cfg.customCards||[]).map((c,i)=>Object.assign({id:"c"+i},c))); return list; }
 function visibleCards(){ return allCards().filter(c=>!(cfg.hiddenCards||[]).includes(c.id)); }
-function cardSvg(c){ return c.p.map(([s,l],i)=>{ const nxt=c.p[i+1]; if(l===1&&nxt&&nxt[0]===s+1&&nxt[1]===1) return SVG.two8; if(l===1&&(i===0||c.p[i-1][1]!==1||c.p[i-1][0]!==s-1)) return SVG.eighth; if(l===1) return ""; return l===8?SVG.whole:l===6?SVG.dhalf:l===4?SVG.half:SVG.quarter; }).join("")+(c.p.reduce((a,[s,l])=>Math.max(a,s+l),0)<8?SVG.rest:""); }
+function cardSvg(c){ const out=[]; let skip=false;
+  c.p.forEach(([s,l],i)=>{ if(skip){ skip=false; return; }
+    const nxt=c.p[i+1];
+    if(l===1&&nxt&&nxt[0]===s+1&&nxt[1]===1){ out.push(SVG.two8); skip=true; return; }
+    if(l===1){ out.push(SVG.eighth); return; }
+    out.push(l===8?SVG.whole:l===6?SVG.dhalf:l===4?SVG.half:SVG.quarter); });
+  return out.join("")+(c.p.reduce((a,[s,l])=>Math.max(a,s+l),0)<8?SVG.rest:""); }
 function buildCards(){
   const box=$("rcards"); box.innerHTML="";
   const cards=FULL?visibleCards():RCARDS.map((c,i)=>Object.assign({id:"b"+i},c));
