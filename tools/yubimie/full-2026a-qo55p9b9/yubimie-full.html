@@ -502,7 +502,7 @@ input[type=range]{accent-color:var(--accent);width:130px}
   </div>
 </div>
 <footer id="siteFooter" style="max-width:1100px;margin:0 auto;padding:8px 16px 30px;font-size:11px;color:var(--muted);line-height:1.8">
-  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.09-6（D.S.・D.C.・to Coda・Fine に対応／ジャーマン式のファ♯の運指を修正／がくふ：おてほん中は赤い縦線が拍ごとに動いて「今どこ」が分かる・長い休みは今数えている小節だけ赤く／下の操作ボタンを「れんしゅう／おてほん／いどう」の3つにまとめて見やすくした／▶️おてほんは「いま光っている音から」に統一（「ここから」ボタンをなくした）／🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす・聴いている途中でON/OFF／がくふ：休符も赤く進む・タイでつながる小節の小節線と番号を修正・手でスクロール中は戻さない・タップでそこから聴き直し／楽譜のテンポを反映／弱起の小節番号／タイの誤警告修正）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理され、サーバーに送信されることはありません｜<b>v2026.09.11-1（🎼 楽譜のオクターブを手で変えられるボタンを追加（もっきん・てっきんなどで音域に合わせて自動調整されたとき、「楽譜どおり」の高さに戻せます）／D.S.・D.C.・to Coda・Fine に対応／ジャーマン式のファ♯の運指を修正／がくふ：おてほん中は赤い縦線が拍ごとに動いて「今どこ」が分かる・長い休みは今数えている小節だけ赤く／下の操作ボタンを「れんしゅう／おてほん／いどう」の3つにまとめて見やすくした／▶️おてほんは「いま光っている音から」に統一（「ここから」ボタンをなくした）／🥁 カウント：おてほんの前に1小節かぞえて拍を鳴らす・聴いている途中でON/OFF／がくふ：休符も赤く進む・タイでつながる小節の小節線と番号を修正・手でスクロール中は戻さない・タップでそこから聴き直し／楽譜のテンポを反映／弱起の小節番号／タイの誤警告修正）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--muted)">無料ツールいちらん</a>｜ファイル・URLの再配布はご遠慮ください
 </footer>
 <div class="toast" id="toast"></div>
@@ -628,7 +628,9 @@ const state = {
   startTime: 0,
   songTitle: '',
   demoTempo: 'normal',
-  demoPlaying: false
+  demoPlaying: false,
+  octShift: 0,          // 楽譜に対していま何半音ずらして表示しているか（12の倍数）
+  autoShift: 0          // 読み込み時に楽器の音域に合わせて自動でずらした量
 };
 const HOLD_MS = 300;        // 正しい音をキープする時間
 const GRACE_MS = 110;       // 一瞬とぎれてもOKな時間
@@ -1372,6 +1374,7 @@ function applyPart(title, part, bundle){
   const fit = fitShiftFor(part.flat, state.instrument);
   const evt = part.measures.map(mm=>mm.map(e=>({m: e.m===null?null:e.m+fit.shift, d:e.d})));
   setSong(title, evt, part.measures);
+  state.autoShift = fit.shift; state.octShift = fit.shift;
   if(bundle!==undefined){ state.loadedSong = bundle; }
   updatePartSwitchBtn();
   state.timeSig = part.timeSig || 4;
@@ -1386,11 +1389,62 @@ function applyPart(title, part, bundle){
     if(part.jump) w = '🔁 くり返しと '+part.jump+(part.jumpCoda?'／to Coda':'')+(part.jumpFine?'／Fine':'');
     showToast(w+'をひらきました（楽譜 '+part.rawMeasures+'小節 → えんそう '+part.measures.length+'小節）', 3600);
   }
+  updateOctBtns();
+  if(fit.shift!==0){
+    const n = Math.abs(fit.shift)/12;
+    showToast('この楽器の音域に合わせて、楽譜より'+n+'オクターブ'+(fit.shift>0?'高く':'低く')+'表示しています。楽譜どおりにするには「🎼 楽譜どおり」を押してください', 6500);
+  }
   if(fit.cov<1) showToast('いまの楽器の音域にない音がふくまれています（スキップできます）');
   if(part.badMeasures && part.badMeasures.length){
     const bm = part.badMeasures.slice(0,3).join('・');
     showToast('⚠️ '+bm+'小節目'+(part.badMeasures.length>3?'など':'')+'の拍が拍子とあいません。PDFやMIDIからの変換ではなく、Flatから直接「MusicXML」で書き出したファイルだと直ることが多いです', 7000);
   }
+}
+/* ---------- 楽譜のオクターブを手で上げ下げする ----------
+   もっきん・てっきんのように音域が高い楽器だと、読み込み時に自動で
+   オクターブを合わせることがある。楽譜どおりに見たい先生のために手で戻せるようにする。 */
+function applyOctShift(sh, quiet){
+  const base = state.rawEventMeasures;
+  if(!base || !base.length) return;
+  sh = Math.max(-24, Math.min(36, sh));
+  state.octShift = sh;
+  const evt = base.map(mm=>mm.map(e=>({m: e.m===null?null:e.m+sh, d:e.d})));
+  state.events = evt.flat();
+  state.eventMeasures = evt; staffInvalidate();
+  state.measures = evt.map(mm=>mm.filter(e=>e.m!==null).map(e=>e.m));
+  state.notes = state.measures.flat();
+  if(state.index>=state.notes.length) state.index = 0;
+  buildListView(); staffSync(); updateView(); updateOctBtns();
+  if(quiet) return;
+  if(sh===0) showToast('楽譜に書かれたとおりの高さで表示しています');
+  else showToast('楽譜より'+(Math.abs(sh)/12)+'オクターブ'+(sh>0?'高く':'低く')+'表示しています');
+  const miss = state.notes.filter(m=>!playable(m, state.instrument)).length;
+  if(miss) showToast('この高さだと、いまの楽器で出せない音が '+miss+' こあります', 4000);
+}
+function updateOctBtns(){
+  let bar = $('octBar');
+  if(!bar){
+    bar = document.createElement('span'); bar.id='octBar';
+    bar.style.cssText='display:none;align-items:center;gap:4px';
+    bar.innerHTML = '<button class="file-btn" id="octDown" title="楽譜より1オクターブ下げて表示">🎼 1オクターブ下</button>'
+                  + '<button class="file-btn" id="octReset">🎼 楽譜どおり</button>'
+                  + '<button class="file-btn" id="octUp" title="楽譜より1オクターブ上げて表示">🎼 1オクターブ上</button>';
+    ($('fileBtn')||document.body).insertAdjacentElement('afterend', bar);
+    bar.querySelector('#octDown').addEventListener('click', ()=>applyOctShift(state.octShift-12));
+    bar.querySelector('#octUp').addEventListener('click', ()=>applyOctShift(state.octShift+12));
+    bar.querySelector('#octReset').addEventListener('click', ()=>applyOctShift(0));
+  }
+  const on = !!(state.rawEventMeasures && state.rawEventMeasures.length);
+  bar.style.display = on ? 'inline-flex' : 'none';
+  if(!on) return;
+  const r = bar.querySelector('#octReset');
+  const at0 = (state.octShift===0);
+  r.textContent = at0 ? '🎼 楽譜どおり ✓' : '🎼 楽譜どおり';
+  r.style.borderStyle = 'solid';
+  r.style.background = at0 ? 'var(--accent-soft)' : '';
+  r.style.color = at0 ? 'var(--accent)' : '';
+  bar.querySelector('#octDown').disabled = (state.octShift<=-24);
+  bar.querySelector('#octUp').disabled   = (state.octShift>=36);
 }
 /* 複数パートの楽譜を読んだあと、いつでもパートを切りかえられるボタン */
 function updatePartSwitchBtn(){
@@ -1481,7 +1535,9 @@ function setSong(title, measures, raw){
   const missing = state.notes.filter(m=>!playable(m, state.instrument));
   if(missing.length) showToast('いまの楽器でえんそうできない音が '+missing.length+' こあります（スキップできます）');
   state.loadedSong = null;                                   // 読み込み曲以外に切りかえたらパート切替は隠す（applyPartがすぐ再設定する）
+  state.octShift = 0; state.autoShift = 0;                   // applyPart から来た場合は、そのあとで入れ直される
   if(typeof updatePartSwitchBtn==='function') updatePartSwitchBtn();
+  if(typeof updateOctBtns==='function') updateOctBtns();
   buildListView();
   restart();
   showToast('「'+title+'」をよみこんだよ！ 🎤マイクスタートでれんしゅう開始');
@@ -2088,6 +2144,7 @@ $('instSelect').addEventListener('change', e=>{
   if(baseEvt){
     const flat = baseEvt.flat().filter(e=>e.m!==null).map(e=>e.m);
     const fit = fitShiftFor(flat, state.instrument);
+    state.autoShift = fit.shift; state.octShift = fit.shift;
     const evt = baseEvt.map(mm=>mm.map(e=>({m: e.m===null?null:e.m+fit.shift, d:e.d})));
     state.events = evt.flat();
     state.eventMeasures = evt; staffInvalidate();
@@ -2097,6 +2154,7 @@ $('instSelect').addEventListener('change', e=>{
     buildListView();
   }
   updateView();
+  if(typeof updateOctBtns==='function') updateOctBtns();
   showToast(I.icon+' '+I.label+' にきりかえました');
 });
 /* キーボード：スペースで「つぎへ」（タップモード時） */
