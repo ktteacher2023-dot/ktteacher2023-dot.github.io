@@ -139,6 +139,60 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     border-radius:10px; padding:10px 14px; display:inline-block; color:var(--ink);
   }
 
+  /* 🏆 クラスモード */
+  #classPanel{background:#fff; border:2px solid #FFE1B3; border-radius:16px; padding:14px 16px; margin:10px 0;}
+  #classPanel .hTitle{font-weight:700; color:var(--ink); margin-bottom:8px; font-size:.95rem;}
+  #classNameIn{font-size:1rem; padding:8px 12px; border:1.5px solid var(--line); border-radius:10px; width:180px; font-family:inherit;}
+  #classNameIn:focus{outline:2px solid var(--voice); border-color:transparent;}
+  .cRow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin-bottom:6px; transition:background .4s;}
+  .cRow.now{background:#FFF1EC; border-color:var(--voice);}
+  .cRow.flash{animation:cflash 1.2s ease-out;}
+  @keyframes cflash{0%{background:#FFF4CC;} 100%{background:var(--paper);}}
+  .cRank{font-weight:900; font-size:1.15rem; width:2.2em; text-align:center; color:var(--ink);}
+  .cRank.top{font-size:1.4rem;}
+  .cTeam{width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--line); cursor:pointer; flex:none;}
+  .cTeam.red{background:#E2574C;} .cTeam.white{background:#F7F7F7;} .cTeam.none{background:transparent; border:2px dashed var(--line); box-shadow:none;}
+  .cName{font-weight:700; min-width:90px; font-size:1rem;}
+  .cVal{font-weight:900; font-size:1.05rem; color:var(--ink); min-width:110px;}
+  .cVal small{font-weight:400; font-size:.75rem; color:var(--sub); margin-left:4px;}
+  .cVal.up{color:#2FB380;} .cVal.down{color:var(--sub);} .cVal.none{color:var(--sub); font-weight:400; font-size:.85rem;}
+  #classTeams{display:flex; gap:12px; align-items:center; margin:6px 0 10px; font-weight:700;}
+  .cTeamBox{flex:1; border-radius:12px; padding:8px 12px; text-align:center; font-size:1.05rem;}
+  .cTeamBox.red{background:#FDE3E0; color:#B3441F;} .cTeamBox.white{background:#F2F6F8; color:var(--ink);}
+  .cTeamBox b{font-size:1.5rem; display:block;}
+  .cTeamBox.win{outline:3px solid #F5A623;}
+  #classNote{font-size:.78rem; color:var(--sub); margin-top:8px; line-height:1.6;}
+  #classOverlay{display:none; position:fixed; inset:0; background:rgba(30,43,51,.72); z-index:70; align-items:center; justify-content:center; padding:16px; overflow:auto;}
+  #classOverlay.open{display:flex;}
+  #classBig{position:relative; z-index:2; background:#fff; border-radius:22px; padding:22px 26px; width:min(94vw,760px); box-shadow:0 30px 60px -20px rgba(0,0,0,.6);}
+  #classBigTitle{font-size:1.5rem; font-weight:900; text-align:center; color:var(--ink); margin-bottom:10px;}
+  #classBigTeams{display:flex; gap:12px; margin-bottom:12px;}
+  #classBigTeams .cTeamBox{font-size:1.2rem;} #classBigTeams .cTeamBox b{font-size:2.2rem;}
+  .cBigRow{display:flex; align-items:center; gap:14px; padding:10px 14px; border-radius:14px; margin-bottom:6px; background:var(--paper); font-size:1.15rem;}
+  .cBigRow.r1{background:#FFF4CC; font-size:1.5rem;} .cBigRow.r2{background:#EEF1F4; font-size:1.3rem;} .cBigRow.r3{background:#F8E9DF; font-size:1.2rem;}
+  .cBigRow .cName{flex:1; min-width:0;} .cBigRow .cVal{min-width:0;}
+  #classConfetti{position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1;}
+  #classConfetti span{position:absolute; top:-6%; font-size:26px; animation:cfall linear forwards;}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(110vh) rotate(540deg); opacity:.7;}}
+  @media(max-width:600px){ #classNameIn{width:130px;} .cName{min-width:70px;} .cVal{min-width:80px;} }
+  /* 🎶 ハモリ */
+  #hamoriPanel{background:#fff; border:2px solid #E6D9F2; border-radius:16px; padding:14px 16px; margin:10px 0;}
+  #hamoriPanel .hTitle{font-weight:700; color:var(--ink); margin-bottom:8px; font-size:.95rem;}
+  .hRow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin-bottom:6px;}
+  .hName{font-weight:700; display:flex; align-items:center; gap:6px; min-width:120px;}
+  .hChip{display:inline-block; width:14px; height:14px; border-radius:50%;}
+  .hOk{color:#2FB380; font-size:.82rem; font-weight:700;}
+  .hNo{color:var(--sub); font-size:.82rem;}
+  #hamoriNote{font-size:.78rem; color:var(--sub); margin-top:8px; line-height:1.6;}
+  /* 📱 QR */
+  #qrOverlay{display:none; position:fixed; inset:0; background:rgba(30,43,51,.55); z-index:60; align-items:center; justify-content:center; padding:16px;}
+  #qrOverlay.open{display:flex;}
+  #qrBox{background:#fff; border-radius:18px; padding:18px 20px; max-width:min(92vw,720px); width:100%; text-align:center; box-shadow:0 20px 50px -20px rgba(0,0,0,.5);}
+  #qrBox h2{font-size:1.05rem; margin-bottom:4px;}
+  #qrImg{margin:10px auto; width:min(70vw,60vh,520px); aspect-ratio:1; background:#fff;}
+  #qrImg svg{width:100%; height:100%; display:block;}
+  #qrMsg{font-size:.8rem; color:var(--sub); line-height:1.7;}
+  #qrBox .row{justify-content:center; margin-top:10px;}
   footer{font-size:.74rem; color:var(--sub); text-align:center; line-height:1.7; padding:6px 0 20px;}
 </style>
 </head>
@@ -163,6 +217,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <button id="presetBtn" class="blue">📚 きょうざいきょく</button>
     <button id="forgetBtn" style="display:none" title="この端末に記憶した楽譜と設定を消します">🗑 きろく消去</button>
     <select id="partSel" style="display:none"></select>
+    <button id="qrBtn" style="display:none" title="この曲が入った状態でひらくQRコードを大きく表示（電子黒板にうつして配れます）">📱 QRで配る</button>
     <span id="songTitle"></span>
   </div>
   <div class="row">
@@ -171,6 +226,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <button id="echoBtn" disabled>🦜 まねっこ</button>
     <button id="breathBtn">🌬 ロングトーン</button>
     <button id="freeBtn">🐤 こえあそび</button>
+    <button id="hamoriBtn" disabled title="パートを一人ずつ歌って、かさねて聴きます（2パート以上の楽譜で使えます）">🎶 ハモリ</button>
+    <button id="classBtn" disabled title="みんなで順番に歌って、黒板にランキングを出します">🏆 クラス</button>
     <button id="rewindBtn" disabled>⏮ 最初へ</button>
     <button id="pauseBtn" disabled>⏸ 一時停止</button>
     <button id="stopBtn" class="stop" disabled>■ 止める</button>
@@ -213,6 +270,54 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 </div>
 
+<div id="classPanel" style="display:none">
+  <div class="hTitle">🏆 クラスモード：じゅんばんに歌って、ランキング！</div>
+  <div class="row">
+    <input id="classNameIn" type="text" placeholder="なまえ（例：ゆい）" maxlength="12" autocomplete="off">
+    <button id="classAddBtn" class="blue">＋ 追加</button>
+    <span class="ctl"><input type="checkbox" id="classTeamChk"> チーム戦（🔴赤・⚪白）</span>
+    <span class="ctl">じゅんいの きめ方
+      <select id="classMetric">
+        <option value="nobi" selected>のび（前回より何点あがったか）</option>
+        <option value="hits">かさなった音の数</option>
+        <option value="score">％</option>
+        <option value="combo">⭐ れんぞくヒット</option>
+      </select>
+    </span>
+  </div>
+  <div id="classTeams" style="display:none"></div>
+  <div id="classList"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="classShowBtn" class="primary" disabled>🏅 けっか はっぴょう</button>
+    <button id="classNextBtn">🔁 つぎのラウンド</button>
+    <button id="classClearBtn">🗑 なまえをぜんぶ消す</button>
+    <button id="classCloseBtn">✕ とじる</button>
+  </div>
+  <div id="classNote"></div>
+</div>
+
+<div id="classOverlay">
+  <div id="classBig">
+    <div id="classBigTitle">🏅 けっか はっぴょう</div>
+    <div id="classBigTeams"></div>
+    <div id="classBigList"></div>
+    <div class="row" style="justify-content:center;margin-top:14px"><button id="classBigClose" class="blue">とじる</button></div>
+  </div>
+  <div id="classConfetti"></div>
+</div>
+
+<div id="hamoriPanel" style="display:none">
+  <div class="hTitle">🎶 ハモリ：パートを ひとりずつ うたって、かさねて きこう</div>
+  <div id="hamoriParts"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="hamoriPlayBtn" class="primary" disabled>🔊 かさねて きく</button>
+    <span class="ctl"><input type="checkbox" id="hamoriGuideChk"> お手本も いっしょに鳴らす</span>
+    <button id="hamoriResetBtn">🗑 ぜんぶ やりなおす</button>
+    <button id="hamoriCloseBtn">✕ とじる</button>
+  </div>
+  <div id="hamoriNote"></div>
+</div>
+
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="qbar"><span id="qRange"></span><button id="qFrom" title="いま見ている小節から練習する">▶ ここから</button><button id="qTo" title="いま見ている小節まで練習する">■ ここまで</button><button id="qAll" class="dim" title="曲全体にもどす">全体</button></div>
@@ -239,7 +344,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.08-1（練習したい小節をタップ・区間なぞり・歌い終わっても頭に戻らない）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.14-3（🎼途中でテンポや拍子が変わる楽譜に対応／🏆クラスモード／🎶ハモリ／📱QRで配る）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -266,7 +371,7 @@ const store={
   set(k,v){ try{localStorage.setItem(k,v); return true;}catch(e){return false;} },
   del(k){ try{localStorage.removeItem(k);}catch(e){} }
 };
-const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo";
+const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo"||mode==="hamori";
 const isSinging = ()=> mode==="sing"||mode==="echo";
 const cv = $("cv"), ctx2d = cv.getContext("2d");
 const NAMES = ["ド","ド♯","レ","レ♯","ミ","ファ","ファ♯","ソ","ソ♯","ラ","ラ♯","シ"];
@@ -285,10 +390,29 @@ function applyGuideVol(){ if(masterGain && audioCtx){ masterGain.gain.setTargetA
 function tempoScale(){ return Number($("tempoSlider").value)/100; }
 function transpose(){ return Number($("transVal").textContent); }
 function guideVol(){ return Number($("volSlider").value)/100; }
-function beatSec(){ return 60/(song.bpm*tempoScale()); }
-function noteStartSec(n){ return n.startBeat*beatSec(); }
-function noteEndSec(n){ return (n.startBeat+n.beats)*beatSec(); }
-function songDur(){ const last=song.notes[song.notes.length-1]; return Math.max(noteEndSec(last), (song.totalBeats||0)*beatSec()); }
+function beatSec(){ return 60/(song.bpm*tempoScale()); }   // 曲頭のテンポでの1拍（目安用途）
+/* ====== 🎼 テンポマップ：途中でテンポが変わる楽譜に対応 ======
+   song.tempos=[{beat,bpm},...]（拍位置とそこからのテンポ）を、拍⇄秒の対応表にする。
+   テンポスライダー(tempoScale)は全体に一律にかかる。 */
+function buildTempoMap(){
+  let tp=(song.tempos&&song.tempos.length)?song.tempos.filter(t=>t&&t.bpm>0).slice().sort((a,b)=>a.beat-b.beat):[];
+  if(!tp.length||tp[0].beat>1e-9) tp.unshift({beat:0,bpm:song.bpm||100});
+  const m=[];
+  for(const t of tp){ if(m.length&&Math.abs(m[m.length-1].beat-t.beat)<1e-6) m[m.length-1]={beat:t.beat,bpm:t.bpm}; else m.push({beat:t.beat,bpm:t.bpm}); }
+  let sec=0;
+  for(let i=0;i<m.length;i++){ m[i].sec=sec; if(i+1<m.length) sec+=(m[i+1].beat-m[i].beat)*60/m[i].bpm; }
+  song.tm=m;
+}
+function tmSeg(b){ if(!song.tm) buildTempoMap(); const m=song.tm; let i=0; while(i+1<m.length&&m[i+1].beat<=b+1e-9) i++; return m[i]; }
+function secOfBeat(b){ const s=tmSeg(b); return (s.sec+(b-s.beat)*60/s.bpm)/tempoScale(); }
+function beatOfSec(sec){ if(!song.tm) buildTempoMap(); const sr=sec*tempoScale(); const m=song.tm; let i=0; while(i+1<m.length&&m[i+1].sec<=sr+1e-9) i++; return m[i].beat+(sr-m[i].sec)*m[i].bpm/60; }
+function beatSecAt(b){ return 60/(tmSeg(b).bpm*tempoScale()); }          // その拍位置での1拍の秒数
+function measIdxOfBeat(beat){ const ms=song.measStarts||[0]; let mi=0; for(let k=0;k<ms.length;k++) if(ms[k]<=beat+1e-6) mi=k; return mi; }
+function measUnitAt(beat){ const mi=measIdxOfBeat(beat); return (song.measUnits&&song.measUnits[mi])||song.beatUnit||1; } // 8分の6系なら1.5
+function countInSec(n){ const b=beatOfSec(sessFrom); return n*measUnitAt(b)*beatSecAt(b); } // 歌い出す位置のテンポ・拍子でカウント
+function noteStartSec(n){ return secOfBeat(n.startBeat); }
+function noteEndSec(n){ return secOfBeat(n.startBeat+n.beats); }
+function songDur(){ const last=song.notes[song.notes.length-1]; return Math.max(noteEndSec(last), secOfBeat(song.totalBeats||0)); }
 /* れんしゅう区間(小節指定)→ 秒に変換 */
 function rangeMeas(){
   const mc=song.measStarts.length;
@@ -299,8 +423,8 @@ function rangeMeas(){
 }
 function rangeSec(){
   const [a,b]=rangeMeas();
-  const from=song.measStarts[a-1]*beatSec();
-  const to=(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*beatSec();
+  const from=secOfBeat(song.measStarts[a-1]);
+  const to=secOfBeat(b<song.measStarts.length?song.measStarts[b]:song.totalBeats);
   return [from,to];
 }
 function isFullRange(){ const [a,b]=rangeMeas(); return a===1&&b===song.measStarts.length; }
@@ -362,16 +486,30 @@ function parseMusicXML(xmlText, fname){
   const parts=[];
   for(const part of doc.querySelectorAll("part")){
     if(!part.querySelector("measure")) continue;
-    let divisions=1, keyFifths=0, keySeen=false;
+    let divisions=1, keyFifths=0, keySeen=false, curUnit=1;
     const meas=[]; // 小節ごと:{notes,len,forward,backward,endingStart,endingStop}
     for(const measure of part.querySelectorAll(":scope > measure")){
       let cur=0, maxCur=0;
       const mn=[];
       let fwd=false, bwd=0, endStart=null, endStop=false;
+      const mtempos=[]; // この小節内のテンポ変更 {off(拍), bpm}
       for(const el of measure.children){
         const tag=el.tagName;
+        if(tag==="direction"||tag==="sound"){
+          // 🎼 テンポ変更：<direction><sound tempo="..."/></direction> または小節直下の <sound tempo>
+          const snd=tag==="sound"?el:el.querySelector("sound[tempo]");
+          const bpmv=snd?Number(snd.getAttribute("tempo")):0;
+          if(bpmv>0){
+            const offEl=tag==="direction"?el.querySelector(":scope > offset"):null;
+            const o=cur+(offEl?(Number(offEl.textContent)||0):0);
+            mtempos.push({off:Math.max(0,o)/divisions, bpm:bpmv});
+          }
+          continue;
+        }
         if(tag==="attributes"){
           const d=el.querySelector("divisions"); if(d) divisions=Number(d.textContent)||divisions;
+          const tme=el.querySelector("time");
+          if(tme){ const bt=Number(tme.querySelector("beat-type")?.textContent||4), bts=Number(tme.querySelector("beats")?.textContent||4); curUnit=(bt===8&&bts%3===0&&bts>=6)?1.5:1; }
           const kf=el.querySelector("key > fifths");
           if(kf&&!keySeen){ keyFifths=Number(kf.textContent)||0; keySeen=true; }
         }else if(tag==="barline"){
@@ -425,7 +563,7 @@ function parseMusicXML(xmlText, fname){
           if(!isChord){ cur+=dur; maxCur=Math.max(maxCur,cur); }
         }
       }
-      meas.push({notes:mn, len:maxCur/divisions, fwd, bwd, endStart, endStop});
+      meas.push({notes:mn, len:maxCur/divisions, fwd, bwd, endStart, endStop, unit:curUnit, tempos:mtempos});
     }
     // 1番・2番カッコの範囲を各小節に割り当て
     let activeEnding=null;
@@ -460,10 +598,11 @@ function parseMusicXML(xmlText, fname){
       i++;
     }
     // 展開順に音符を並べる(小節の開始位置も記録)
-    let gt=0; const raw=[]; const measStarts=[];
+    let gt=0; const raw=[]; const measStarts=[]; const measUnits=[]; const tempos=[];
     for(const o of order){
       const m=meas[o.idx];
-      measStarts.push(gt);
+      measStarts.push(gt); measUnits.push(m.unit);
+      for(const t of m.tempos) tempos.push({beat:gt+t.off, bpm:t.bpm});
       for(const n of m.notes){
         // 周回に合わせて歌詞を選ぶ(2周目なら2番、なければ1番)
         const lyric=n.lyr[String(o.pass)]??n.lyr["1"]??Object.values(n.lyr)[0]??"";
@@ -491,7 +630,7 @@ function parseMusicXML(xmlText, fname){
     }
     if(notes.length){
       const pname=nameOf[part.getAttribute("id")]||"";
-      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, totalBeats:Math.max(0.001,totalBeats), keyFifths});
+      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, measUnits, tempos, totalBeats:Math.max(0.001,totalBeats), keyFifths});
     }
   }
   if(!parts.length) throw new Error("音符が見つかりませんでした");
@@ -503,7 +642,10 @@ function parseMusicXML(xmlText, fname){
     const bts=Number(timeEl.querySelector("beats")?.textContent||4);
     if(bt===8 && bts%3===0 && bts>=6) beatUnit=1.5;
   }
-  return {title, bpm, parts, beatUnit};
+  // 🎼 テンポ変更は、いずれかのパートに書かれていれば曲全体に適用（ふつうは第1パートに書かれている）
+  const tpart=parts.find(p=>p.tempos&&p.tempos.length);
+  const tempos=tpart?tpart.tempos:[];
+  return {title, bpm:(tempos.length&&tempos[0].beat<1e-9)?tempos[0].bpm:bpm, parts, beatUnit, tempos};
 }
 
 let songMeta=null;
@@ -511,7 +653,7 @@ let songMeta=null;
    端末に保存ずみの楽譜は「古い読み取り方の結果」なので、
    番号が変わっていたら捨てて、読み込み直してもらう。
    （2026-08-24：くり返し記号の展開を修正したため 1 → 2） */
-const PARSER_VERSION = 2;
+const PARSER_VERSION = 3;   // 2026-09-14：テンポ変更・小節ごとの拍子を読むようにしたため 2 → 3
 function saveSongToDevice(){
   if(!songMeta) return;
   try{
@@ -537,6 +679,7 @@ function setSong(s, save=true){
   if(!(pi>=0&&pi<s.parts.length)) pi=0;
   sel.value=String(pi);
   applyPart(pi);
+  hamoriReset(); hamoriUpdateBtn(); classOnSongChange();
   banner(s.parts.length>1?"この楽譜には複数のパートがあります。歌うパートをプルダウンで選んでください(今は「"+escapeHtml(s.parts[0].name)+"」を表示中)。":null);
 }
 function applyPart(i){
@@ -546,7 +689,10 @@ function applyPart(i){
   song={title:songMeta.title, bpm:songMeta.bpm, beatUnit:songMeta.beatUnit||1, notes:p.notes,
         measStarts:p.measStarts||[0],
         totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0),
-        keyFifths:p.keyFifths||0};
+        keyFifths:p.keyFifths||0,
+        tempos:(songMeta.tempos&&songMeta.tempos.length)?songMeta.tempos:(p.tempos||null),
+        measUnits:p.measUnits||null};
+  song.tm=null;
   song.otherParts=songMeta.parts.map((q,j)=>({name:q.name,notes:q.notes,idx:j})).filter(q=>q.idx!==i);
   const palette=["#CFDCEA","#E6D9F2","#F2E3CF","#D9F2DC","#F2D9DC"];
   const list=$("partPlayList"); list.innerHTML="";
@@ -577,9 +723,9 @@ function applyPart(i){
   $("rangeFrom").max=mc; $("rangeTo").max=mc;
   $("rangeFrom").value=firstM; $("rangeTo").value=lastM;
   $("rangeRow").style.display="flex";
-  viewOffset=song.measStarts[firstM-1]*beatSec();
+  viewOffset=secOfBeat(song.measStarts[firstM-1]);
   updateQbar();
-  $("songTitle").innerHTML="読み込み中の曲:<b>"+escapeHtml(song.title)+"</b>("+song.notes.length+"音・"+mc+"小節・♩="+song.bpm+")";
+  $("songTitle").innerHTML="読み込み中の曲:<b>"+escapeHtml(song.title)+"</b>("+song.notes.length+"音・"+mc+"小節・♩="+song.bpm+((song.tempos&&song.tempos.length>1)?"→ 途中で変わります":"")+")";
   $("playBtn").disabled=false; $("singBtn").disabled=false;
   $("echoBtn").disabled=false; $("rewindBtn").disabled=false;
   $("emptyMsg").style.display="none";
@@ -599,7 +745,7 @@ function resize(){
 window.addEventListener("resize",resize);
 
 function currentT(){
-  if(mode==="play"||mode==="sing") return getAudio().currentTime-startAt;
+  if(mode==="play"||mode==="sing"||mode==="hamori") return getAudio().currentTime-startAt;
   if(mode==="echo"&&echo) return echoT();
   if(mode==="paused"&&pausedAt!==null) return pausedAt;
   return viewOffset;
@@ -611,10 +757,10 @@ const RULER_H=24;   // 上の小節番号の帯（ここをなぞると区間え
 function measAtClientX(clientX, t){
   const r=cv.getBoundingClientRect(); const x=clientX-r.left;
   const tt=(t!==undefined?t:viewOffset)+(x-PLAYHEAD_X())/pps();
-  let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=tt+1e-6) mi=k;
+  let mi=0; for(let k=0;k<song.measStarts.length;k++) if(secOfBeat(song.measStarts[k])<=tt+1e-6) mi=k;
   return mi+1;
 }
-function measAtView(){ let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=viewOffset+1e-3) mi=k; return mi+1; }
+function measAtView(){ let mi=0; for(let k=0;k<song.measStarts.length;k++) if(secOfBeat(song.measStarts[k])<=viewOffset+1e-3) mi=k; return mi+1; }
 cv.addEventListener("pointerdown",e=>{
   if(!song||isActive()) return;
   const r=cv.getBoundingClientRect();
@@ -719,7 +865,7 @@ function draw(t){
   if(song.measStarts){
     ctx2d.font="10px sans-serif"; ctx2d.textBaseline="top";
     for(let mi=0;mi<song.measStarts.length;mi++){
-      const x=off+song.measStarts[mi]*beatSec()*pps();
+      const x=off+secOfBeat(song.measStarts[mi])*pps();
       if(x<-30||x>W+30) continue;
       ctx2d.strokeStyle="#D8E2E8"; ctx2d.lineWidth=1;
       ctx2d.beginPath(); ctx2d.moveTo(x,14); ctx2d.lineTo(x,H-8); ctx2d.stroke();
@@ -788,6 +934,32 @@ function draw(t){
       ctx2d.textAlign="left"; ctx2d.textBaseline="top";
       ctx2d.fillText(n.lyric, x+2, y+h/2+3);
     }
+  }
+
+  // 🎶 ハモリ:とった声を、パートの色で かさねて描く（まっすぐ棒）
+  if(hamori.showTraces){
+    ctx2d.lineWidth=6; ctx2d.lineCap="round"; ctx2d.globalAlpha=0.85;
+    for(const k of Object.keys(hamori.takes)){
+      const tk=hamori.takes[k];
+      ctx2d.strokeStyle=hamori.colors[Number(k)%hamori.colors.length];
+      let sx0=0,sx1=0,sSnap=null,prevT=-1;
+      const flush=()=>{
+        if(sSnap===null) return;
+        if(sx1-sx0>=0.08*pps()){ const y=yOf(sSnap); ctx2d.beginPath(); ctx2d.moveTo(sx0,y); ctx2d.lineTo(Math.max(sx1,sx0+3),y); ctx2d.stroke(); }
+        sSnap=null;
+      };
+      for(const p of tk.trace){
+        const x=off+p.t*pps();
+        if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
+        const snap=(p.ok===true&&p.tg!=null)?p.tg:Math.round(p.midi);
+        if(sSnap===null){ sSnap=snap; sx0=x; sx1=x; }
+        else if(snap!==sSnap||(prevT>=0&&p.t-prevT>0.30)){ flush(); sSnap=snap; sx0=x; sx1=x; }
+        else sx1=x;
+        prevT=p.t;
+      }
+      flush();
+    }
+    ctx2d.globalAlpha=1;
   }
 
   // 歌声の軌跡(ぴったり=緑、ずれ=オレンジ)
@@ -867,8 +1039,8 @@ function draw(t){
   // 区間えらび中（上の帯をなぞっている間）
   if(rulerSel&&song.measStarts){
     const a=Math.min(rulerSel.a,rulerSel.b), b=Math.max(rulerSel.a,rulerSel.b);
-    const xa=off+song.measStarts[a-1]*beatSec()*pps();
-    const xb=off+(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*beatSec()*pps();
+    const xa=off+secOfBeat(song.measStarts[a-1])*pps();
+    const xb=off+secOfBeat(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*pps();
     ctx2d.fillStyle="rgba(255,122,89,0.18)"; ctx2d.fillRect(xa,0,xb-xa,H);
     ctx2d.fillStyle="#B3441F"; ctx2d.font="bold 12px sans-serif"; ctx2d.textAlign="left"; ctx2d.textBaseline="top";
     ctx2d.fillText(a===b?(a+"小節目"):(a+"〜"+b+"小節目"), Math.max(4,xa+4), 16);
@@ -1054,13 +1226,14 @@ function scheduleMetronome(when){
   o.connect(g); g.connect(masterGain||ac.destination);
   let any=false, firstT=Infinity, lastT=0;
   for(let i=0;i<ms.length;i++){
-    const mStart=ms[i]*beatSec();
-    const mEnd=(i+1<ms.length?ms[i+1]:total)*beatSec();
+    const mStart=secOfBeat(ms[i]);
+    const mEnd=secOfBeat(i+1<ms.length?ms[i+1]:total);
     if(mEnd<=sessFrom||mStart>=sessTo) continue;
-    const unit=(song.beatUnit||1)*beatSec();  // 8分の6などは付点4分=1.5拍を1拍として鳴らす
-    const beats=Math.max(1,Math.round((mEnd-mStart)/unit));
+    const unitB=(song.measUnits&&song.measUnits[i])||song.beatUnit||1;  // 8分の6などは付点4分=1.5拍を1拍として鳴らす（小節ごと）
+    const lenB=(i+1<ms.length?ms[i+1]:total)-ms[i];
+    const beats=Math.max(1,Math.round(lenB/unitB));
     for(let k=0;k<beats;k++){
-      const tAbs=mStart+k*unit;
+      const tAbs=secOfBeat(ms[i]+k*unitB);   // 小節の途中でテンポが変わっても拍の位置は楽譜どおり
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
       if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
@@ -1084,7 +1257,7 @@ function scheduleCountIn(when,beats){
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
-    const t0=when+i*((song.beatUnit||1)*beatSec());
+    const t0=when+i*countInSec(1);
     g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     o.connect(g); g.connect(masterGain||ac.destination);
@@ -1099,6 +1272,7 @@ function stopScheduled(){
 function stopAll(){
   cancelAnimationFrame(rafId);
   stopScheduled();
+  hamoriStopNodes(); // 🎶 かさねて再生中なら止める
   pausedAt=null; prevMode=null;
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; analyser=null; }
   if(recorder&&recStarted&&recorder.state==="recording"){ try{recorder.stop();}catch(e){} }
@@ -1111,6 +1285,7 @@ function stopAll(){
   $("breathBtn").disabled=false;
   $("freeBtn").disabled=false;
   if(song){ $("playBtn").disabled=false; $("singBtn").disabled=false; $("echoBtn").disabled=false; $("rewindBtn").disabled=false; }
+  hamoriAfterStop();
 }
 
 $("playBtn").addEventListener("click",()=>{
@@ -1148,16 +1323,21 @@ async function setupMic(aec){
   }catch(e){ recorder=null; }
   return true;
 }
+let recStartSongT=0;   // 録音を始めた瞬間の、曲の中での秒（ハモリで重ねるときの基準）
 function recStartIfNeeded(){
-  if(recorder&&!recStarted){ try{recorder.start();}catch(e){} recStarted=true; }
+  if(recorder&&!recStarted){ try{recorder.start();}catch(e){} recStarted=true; recStartSongT=sessFrom+(getAudio().currentTime-startAt); }
 }
 function recFinish(show){
   if(recorder&&recStarted&&recorder.state==="recording"){
     recorder.onstop=()=>{
-      if(show&&recChunks.length){
-        if(recUrl) URL.revokeObjectURL(recUrl);
-        recUrl=URL.createObjectURL(new Blob(recChunks,{type:recorder.mimeType||"audio/webm"}));
-        $("recWrap").style.display="block";
+      if(recChunks.length){
+        const blob=new Blob(recChunks,{type:recorder.mimeType||"audio/webm"});
+        if(show){
+          if(recUrl) URL.revokeObjectURL(recUrl);
+          recUrl=URL.createObjectURL(blob);
+          $("recWrap").style.display="block";
+        }
+        hamoriOnTake(blob); // 🎶 ハモリの録音待ちなら受け取る（待ちでなければ何もしない）
       }
     };
     try{recorder.stop();}catch(e){}
@@ -1180,6 +1360,7 @@ $("singBtn").addEventListener("click",async()=>{
   startSession(true);
 });
 $("stopBtn").addEventListener("click",()=>{
+  hamori.pending=null; cls.pending=null; // 途中で止めたので、ハモリ／クラスの記録としては受け取らない
   const t=Math.max(0,Math.min(song?songDur():0,currentT()));
   stopAll();
   if(!song){ $("emptyMsg").style.display="flex"; return; }
@@ -1190,6 +1371,7 @@ $("stopBtn").addEventListener("click",()=>{
 function startSession(withMic){
   lastResult=null; $("result").style.display="none"; $("recWrap").style.display="none";
   trace=[];
+  hamori.showTraces=false; $("hamoriBtn").disabled=true; $("classBtn").disabled=true;
   micGate=0.006; calibRms=0; calibArr=[];
   combo=0; comboBest=0; comboBurst=null; sparkles.length=0;
   liveStats=[]; liveDiff=null; recentM=[];
@@ -1201,7 +1383,7 @@ function startSession(withMic){
   let from=rf;
   if(viewOffset>rf+1e-3&&viewOffset<rt-0.3){
     for(const msb of song.measStarts){
-      const s=msb*beatSec();
+      const s=secOfBeat(msb);
       if(s<=viewOffset+1e-3&&s>=rf-1e-3) from=Math.max(from,s);
     }
   }
@@ -1210,7 +1392,7 @@ function startSession(withMic){
   const countBeats=4;
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,countBeats);
-  const melodyAt=begin+countBeats*((song.beatUnit||1)*beatSec());
+  const melodyAt=begin+countInSec(countBeats);
   if(!withMic||$("guideChk").checked) scheduleMelody(melodyAt);
   scheduleMetronome(melodyAt);
   startAt=melodyAt;
@@ -1278,7 +1460,7 @@ function loop(){
     if($("loopChk").checked){
       // くりかえし:1拍あけて同じ区間をもう一度
       const ac=getAudio();
-      startAt=ac.currentTime+beatSec();
+      startAt=ac.currentTime+beatSecAt(beatOfSec(sessFrom));
       schedFloor=sessFrom;
       scheduleMelody(startAt);
       scheduleMetronome(startAt);
@@ -1337,6 +1519,7 @@ function togglePause(){
     cancelAnimationFrame(rafId);
     stopScheduled();
     if(recorder&&recorder.state==="recording"){ try{recorder.pause();}catch(e){} }
+    if(hamori.pending!==null) hamori.pausedInTake=true; // 🎶 一時停止すると録音に切れ目ができ、かさねたときにずれる
     prevMode=mode; mode="paused";
     $("pauseBtn").textContent="▶ 再開";
     draw(pausedAt);
@@ -1427,7 +1610,7 @@ $("echoBtn").addEventListener("click",async()=>{
   const ac=getAudio();
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,4);
-  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*((song.beatUnit||1)*beatSec())};
+  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:countInSec(4)};
   echoLoop();
 });
 function echoLoop(){
@@ -1814,6 +1997,7 @@ function finishSing(){
   recFinish(true);
   stopAll();
   showResult();
+  classOnResult(); // 🏆 クラスモードの順番なら、ランキングに入れる
 }
 function whenLabel(){
   const d=new Date();
@@ -1934,6 +2118,337 @@ function restoreSong(){
   }catch(e){}
 }
 
+/* ====== 🎶 ハモリモード：パートを一人ずつ録音して、かさねて聴く ======
+   ① あそぶ：自分のパートをふつうに「歌ってみる」（マイク1本・同じ端末で交代）
+   ② きづく：2本以上そろったら「かさねて きく」。自分の声と友だちの声が同時に鳴り、
+             線がパートの色で重なって見える（＝ハモった、が耳と目でわかる）
+   ③ なまえ：パート名（ソプラノ/アルト等）は楽譜の名前をそのまま表示。用語は足さない
+   録音は Web Audio の AudioBuffer にして start(when, offset) で同時再生（サンプル精度で同期） */
+var hamori={open:false, takes:{}, range:null, pending:null, showTraces:false, nodes:[],
+            colors:["#7B61FF","#FF6FAE","#2BB6C9","#F5A623","#3FBF6B","#E2574C"]};
+function hamoriParts(){ return (songMeta&&songMeta.parts)?songMeta.parts:[]; }
+function hamoriUpdateBtn(){ $("hamoriBtn").disabled=!(hamoriParts().length>1); }
+function hamoriOpen(){
+  if(hamoriParts().length<2){ banner("🎶 ハモリは、パートが2つ以上ある楽譜で使えます。「📄 楽譜を読み込む」で合唱の楽譜（MusicXML）を開いてください"); return; }
+  if(cls.open) classClose();
+  hamori.open=true; $("hamoriPanel").style.display="block"; hamoriRender();
+  $("hamoriPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function hamoriClose(){
+  hamori.open=false; hamori.pending=null; hamori.showTraces=false;
+  if(mode==="hamori") stopAll();
+  $("hamoriPanel").style.display="none";
+  if(song&&mode==="idle") draw(currentT());
+}
+function hamoriReset(){
+  hamori.takes={}; hamori.range=null; hamori.pending=null; hamori.showTraces=false;
+  if(mode==="hamori") stopAll();
+  if(hamori.open) hamoriRender();
+}
+function hamoriRender(){
+  const list=$("hamoriParts"); if(!list) return;
+  list.innerHTML="";
+  hamoriParts().forEach((p,i)=>{
+    const t=hamori.takes[i];
+    const row=document.createElement("div"); row.className="hRow";
+    const name=document.createElement("span"); name.className="hName";
+    const chip=document.createElement("span"); chip.className="hChip"; chip.style.background=hamori.colors[i%hamori.colors.length];
+    name.append(chip, document.createTextNode(p.name));
+    const st=document.createElement("span");
+    if(t){ st.className="hOk"; st.textContent="✓ とれた（"+t.hits+"/"+t.total+"音 かさなった）"; }
+    else { st.className="hNo"; st.textContent="まだ"; }
+    const b=document.createElement("button"); b.className=t?"":"primary";
+    b.textContent=t?"🎤 うたいなおす":"🎤 このパートを うたう";
+    b.addEventListener("click",()=>hamoriSing(i));
+    row.append(name, st, b);
+    if(t){
+      const d=document.createElement("button"); d.textContent="🗑"; d.title="この録音を消す";
+      d.addEventListener("click",()=>{ delete hamori.takes[i]; if(!Object.keys(hamori.takes).length) hamori.range=null; hamori.showTraces=false; hamoriRender(); if(song&&mode==="idle") draw(currentT()); });
+      row.appendChild(d);
+    }
+    list.appendChild(row);
+  });
+  const n=Object.keys(hamori.takes).length;
+  $("hamoriPlayBtn").disabled=n<2||isActive();
+  const note=$("hamoriNote");
+  if(hamori.range) note.textContent="区間：小節 "+hamori.range[0]+"〜"+hamori.range[1]+"（さいしょに歌った区間に そろえています。区間を変えるときは「ぜんぶ やりなおす」）";
+  else note.textContent="① ひとりめが 自分のパートを歌う → ② ふたりめが べつのパートを歌う → ③「かさねて きく」。同じ端末で、こうたいで歌います。";
+}
+async function hamoriSing(i){
+  if(isActive()) return;
+  hamori.pausedInTake=false;
+  const sel=$("partSel");
+  if(Number(sel.value)!==i){ sel.value=String(i); applyPart(i); }
+  if(hamori.range){ $("rangeFrom").value=hamori.range[0]; $("rangeTo").value=hamori.range[1]; onRangeChange(); }
+  viewOffset=rangeSec()[0];
+  banner(null);
+  if(!await setupMic($("guideChk").checked)) return;
+  hamori.pending=i;
+  startSession(true);
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+async function hamoriOnTake(blob){
+  if(hamori.pending===null||hamori.pending===undefined) return;
+  const i=hamori.pending; hamori.pending=null;
+  if(!lastResult){ return; }
+  const take={trace:trace.slice(), score:lastResult.score, hits:lastResult.hits, total:lastResult.total,
+              from:sessFrom, to:sessTo, recAt:recStartSongT, ab:null};
+  try{
+    const buf=await blob.arrayBuffer();
+    take.ab=await getAudio().decodeAudioData(buf.slice(0));
+  }catch(e){ take.ab=null; }
+  if(!take.ab){ banner("⚠️ 録音を読み込めませんでした。もう一度「このパートを うたう」をためしてください"); return; }
+  hamori.takes[i]=take;
+  if(!hamori.range) hamori.range=rangeMeas();
+  if(hamori.pausedInTake){ hamori.pausedInTake=false; banner("⚠️ 途中で一時停止したので、かさねたときに少しずれることがあります。ずれていたら「うたいなおす」で止めずに歌ってみてください"); }
+  hamoriRender();
+  const n=Object.keys(hamori.takes).length;
+  if(n>=2){ $("hamoriPanel").scrollIntoView({behavior:"smooth",block:"nearest"}); }
+}
+function hamoriSyncOtherChecks(){
+  if(!song||!song.otherParts) return;
+  const cbs=$("partPlayList").querySelectorAll("input");
+  song.otherParts.forEach((q,k)=>{ if(cbs[k]) cbs[k].checked=!!q.on; });
+}
+function hamoriPlay(){
+  if(isActive()||!song) return;
+  const keys=Object.keys(hamori.takes).map(Number);
+  if(keys.length<2) return;
+  stopAll();
+  lastResult=null; trace=[]; $("result").style.display="none"; $("recWrap").style.display="none";
+  const [a,b]=hamori.range; $("rangeFrom").value=a; $("rangeTo").value=b; onRangeChange();
+  const [from,to]=rangeSec();
+  // 録音したパートのブロックも見えるようにする
+  if(song.otherParts){ song.otherParts.forEach(q=>{ if(hamori.takes[q.idx]) q.on=true; }); hamoriSyncOtherChecks(); }
+  const ac=getAudio();
+  mode="hamori"; hamori.showTraces=true;
+  sessFrom=from; sessTo=to; schedFloor=sessFrom;
+  const begin=ac.currentTime+0.15;
+  startAt=begin;
+  hamori.nodes=[];
+  for(const k of keys){
+    const t=hamori.takes[k];
+    const src=ac.createBufferSource(); src.buffer=t.ab;
+    const g=ac.createGain(); g.gain.value=1.0;
+    src.connect(g); g.connect(ac.destination);
+    const off=from-t.recAt;              // 再生開始点が、録音の何秒目か
+    if(off>=0) src.start(begin, Math.min(off, Math.max(0,t.ab.duration-0.01)));
+    else src.start(begin-off, 0);        // 録音のほうが後から始まっている
+    hamori.nodes.push(src,g);
+  }
+  if($("hamoriGuideChk").checked){
+    for(const k of keys) scheduleNotes(songMeta.parts[k].notes, begin, 0.28, "sine");
+  }
+  $("stopBtn").disabled=false; $("playBtn").disabled=true; $("singBtn").disabled=true; $("echoBtn").disabled=true;
+  $("hamoriPlayBtn").disabled=true; $("hamoriBtn").disabled=true;
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+  hamoriLoop();
+}
+function hamoriLoop(){
+  if(mode!=="hamori") return;
+  const t=getAudio().currentTime-startAt;
+  drawThrottled(Math.max(sessFrom+t, sessFrom));
+  if(t>sessTo-sessFrom+0.6){ stopAll(); viewOffset=sessFrom; draw(viewOffset); return; }
+  rafId=requestAnimationFrame(hamoriLoop);
+}
+function hamoriStopNodes(){
+  for(const n of hamori.nodes){ try{ n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} }
+  hamori.nodes=[];
+}
+function hamoriAfterStop(){
+  hamoriUpdateBtn(); classAfterStop();
+  if(hamori.open) hamoriRender();
+}
+$("hamoriBtn").addEventListener("click",()=>{ if(isActive()) return; hamori.open?hamoriClose():hamoriOpen(); });
+$("hamoriPlayBtn").addEventListener("click",hamoriPlay);
+$("hamoriResetBtn").addEventListener("click",()=>{ if(!Object.keys(hamori.takes).length||confirm("録音をぜんぶ消して、やりなおしますか?")){ hamoriReset(); if(song&&mode==="idle") draw(currentT()); } });
+$("hamoriCloseBtn").addEventListener("click",hamoriClose);
+
+/* ====== 🏆 クラスモード：みんなで順番に歌って、黒板にランキング ======
+   ① あそぶ：名前を登録して、順番に「うたう」（ふつうの歌ってみると同じ）
+   ② きづく：歌い終わるたびに順位が動く。既定の物差しは「のび」＝前回の自分より何点あがったか
+             （声の小さい子でも勝てる／大きい声は一切点数に入らない＝怒鳴りが有利にならない）
+   ③ なまえ：用語は出さない。先生が物差しを切り替えられる（かさなった音・％・⭐）
+   名前と「前回の点」はこの端末に残る（曲ごと）。サーバなし。 */
+var cls={open:false, members:[], pending:null, range:null, seq:1};
+var CLS_KEY="utamie_class_members", CLS_HIST="utamie_class_hist";
+function clsLoad(){ try{ const a=JSON.parse(store.get(CLS_KEY)||"[]"); if(Array.isArray(a)) cls.members=a.map(m=>({id:cls.seq++, name:String(m.name||""), team:m.team||null, prev:null, score:null, hits:0, total:0, combo:0})); }catch(e){} clsLoadPrev(); }
+function clsSaveMembers(){ store.set(CLS_KEY, JSON.stringify(cls.members.map(m=>({name:m.name, team:m.team})))); }
+function clsHist(){ try{ return JSON.parse(store.get(CLS_HIST)||"{}")||{}; }catch(e){ return {}; } }
+function clsTitle(){ return song?song.title:""; }
+function clsLoadPrev(){ const h=clsHist()[clsTitle()]||{}; cls.members.forEach(m=>{ m.prev=(typeof h[m.name]==="number")?h[m.name]:null; }); }
+function clsCommit(){ // 今回の点を「前回の点」として残す
+  const h=clsHist(); const t=clsTitle(); if(!t) return; h[t]=h[t]||{};
+  cls.members.forEach(m=>{ if(m.score!==null) h[t][m.name]=m.score; });
+  try{ store.set(CLS_HIST, JSON.stringify(h)); }catch(e){}
+}
+function classVal(m){
+  if(m.score===null) return null;
+  const k=$("classMetric").value;
+  if(k==="hits") return m.hits;
+  if(k==="score") return m.score;
+  if(k==="combo") return m.combo;
+  return (m.prev===null)?null:(m.score-m.prev);   // のび
+}
+function classValText(m){
+  const k=$("classMetric").value, v=classVal(m);
+  if(m.score===null) return {t:"", c:"none"};
+  if(k==="nobi"){
+    if(v===null) return {t:"はじめて", s:m.score+"%", c:"none"};
+    return {t:(v>0?"+"+v:(v<0?String(v):"±0")), s:m.score+"%（前回 "+m.prev+"%）", c:v>0?"up":(v<0?"down":"")};
+  }
+  if(k==="hits") return {t:m.hits+"音", s:"／"+m.total+"音", c:""};
+  if(k==="score") return {t:m.score+"%", s:"", c:""};
+  return {t:"⭐×"+m.combo, s:m.score+"%", c:""};
+}
+function classSorted(){
+  const k=$("classMetric").value;
+  return cls.members.slice().sort((a,b)=>{
+    const va=classVal(a), vb=classVal(b);
+    const ha=va!==null, hb=vb!==null;
+    if(ha!==hb) return ha?-1:1;
+    if(ha&&va!==vb) return vb-va;
+    const sa=a.score===null?-1:a.score, sb=b.score===null?-1:b.score;
+    if(sa!==sb) return sb-sa;
+    return a.id-b.id;
+  });
+}
+function classRankOf(){ // 同点は同順位
+  const arr=classSorted(); const ranks=new Map(); let r=0, prevKey=null;
+  arr.forEach((m,i)=>{ const key=(classVal(m)===null?"n":classVal(m))+"|"+(m.score===null?"n":m.score); if(key!==prevKey){ r=i+1; prevKey=key; } ranks.set(m.id, m.score===null?null:r); });
+  return {arr, ranks};
+}
+function classTeamTotals(){
+  const t={red:{sum:0,n:0}, white:{sum:0,n:0}};
+  cls.members.forEach(m=>{ if(!m.team||!t[m.team]) return; const v=classVal(m); if(v!==null){ t[m.team].sum+=v; t[m.team].n++; } });
+  return t;
+}
+function classTeamHtml(big){
+  const t=classTeamTotals(); const k=$("classMetric").value;
+  const unit=k==="hits"?"音":(k==="combo"?"⭐":(k==="score"?"%":"点"));
+  const win=t.red.sum===t.white.sum?null:(t.red.sum>t.white.sum?"red":"white");
+  const f=(team,label)=>'<div class="cTeamBox '+team+(win===team?" win":"")+'"><span>'+label+'</span><b>'+(k==="nobi"&&t[team].sum>0?"+":"")+t[team].sum+unit+'</b><small>'+t[team].n+'人</small></div>';
+  return f("red","🔴 赤")+f("white","⚪ 白");
+}
+function classRender(){
+  const list=$("classList"); if(!list) return;
+  const team=$("classTeamChk").checked;
+  const {arr,ranks}=classRankOf();
+  list.innerHTML="";
+  arr.forEach(m=>{
+    const row=document.createElement("div"); row.className="cRow"+(cls.pending===m.id?" now":"")+(m.flash?" flash":""); m.flash=false;
+    const rk=ranks.get(m.id);
+    const rank=document.createElement("span"); rank.className="cRank"+(rk&&rk<=3?" top":""); rank.textContent=rk?(rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk+"位"):"–";
+    row.appendChild(rank);
+    if(team){
+      const tc=document.createElement("span"); tc.className="cTeam "+(m.team||"none"); tc.title="タップで 赤／白 を切りかえ";
+      tc.addEventListener("click",()=>{ m.team=m.team==="red"?"white":(m.team==="white"?null:"red"); clsSaveMembers(); classRender(); });
+      row.appendChild(tc);
+    }
+    const nm=document.createElement("span"); nm.className="cName"; nm.textContent=m.name; row.appendChild(nm);
+    const vt=classValText(m);
+    const val=document.createElement("span"); val.className="cVal "+vt.c; val.textContent=vt.t; if(vt.s){ const s=document.createElement("small"); s.textContent=vt.s; val.appendChild(s); }
+    row.appendChild(val);
+    const b=document.createElement("button"); b.className=m.score===null?"primary":""; b.textContent=m.score===null?"🎤 うたう":"🎤 もういちど";
+    b.disabled=isActive(); b.addEventListener("click",()=>classSing(m.id)); row.appendChild(b);
+    const d=document.createElement("button"); d.textContent="🗑"; d.title="この なまえを消す";
+    d.addEventListener("click",()=>{ cls.members=cls.members.filter(x=>x.id!==m.id); clsSaveMembers(); classRender(); });
+    row.appendChild(d);
+    list.appendChild(row);
+  });
+  $("classTeams").style.display=team?"flex":"none";
+  if(team) $("classTeams").innerHTML=classTeamHtml(false);
+  const sung=cls.members.filter(m=>m.score!==null).length;
+  $("classShowBtn").disabled=sung<1||isActive();
+  const k=$("classMetric").value;
+  let note="大きな声は点数に入りません。見ているのは「高さ」だけです。";
+  if(k==="nobi") note+="　「のび」は前回の自分との比べっこ。1回目は「はじめて」になり、2回目から順位がつきます。";
+  if(cls.range) note+="　区間：小節 "+cls.range[0]+"〜"+cls.range[1]+"（このラウンドは全員同じ区間）";
+  if(!cls.members.length) note="なまえを入れて「＋ 追加」。なまえは この端末に残ります。";
+  $("classNote").textContent=note;
+}
+function classAdd(){
+  const inp=$("classNameIn"); const name=(inp.value||"").trim(); if(!name) return;
+  if(cls.members.some(m=>m.name===name)){ banner("同じ なまえが もうあります（"+escapeHtml(name)+"）。ちがう書き方にしてください（例：ゆい2）"); inp.focus(); return; }
+  const h=clsHist()[clsTitle()]||{};
+  const team=$("classTeamChk").checked?(cls.members.filter(m=>m.team==="red").length<=cls.members.filter(m=>m.team==="white").length?"red":"white"):null;
+  cls.members.push({id:cls.seq++, name, team, prev:(typeof h[name]==="number")?h[name]:null, score:null, hits:0, total:0, combo:0});
+  clsSaveMembers(); inp.value=""; inp.focus(); classRender();
+}
+async function classSing(id){
+  if(isActive()||!song) return;
+  const m=cls.members.find(x=>x.id===id); if(!m) return;
+  if(cls.range){ $("rangeFrom").value=cls.range[0]; $("rangeTo").value=cls.range[1]; onRangeChange(); }
+  viewOffset=rangeSec()[0];
+  banner(null);
+  if(!await setupMic($("guideChk").checked)) return;
+  cls.pending=id; classRender();
+  startSession(true);
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classOnResult(){
+  if(cls.pending===null||!lastResult) return;
+  const m=cls.members.find(x=>x.id===cls.pending); cls.pending=null;
+  if(!m) return;
+  m.score=lastResult.score; m.hits=lastResult.hits; m.total=lastResult.total; m.combo=comboBest; m.flash=true;
+  if(!cls.range) cls.range=rangeMeas();
+  classRender();
+  $("classPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classShow(){
+  const team=$("classTeamChk").checked;
+  const {arr,ranks}=classRankOf();
+  $("classBigTeams").innerHTML=team?classTeamHtml(true):""; $("classBigTeams").style.display=team?"flex":"none";
+  const L=$("classBigList"); L.innerHTML="";
+  arr.filter(m=>m.score!==null).forEach(m=>{
+    const rk=ranks.get(m.id);
+    const row=document.createElement("div"); row.className="cBigRow"+(rk<=3?" r"+rk:"");
+    const vt=classValText(m);
+    row.innerHTML='<span class="cRank">'+(rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk+"位")+'</span>'
+      +(team?'<span class="cTeam '+(m.team||"none")+'"></span>':"")
+      +'<span class="cName"></span><span class="cVal '+vt.c+'"></span>';
+    row.querySelector(".cName").textContent=m.name;
+    const v=row.querySelector(".cVal"); v.textContent=vt.t; if(vt.s){ const s=document.createElement("small"); s.textContent=vt.s; v.appendChild(s); }
+    L.appendChild(row);
+  });
+  const cf=$("classConfetti"); cf.innerHTML="";
+  const em=["✨","🎵","⭐","🎶","💫"];
+  for(let i=0;i<36;i++){ const s=document.createElement("span"); s.textContent=em[i%em.length]; s.style.left=(Math.random()*100)+"%"; s.style.animationDuration=(2.2+Math.random()*2.2)+"s"; s.style.animationDelay=(Math.random()*1.2)+"s"; s.style.fontSize=(18+Math.random()*18)+"px"; cf.appendChild(s); }
+  $("classOverlay").classList.add("open");
+  clsCommit();
+}
+function classNextRound(){
+  clsCommit(); clsLoadPrev();
+  cls.members.forEach(m=>{ m.score=null; m.hits=0; m.total=0; m.combo=0; });
+  cls.range=null; cls.pending=null;
+  classRender();
+}
+function classOpen(){
+  if(!song){ banner("🏆 クラスモードは、曲をえらんでから使えます"); return; }
+  if(hamori.open) hamoriClose();
+  cls.open=true; $("classPanel").style.display="block"; classRender();
+  $("classPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classClose(){ cls.open=false; cls.pending=null; $("classPanel").style.display="none"; }
+function classOnSongChange(){ // 曲が変わったら、点はリセット。前回の点はその曲のものを読み直す
+  cls.members.forEach(m=>{ m.score=null; m.hits=0; m.total=0; m.combo=0; }); cls.range=null; cls.pending=null; clsLoadPrev();
+  $("classBtn").disabled=!song; if(cls.open) classRender();
+}
+function classAfterStop(){ $("classBtn").disabled=!song; if(cls.open) classRender(); }
+$("classBtn").addEventListener("click",()=>{ if(isActive()) return; cls.open?classClose():classOpen(); });
+$("classAddBtn").addEventListener("click",classAdd);
+$("classNameIn").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); classAdd(); } });
+$("classTeamChk").addEventListener("change",()=>{ if($("classTeamChk").checked){ cls.members.forEach((m,i)=>{ if(!m.team) m.team=i%2?"white":"red"; }); clsSaveMembers(); } classRender(); });
+$("classMetric").addEventListener("change",()=>{ store.set("utamie_class_metric",$("classMetric").value); classRender(); });
+$("classShowBtn").addEventListener("click",classShow);
+$("classNextBtn").addEventListener("click",()=>{ if(!cls.members.some(m=>m.score!==null)||confirm("いまの点を「前回の点」として残して、つぎのラウンドにしますか?")) classNextRound(); });
+$("classClearBtn").addEventListener("click",()=>{ if(!cls.members.length||confirm("なまえをぜんぶ消しますか?（前回の点の記録は残ります）")){ cls.members=[]; clsSaveMembers(); cls.range=null; classRender(); } });
+$("classCloseBtn").addEventListener("click",classClose);
+$("classBigClose").addEventListener("click",()=>{ $("classOverlay").classList.remove("open"); $("classConfetti").innerHTML=""; });
+$("classOverlay").addEventListener("click",e=>{ if(e.target===$("classOverlay")){ $("classOverlay").classList.remove("open"); $("classConfetti").innerHTML=""; } });
+(function(){ const mv=store.get("utamie_class_metric"); if(mv&&$("classMetric").querySelector('option[value="'+mv+'"]')) $("classMetric").value=mv; })();
+clsLoad();
+
 resize();
 restoreSettings();
 restoreSong();
@@ -1976,7 +2491,24 @@ restoreSong();
                  border-top:1px dashed var(--line); padding-top:10px;}
 </style>
 
-<div id="presetOverlay">
+<div id="qrOverlay">
+      <div id="qrBox">
+        <h2 id="qrTitle">📱 QRで配る</h2>
+        <div id="qrImg"></div>
+        <div id="qrMsg"></div>
+        <div class="row">
+          <button id="qrCopyBtn" class="blue">🔗 リンクをコピー</button>
+          <button id="qrCloseBtn">とじる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Generator for JavaScript (c) Kazuhiko Arase / MIT License. "QR Code" is a registered trademark of DENSO WAVE INCORPORATED. -->
+    <script>
+    var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+    </script>
+
+    <div id="presetOverlay">
   <div id="presetBox">
     <h2>📚 きょうざいきょく</h2>
     <div style="font-size:.78rem;color:var(--sub)">曲をえらぶと、すぐに「お手本をきく」「歌ってみる」ができます</div>
@@ -2062,6 +2594,7 @@ restoreSong();
   function songPayload(meta){
     var o={title:meta.title, bpm:meta.bpm, parts:meta.parts};
     if(meta.beatUnit) o.beatUnit=meta.beatUnit;
+    if(meta.tempos&&meta.tempos.length) o.tempos=meta.tempos;
     return o;
   }
   function pickSong(meta, save){
@@ -2079,7 +2612,10 @@ restoreSong();
       var bl2=document.createElement("button"); bl2.className="mini"; bl2.textContent="🔗";
       bl2.title="この曲が入った状態でひらくURLをコピー";
       bl2.addEventListener("click", function(){ makeSongLink(p); });
-      d.appendChild(b); d.appendChild(bl2); bl.appendChild(d);
+      var bq=document.createElement("button"); bq.className="mini"; bq.textContent="📱";
+      bq.title="この曲が入った状態でひらくQRコードを表示";
+      bq.addEventListener("click", function(){ showSongQR(p); });
+      d.appendChild(b); d.appendChild(bl2); d.appendChild(bq); bl.appendChild(d);
     });
     var dl=$("deviceList"); dl.innerHTML="";
     var arr=devLoad();
@@ -2112,7 +2648,10 @@ restoreSong();
         if(!confirm("「"+(p.title||"無題")+"」をリストから消しますか?")) return;
         var a=devLoad(); a.splice(i,1); devSave(a); renderLists();
       });
-      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(lnk); d.appendChild(del); dl.appendChild(d);
+      var lq=document.createElement("button"); lq.className="mini"; lq.textContent="📱 QR";
+      lq.title="この曲が入った状態でひらくQRコードを表示";
+      lq.addEventListener("click", function(){ showSongQR(p); });
+      d.appendChild(use); d.appendChild(ren); d.appendChild(code); d.appendChild(lnk); d.appendChild(lq); d.appendChild(del); dl.appendChild(d);
     });
   }
 
@@ -2188,13 +2727,66 @@ restoreSong();
       }else{ fallbackCopy(url); done(); }
     });
   }
-  function loadFromHash(){
+  /* ====== ②c QRで配る（曲入りリンクをQRコードにして大きく表示） ======
+         電子黒板に映して、子どもがタブレットのカメラで読み取る。ロイロ等に貼らなくても配れる。
+         QRの容量は約2,900バイトが上限なので、長い曲（合唱の全パート等）は入らないことがある→その場合は🔗リンクへ誘導 */
+      function songLinkFor(p){
+        var obj=songPayload(p); obj.v=1;
+        return encodeSong(obj).then(function(tok){
+          var base=(location.protocol==="http:"||location.protocol==="https:") ? location.href.split("#")[0] : HOSTED_URL;
+          return base+"#s="+tok;
+        });
+      }
+      var qrCurrentUrl="";
+      function showSongQR(p){
+        var ovq=$("qrOverlay"), img=$("qrImg"), msg=$("qrMsg");
+        $("qrTitle").textContent="📱 QRで配る：「"+(p.title||"無題")+"」";
+        img.innerHTML=""; msg.textContent="つくっています…"; qrCurrentUrl="";
+        ovq.classList.add("open");
+        songLinkFor(p).then(function(url){
+          qrCurrentUrl=url;
+          if(typeof qrcode!=="function"){ msg.innerHTML="この端末ではQRを作れませんでした。<b>🔗 リンクをコピー</b>して配ってください。"; return; }
+          var ok=false, q=null;
+          try{ q=qrcode(0,"L"); q.addData(url,"Byte"); q.make(); ok=true; }catch(e){ ok=false; }
+          if(!ok){
+            img.innerHTML='<div style="padding:40px 10px;font-size:.9rem;color:var(--sub)">この曲はデータが大きいので、QRコードに入りきりませんでした。</div>';
+            msg.innerHTML="<b>🔗 リンクをコピー</b>して、ロイロノートやClassroomに貼って配ってください。<br>（パートを1つだけにした楽譜なら、QRに入ることがあります）";
+            return;
+          }
+          img.innerHTML=q.createSvgTag({cellSize:4, margin:2, scalable:true});
+          var len=url.length;
+          msg.innerHTML="タブレットのカメラで読み取ると、この曲が入った うたミエ が ひらきます。<br>"
+            +(len>1400
+              ? "⚠️ 曲のデータが大きめです（"+len+"文字）。画面を<b>大きく</b>映して、近づいて読み取ってください。読めないときは🔗リンクで配ってください。"
+              : "電子黒板に映すか、この画面をそのまま見せてください。（"+len+"文字）");
+        }).catch(function(){ msg.textContent="リンクを作れませんでした。"; });
+      }
+      function copyQrLink(){
+        if(!qrCurrentUrl){ alert("まだリンクができていません"); return; }
+        var done=function(){ alert("🔗 配布リンクをコピーしました。"); };
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(qrCurrentUrl).then(done, function(){ fallbackCopy(qrCurrentUrl); done(); });
+        }else{ fallbackCopy(qrCurrentUrl); done(); }
+      }
+      $("qrCopyBtn").addEventListener("click", copyQrLink);
+      $("qrCloseBtn").addEventListener("click", function(){ $("qrOverlay").classList.remove("open"); });
+      $("qrOverlay").addEventListener("click", function(e){ if(e.target===$("qrOverlay")) $("qrOverlay").classList.remove("open"); });
+      /* 読み込み中の曲を配る（メイン画面のボタン） */
+      $("qrBtn").addEventListener("click", function(){
+        if(!songMeta){ alert("先に曲を読み込んでください"); return; }
+        showSongQR(songMeta);
+      });
+      /* 曲が入ったらボタンを出す（setSong の後で反映されるよう、軽く監視） */
+      (function watchSong(){ var qb=$("qrBtn"); if(qb) qb.style.display=songMeta?"inline-block":"none"; setTimeout(watchSong, 800); })();
+
+      function loadFromHash(){
     var m=location.hash.match(/[#&]s=([A-Za-z0-9.\-_]+)/);
     if(!m) return;
     decodeSong(m[1]).then(function(d){
       if(!d || !d.title || !d.parts || !d.parts.length) return;
       var meta={title:d.title, bpm:d.bpm||100, parts:d.parts};
       if(d.beatUnit) meta.beatUnit=d.beatUnit;
+      if(d.tempos) meta.tempos=d.tempos;
       setSong(JSON.parse(JSON.stringify(meta)), false);
     }).catch(function(){ /* 壊れたリンクは無視して普通に起動 */ });
   }

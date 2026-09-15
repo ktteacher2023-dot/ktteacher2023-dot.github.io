@@ -139,6 +139,60 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     border-radius:10px; padding:10px 14px; display:inline-block; color:var(--ink);
   }
 
+  /* 🏆 クラスモード */
+  #classPanel{background:#fff; border:2px solid #FFE1B3; border-radius:16px; padding:14px 16px; margin:10px 0;}
+  #classPanel .hTitle{font-weight:700; color:var(--ink); margin-bottom:8px; font-size:.95rem;}
+  #classNameIn{font-size:1rem; padding:8px 12px; border:1.5px solid var(--line); border-radius:10px; width:180px; font-family:inherit;}
+  #classNameIn:focus{outline:2px solid var(--voice); border-color:transparent;}
+  .cRow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin-bottom:6px; transition:background .4s;}
+  .cRow.now{background:#FFF1EC; border-color:var(--voice);}
+  .cRow.flash{animation:cflash 1.2s ease-out;}
+  @keyframes cflash{0%{background:#FFF4CC;} 100%{background:var(--paper);}}
+  .cRank{font-weight:900; font-size:1.15rem; width:2.2em; text-align:center; color:var(--ink);}
+  .cRank.top{font-size:1.4rem;}
+  .cTeam{width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--line); cursor:pointer; flex:none;}
+  .cTeam.red{background:#E2574C;} .cTeam.white{background:#F7F7F7;} .cTeam.none{background:transparent; border:2px dashed var(--line); box-shadow:none;}
+  .cName{font-weight:700; min-width:90px; font-size:1rem;}
+  .cVal{font-weight:900; font-size:1.05rem; color:var(--ink); min-width:110px;}
+  .cVal small{font-weight:400; font-size:.75rem; color:var(--sub); margin-left:4px;}
+  .cVal.up{color:#2FB380;} .cVal.down{color:var(--sub);} .cVal.none{color:var(--sub); font-weight:400; font-size:.85rem;}
+  #classTeams{display:flex; gap:12px; align-items:center; margin:6px 0 10px; font-weight:700;}
+  .cTeamBox{flex:1; border-radius:12px; padding:8px 12px; text-align:center; font-size:1.05rem;}
+  .cTeamBox.red{background:#FDE3E0; color:#B3441F;} .cTeamBox.white{background:#F2F6F8; color:var(--ink);}
+  .cTeamBox b{font-size:1.5rem; display:block;}
+  .cTeamBox.win{outline:3px solid #F5A623;}
+  #classNote{font-size:.78rem; color:var(--sub); margin-top:8px; line-height:1.6;}
+  #classOverlay{display:none; position:fixed; inset:0; background:rgba(30,43,51,.72); z-index:70; align-items:center; justify-content:center; padding:16px; overflow:auto;}
+  #classOverlay.open{display:flex;}
+  #classBig{position:relative; z-index:2; background:#fff; border-radius:22px; padding:22px 26px; width:min(94vw,760px); box-shadow:0 30px 60px -20px rgba(0,0,0,.6);}
+  #classBigTitle{font-size:1.5rem; font-weight:900; text-align:center; color:var(--ink); margin-bottom:10px;}
+  #classBigTeams{display:flex; gap:12px; margin-bottom:12px;}
+  #classBigTeams .cTeamBox{font-size:1.2rem;} #classBigTeams .cTeamBox b{font-size:2.2rem;}
+  .cBigRow{display:flex; align-items:center; gap:14px; padding:10px 14px; border-radius:14px; margin-bottom:6px; background:var(--paper); font-size:1.15rem;}
+  .cBigRow.r1{background:#FFF4CC; font-size:1.5rem;} .cBigRow.r2{background:#EEF1F4; font-size:1.3rem;} .cBigRow.r3{background:#F8E9DF; font-size:1.2rem;}
+  .cBigRow .cName{flex:1; min-width:0;} .cBigRow .cVal{min-width:0;}
+  #classConfetti{position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1;}
+  #classConfetti span{position:absolute; top:-6%; font-size:26px; animation:cfall linear forwards;}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(110vh) rotate(540deg); opacity:.7;}}
+  @media(max-width:600px){ #classNameIn{width:130px;} .cName{min-width:70px;} .cVal{min-width:80px;} }
+  /* 🎶 ハモリ */
+  #hamoriPanel{background:#fff; border:2px solid #E6D9F2; border-radius:16px; padding:14px 16px; margin:10px 0;}
+  #hamoriPanel .hTitle{font-weight:700; color:var(--ink); margin-bottom:8px; font-size:.95rem;}
+  .hRow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin-bottom:6px;}
+  .hName{font-weight:700; display:flex; align-items:center; gap:6px; min-width:120px;}
+  .hChip{display:inline-block; width:14px; height:14px; border-radius:50%;}
+  .hOk{color:#2FB380; font-size:.82rem; font-weight:700;}
+  .hNo{color:var(--sub); font-size:.82rem;}
+  #hamoriNote{font-size:.78rem; color:var(--sub); margin-top:8px; line-height:1.6;}
+  /* 📱 QR */
+  #qrOverlay{display:none; position:fixed; inset:0; background:rgba(30,43,51,.55); z-index:60; align-items:center; justify-content:center; padding:16px;}
+  #qrOverlay.open{display:flex;}
+  #qrBox{background:#fff; border-radius:18px; padding:18px 20px; max-width:min(92vw,720px); width:100%; text-align:center; box-shadow:0 20px 50px -20px rgba(0,0,0,.5);}
+  #qrBox h2{font-size:1.05rem; margin-bottom:4px;}
+  #qrImg{margin:10px auto; width:min(70vw,60vh,520px); aspect-ratio:1; background:#fff;}
+  #qrImg svg{width:100%; height:100%; display:block;}
+  #qrMsg{font-size:.8rem; color:var(--sub); line-height:1.7;}
+  #qrBox .row{justify-content:center; margin-top:10px;}
   footer{font-size:.74rem; color:var(--sub); text-align:center; line-height:1.7; padding:6px 0 20px;}
 </style>
 </head>
@@ -171,6 +225,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <button id="echoBtn" disabled>🦜 まねっこ</button>
     <button id="breathBtn">🌬 ロングトーン</button>
     <button id="freeBtn">🐤 こえあそび</button>
+    <button id="hamoriBtn" disabled title="パートを一人ずつ歌って、かさねて聴きます（2パート以上の楽譜で使えます）">🎶 ハモリ</button>
+    <button id="classBtn" disabled title="みんなで順番に歌って、黒板にランキングを出します">🏆 クラス</button>
     <button id="rewindBtn" disabled>⏮ 最初へ</button>
     <button id="pauseBtn" disabled>⏸ 一時停止</button>
     <button id="stopBtn" class="stop" disabled>■ 止める</button>
@@ -213,6 +269,54 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 </div>
 
+<div id="classPanel" style="display:none">
+  <div class="hTitle">🏆 クラスモード：じゅんばんに歌って、ランキング！</div>
+  <div class="row">
+    <input id="classNameIn" type="text" placeholder="なまえ（例：ゆい）" maxlength="12" autocomplete="off">
+    <button id="classAddBtn" class="blue">＋ 追加</button>
+    <span class="ctl"><input type="checkbox" id="classTeamChk"> チーム戦（🔴赤・⚪白）</span>
+    <span class="ctl">じゅんいの きめ方
+      <select id="classMetric">
+        <option value="nobi" selected>のび（前回より何点あがったか）</option>
+        <option value="hits">かさなった音の数</option>
+        <option value="score">％</option>
+        <option value="combo">⭐ れんぞくヒット</option>
+      </select>
+    </span>
+  </div>
+  <div id="classTeams" style="display:none"></div>
+  <div id="classList"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="classShowBtn" class="primary" disabled>🏅 けっか はっぴょう</button>
+    <button id="classNextBtn">🔁 つぎのラウンド</button>
+    <button id="classClearBtn">🗑 なまえをぜんぶ消す</button>
+    <button id="classCloseBtn">✕ とじる</button>
+  </div>
+  <div id="classNote"></div>
+</div>
+
+<div id="classOverlay">
+  <div id="classBig">
+    <div id="classBigTitle">🏅 けっか はっぴょう</div>
+    <div id="classBigTeams"></div>
+    <div id="classBigList"></div>
+    <div class="row" style="justify-content:center;margin-top:14px"><button id="classBigClose" class="blue">とじる</button></div>
+  </div>
+  <div id="classConfetti"></div>
+</div>
+
+<div id="hamoriPanel" style="display:none">
+  <div class="hTitle">🎶 ハモリ：パートを ひとりずつ うたって、かさねて きこう</div>
+  <div id="hamoriParts"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="hamoriPlayBtn" class="primary" disabled>🔊 かさねて きく</button>
+    <span class="ctl"><input type="checkbox" id="hamoriGuideChk"> お手本も いっしょに鳴らす</span>
+    <button id="hamoriResetBtn">🗑 ぜんぶ やりなおす</button>
+    <button id="hamoriCloseBtn">✕ とじる</button>
+  </div>
+  <div id="hamoriNote"></div>
+</div>
+
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="qbar"><span id="qRange"></span><button id="qFrom" title="いま見ている小節から練習する">▶ ここから</button><button id="qTo" title="いま見ている小節まで練習する">■ ここまで</button><button id="qAll" class="dim" title="曲全体にもどす">全体</button></div>
@@ -239,7 +343,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   💡 お手本を流しながら正確に判定したいときは、イヤホン・ヘッドホンでお手本を聴くのがいちばん確実です<br>
   🎙 うまく声がひろえないときは、まず「🐤こえあそび」でマイクチェック!それでもダメなら マイク設定を「クリア(処理なし)」にしてみてください<br>
   ※マイク機能はブラウザの許可が必要です(チャット内プレビューでは動かない場合があります)<br>
-  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.08-1（練習したい小節をタップ・区間なぞり・歌い終わっても頭に戻らない）</b><br>
+  🔒 マイクの音はすべてこの端末の中だけで処理されます。歌声や録音データがサーバーへ送信されることはありません｜<b>v2026.09.14-3（🎼途中でテンポや拍子が変わる楽譜に対応／🏆クラスモード／🎶ハモリ／📱QRで配る）</b><br>
   © けいてぃの音楽ツールズ（フル版・購入者用）｜<a href="https://ktteacher.net/tools/" target="_blank" rel="noopener" style="color:var(--sub)">無料ツールいちらん</a><br>
   ※このファイルは購入者用です。URLやファイルの再配布はご遠慮ください
 </footer>
@@ -266,7 +370,7 @@ const store={
   set(k,v){ try{localStorage.setItem(k,v); return true;}catch(e){return false;} },
   del(k){ try{localStorage.removeItem(k);}catch(e){} }
 };
-const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo";
+const isActive = ()=> mode==="play"||mode==="sing"||mode==="echo"||mode==="hamori";
 const isSinging = ()=> mode==="sing"||mode==="echo";
 const cv = $("cv"), ctx2d = cv.getContext("2d");
 const NAMES = ["ド","ド♯","レ","レ♯","ミ","ファ","ファ♯","ソ","ソ♯","ラ","ラ♯","シ"];
@@ -285,10 +389,29 @@ function applyGuideVol(){ if(masterGain && audioCtx){ masterGain.gain.setTargetA
 function tempoScale(){ return Number($("tempoSlider").value)/100; }
 function transpose(){ return Number($("transVal").textContent); }
 function guideVol(){ return Number($("volSlider").value)/100; }
-function beatSec(){ return 60/(song.bpm*tempoScale()); }
-function noteStartSec(n){ return n.startBeat*beatSec(); }
-function noteEndSec(n){ return (n.startBeat+n.beats)*beatSec(); }
-function songDur(){ const last=song.notes[song.notes.length-1]; return Math.max(noteEndSec(last), (song.totalBeats||0)*beatSec()); }
+function beatSec(){ return 60/(song.bpm*tempoScale()); }   // 曲頭のテンポでの1拍（目安用途）
+/* ====== 🎼 テンポマップ：途中でテンポが変わる楽譜に対応 ======
+   song.tempos=[{beat,bpm},...]（拍位置とそこからのテンポ）を、拍⇄秒の対応表にする。
+   テンポスライダー(tempoScale)は全体に一律にかかる。 */
+function buildTempoMap(){
+  let tp=(song.tempos&&song.tempos.length)?song.tempos.filter(t=>t&&t.bpm>0).slice().sort((a,b)=>a.beat-b.beat):[];
+  if(!tp.length||tp[0].beat>1e-9) tp.unshift({beat:0,bpm:song.bpm||100});
+  const m=[];
+  for(const t of tp){ if(m.length&&Math.abs(m[m.length-1].beat-t.beat)<1e-6) m[m.length-1]={beat:t.beat,bpm:t.bpm}; else m.push({beat:t.beat,bpm:t.bpm}); }
+  let sec=0;
+  for(let i=0;i<m.length;i++){ m[i].sec=sec; if(i+1<m.length) sec+=(m[i+1].beat-m[i].beat)*60/m[i].bpm; }
+  song.tm=m;
+}
+function tmSeg(b){ if(!song.tm) buildTempoMap(); const m=song.tm; let i=0; while(i+1<m.length&&m[i+1].beat<=b+1e-9) i++; return m[i]; }
+function secOfBeat(b){ const s=tmSeg(b); return (s.sec+(b-s.beat)*60/s.bpm)/tempoScale(); }
+function beatOfSec(sec){ if(!song.tm) buildTempoMap(); const sr=sec*tempoScale(); const m=song.tm; let i=0; while(i+1<m.length&&m[i+1].sec<=sr+1e-9) i++; return m[i].beat+(sr-m[i].sec)*m[i].bpm/60; }
+function beatSecAt(b){ return 60/(tmSeg(b).bpm*tempoScale()); }          // その拍位置での1拍の秒数
+function measIdxOfBeat(beat){ const ms=song.measStarts||[0]; let mi=0; for(let k=0;k<ms.length;k++) if(ms[k]<=beat+1e-6) mi=k; return mi; }
+function measUnitAt(beat){ const mi=measIdxOfBeat(beat); return (song.measUnits&&song.measUnits[mi])||song.beatUnit||1; } // 8分の6系なら1.5
+function countInSec(n){ const b=beatOfSec(sessFrom); return n*measUnitAt(b)*beatSecAt(b); } // 歌い出す位置のテンポ・拍子でカウント
+function noteStartSec(n){ return secOfBeat(n.startBeat); }
+function noteEndSec(n){ return secOfBeat(n.startBeat+n.beats); }
+function songDur(){ const last=song.notes[song.notes.length-1]; return Math.max(noteEndSec(last), secOfBeat(song.totalBeats||0)); }
 /* れんしゅう区間(小節指定)→ 秒に変換 */
 function rangeMeas(){
   const mc=song.measStarts.length;
@@ -299,8 +422,8 @@ function rangeMeas(){
 }
 function rangeSec(){
   const [a,b]=rangeMeas();
-  const from=song.measStarts[a-1]*beatSec();
-  const to=(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*beatSec();
+  const from=secOfBeat(song.measStarts[a-1]);
+  const to=secOfBeat(b<song.measStarts.length?song.measStarts[b]:song.totalBeats);
   return [from,to];
 }
 function isFullRange(){ const [a,b]=rangeMeas(); return a===1&&b===song.measStarts.length; }
@@ -358,16 +481,30 @@ function parseMusicXML(xmlText, fname){
   const parts=[];
   for(const part of doc.querySelectorAll("part")){
     if(!part.querySelector("measure")) continue;
-    let divisions=1, keyFifths=0, keySeen=false;
+    let divisions=1, keyFifths=0, keySeen=false, curUnit=1;
     const meas=[]; // 小節ごと:{notes,len,forward,backward,endingStart,endingStop}
     for(const measure of part.querySelectorAll(":scope > measure")){
       let cur=0, maxCur=0;
       const mn=[];
       let fwd=false, bwd=0, endStart=null, endStop=false;
+      const mtempos=[]; // この小節内のテンポ変更 {off(拍), bpm}
       for(const el of measure.children){
         const tag=el.tagName;
+        if(tag==="direction"||tag==="sound"){
+          // 🎼 テンポ変更：<direction><sound tempo="..."/></direction> または小節直下の <sound tempo>
+          const snd=tag==="sound"?el:el.querySelector("sound[tempo]");
+          const bpmv=snd?Number(snd.getAttribute("tempo")):0;
+          if(bpmv>0){
+            const offEl=tag==="direction"?el.querySelector(":scope > offset"):null;
+            const o=cur+(offEl?(Number(offEl.textContent)||0):0);
+            mtempos.push({off:Math.max(0,o)/divisions, bpm:bpmv});
+          }
+          continue;
+        }
         if(tag==="attributes"){
           const d=el.querySelector("divisions"); if(d) divisions=Number(d.textContent)||divisions;
+          const tme=el.querySelector("time");
+          if(tme){ const bt=Number(tme.querySelector("beat-type")?.textContent||4), bts=Number(tme.querySelector("beats")?.textContent||4); curUnit=(bt===8&&bts%3===0&&bts>=6)?1.5:1; }
           const kf=el.querySelector("key > fifths");
           if(kf&&!keySeen){ keyFifths=Number(kf.textContent)||0; keySeen=true; }
         }else if(tag==="barline"){
@@ -421,7 +558,7 @@ function parseMusicXML(xmlText, fname){
           if(!isChord){ cur+=dur; maxCur=Math.max(maxCur,cur); }
         }
       }
-      meas.push({notes:mn, len:maxCur/divisions, fwd, bwd, endStart, endStop});
+      meas.push({notes:mn, len:maxCur/divisions, fwd, bwd, endStart, endStop, unit:curUnit, tempos:mtempos});
     }
     // 1番・2番カッコの範囲を各小節に割り当て
     let activeEnding=null;
@@ -456,10 +593,11 @@ function parseMusicXML(xmlText, fname){
       i++;
     }
     // 展開順に音符を並べる(小節の開始位置も記録)
-    let gt=0; const raw=[]; const measStarts=[];
+    let gt=0; const raw=[]; const measStarts=[]; const measUnits=[]; const tempos=[];
     for(const o of order){
       const m=meas[o.idx];
-      measStarts.push(gt);
+      measStarts.push(gt); measUnits.push(m.unit);
+      for(const t of m.tempos) tempos.push({beat:gt+t.off, bpm:t.bpm});
       for(const n of m.notes){
         // 周回に合わせて歌詞を選ぶ(2周目なら2番、なければ1番)
         const lyric=n.lyr[String(o.pass)]??n.lyr["1"]??Object.values(n.lyr)[0]??"";
@@ -487,7 +625,7 @@ function parseMusicXML(xmlText, fname){
     }
     if(notes.length){
       const pname=nameOf[part.getAttribute("id")]||"";
-      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, totalBeats:Math.max(0.001,totalBeats), keyFifths});
+      parts.push({name:pname||("パート"+(parts.length+1)), notes, measStarts, measUnits, tempos, totalBeats:Math.max(0.001,totalBeats), keyFifths});
     }
   }
   if(!parts.length) throw new Error("音符が見つかりませんでした");
@@ -499,7 +637,10 @@ function parseMusicXML(xmlText, fname){
     const bts=Number(timeEl.querySelector("beats")?.textContent||4);
     if(bt===8 && bts%3===0 && bts>=6) beatUnit=1.5;
   }
-  return {title, bpm, parts, beatUnit};
+  // 🎼 テンポ変更は、いずれかのパートに書かれていれば曲全体に適用（ふつうは第1パートに書かれている）
+  const tpart=parts.find(p=>p.tempos&&p.tempos.length);
+  const tempos=tpart?tpart.tempos:[];
+  return {title, bpm:(tempos.length&&tempos[0].beat<1e-9)?tempos[0].bpm:bpm, parts, beatUnit, tempos};
 }
 
 let songMeta=null;
@@ -507,7 +648,7 @@ let songMeta=null;
    端末に保存ずみの楽譜は「古い読み取り方の結果」なので、
    番号が変わっていたら捨てて、読み込み直してもらう。
    （2026-08-24：くり返し記号の展開を修正したため 1 → 2） */
-const PARSER_VERSION = 2;
+const PARSER_VERSION = 3;   // 2026-09-14：テンポ変更・小節ごとの拍子を読むようにしたため 2 → 3
 function saveSongToDevice(){
   if(!songMeta) return;
   try{
@@ -533,6 +674,7 @@ function setSong(s, save=true){
   if(!(pi>=0&&pi<s.parts.length)) pi=0;
   sel.value=String(pi);
   applyPart(pi);
+  hamoriReset(); hamoriUpdateBtn(); classOnSongChange();
   banner(s.parts.length>1?"この楽譜には複数のパートがあります。歌うパートをプルダウンで選んでください(今は「"+escapeHtml(s.parts[0].name)+"」を表示中)。":null);
 }
 function applyPart(i){
@@ -542,7 +684,10 @@ function applyPart(i){
   song={title:songMeta.title, bpm:songMeta.bpm, beatUnit:songMeta.beatUnit||1, notes:p.notes,
         measStarts:p.measStarts||[0],
         totalBeats:p.totalBeats||p.notes.reduce((a,n)=>Math.max(a,n.startBeat+n.beats),0),
-        keyFifths:p.keyFifths||0};
+        keyFifths:p.keyFifths||0,
+        tempos:(songMeta.tempos&&songMeta.tempos.length)?songMeta.tempos:(p.tempos||null),
+        measUnits:p.measUnits||null};
+  song.tm=null;
   song.otherParts=songMeta.parts.map((q,j)=>({name:q.name,notes:q.notes,idx:j})).filter(q=>q.idx!==i);
   const palette=["#CFDCEA","#E6D9F2","#F2E3CF","#D9F2DC","#F2D9DC"];
   const list=$("partPlayList"); list.innerHTML="";
@@ -573,9 +718,9 @@ function applyPart(i){
   $("rangeFrom").max=mc; $("rangeTo").max=mc;
   $("rangeFrom").value=firstM; $("rangeTo").value=lastM;
   $("rangeRow").style.display="flex";
-  viewOffset=song.measStarts[firstM-1]*beatSec();
+  viewOffset=secOfBeat(song.measStarts[firstM-1]);
   updateQbar();
-  $("songTitle").innerHTML="読み込み中の曲:<b>"+escapeHtml(song.title)+"</b>("+song.notes.length+"音・"+mc+"小節・♩="+song.bpm+")";
+  $("songTitle").innerHTML="読み込み中の曲:<b>"+escapeHtml(song.title)+"</b>("+song.notes.length+"音・"+mc+"小節・♩="+song.bpm+((song.tempos&&song.tempos.length>1)?"→ 途中で変わります":"")+")";
   $("playBtn").disabled=false; $("singBtn").disabled=false;
   $("echoBtn").disabled=false; $("rewindBtn").disabled=false;
   $("emptyMsg").style.display="none";
@@ -595,7 +740,7 @@ function resize(){
 window.addEventListener("resize",resize);
 
 function currentT(){
-  if(mode==="play"||mode==="sing") return getAudio().currentTime-startAt;
+  if(mode==="play"||mode==="sing"||mode==="hamori") return getAudio().currentTime-startAt;
   if(mode==="echo"&&echo) return echoT();
   if(mode==="paused"&&pausedAt!==null) return pausedAt;
   return viewOffset;
@@ -607,10 +752,10 @@ const RULER_H=24;   // 上の小節番号の帯（ここをなぞると区間え
 function measAtClientX(clientX, t){
   const r=cv.getBoundingClientRect(); const x=clientX-r.left;
   const tt=(t!==undefined?t:viewOffset)+(x-PLAYHEAD_X())/pps();
-  let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=tt+1e-6) mi=k;
+  let mi=0; for(let k=0;k<song.measStarts.length;k++) if(secOfBeat(song.measStarts[k])<=tt+1e-6) mi=k;
   return mi+1;
 }
-function measAtView(){ let mi=0; for(let k=0;k<song.measStarts.length;k++) if(song.measStarts[k]*beatSec()<=viewOffset+1e-3) mi=k; return mi+1; }
+function measAtView(){ let mi=0; for(let k=0;k<song.measStarts.length;k++) if(secOfBeat(song.measStarts[k])<=viewOffset+1e-3) mi=k; return mi+1; }
 cv.addEventListener("pointerdown",e=>{
   if(!song||isActive()) return;
   const r=cv.getBoundingClientRect();
@@ -715,7 +860,7 @@ function draw(t){
   if(song.measStarts){
     ctx2d.font="10px sans-serif"; ctx2d.textBaseline="top";
     for(let mi=0;mi<song.measStarts.length;mi++){
-      const x=off+song.measStarts[mi]*beatSec()*pps();
+      const x=off+secOfBeat(song.measStarts[mi])*pps();
       if(x<-30||x>W+30) continue;
       ctx2d.strokeStyle="#D8E2E8"; ctx2d.lineWidth=1;
       ctx2d.beginPath(); ctx2d.moveTo(x,14); ctx2d.lineTo(x,H-8); ctx2d.stroke();
@@ -784,6 +929,32 @@ function draw(t){
       ctx2d.textAlign="left"; ctx2d.textBaseline="top";
       ctx2d.fillText(n.lyric, x+2, y+h/2+3);
     }
+  }
+
+  // 🎶 ハモリ:とった声を、パートの色で かさねて描く（まっすぐ棒）
+  if(hamori.showTraces){
+    ctx2d.lineWidth=6; ctx2d.lineCap="round"; ctx2d.globalAlpha=0.85;
+    for(const k of Object.keys(hamori.takes)){
+      const tk=hamori.takes[k];
+      ctx2d.strokeStyle=hamori.colors[Number(k)%hamori.colors.length];
+      let sx0=0,sx1=0,sSnap=null,prevT=-1;
+      const flush=()=>{
+        if(sSnap===null) return;
+        if(sx1-sx0>=0.08*pps()){ const y=yOf(sSnap); ctx2d.beginPath(); ctx2d.moveTo(sx0,y); ctx2d.lineTo(Math.max(sx1,sx0+3),y); ctx2d.stroke(); }
+        sSnap=null;
+      };
+      for(const p of tk.trace){
+        const x=off+p.t*pps();
+        if(x<-10||x>W+10){ flush(); prevT=p.t; continue; }
+        const snap=(p.ok===true&&p.tg!=null)?p.tg:Math.round(p.midi);
+        if(sSnap===null){ sSnap=snap; sx0=x; sx1=x; }
+        else if(snap!==sSnap||(prevT>=0&&p.t-prevT>0.30)){ flush(); sSnap=snap; sx0=x; sx1=x; }
+        else sx1=x;
+        prevT=p.t;
+      }
+      flush();
+    }
+    ctx2d.globalAlpha=1;
   }
 
   // 歌声の軌跡(ぴったり=緑、ずれ=オレンジ)
@@ -863,8 +1034,8 @@ function draw(t){
   // 区間えらび中（上の帯をなぞっている間）
   if(rulerSel&&song.measStarts){
     const a=Math.min(rulerSel.a,rulerSel.b), b=Math.max(rulerSel.a,rulerSel.b);
-    const xa=off+song.measStarts[a-1]*beatSec()*pps();
-    const xb=off+(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*beatSec()*pps();
+    const xa=off+secOfBeat(song.measStarts[a-1])*pps();
+    const xb=off+secOfBeat(b<song.measStarts.length?song.measStarts[b]:song.totalBeats)*pps();
     ctx2d.fillStyle="rgba(255,122,89,0.18)"; ctx2d.fillRect(xa,0,xb-xa,H);
     ctx2d.fillStyle="#B3441F"; ctx2d.font="bold 12px sans-serif"; ctx2d.textAlign="left"; ctx2d.textBaseline="top";
     ctx2d.fillText(a===b?(a+"小節目"):(a+"〜"+b+"小節目"), Math.max(4,xa+4), 16);
@@ -1050,13 +1221,14 @@ function scheduleMetronome(when){
   o.connect(g); g.connect(masterGain||ac.destination);
   let any=false, firstT=Infinity, lastT=0;
   for(let i=0;i<ms.length;i++){
-    const mStart=ms[i]*beatSec();
-    const mEnd=(i+1<ms.length?ms[i+1]:total)*beatSec();
+    const mStart=secOfBeat(ms[i]);
+    const mEnd=secOfBeat(i+1<ms.length?ms[i+1]:total);
     if(mEnd<=sessFrom||mStart>=sessTo) continue;
-    const unit=(song.beatUnit||1)*beatSec();  // 8分の6などは付点4分=1.5拍を1拍として鳴らす
-    const beats=Math.max(1,Math.round((mEnd-mStart)/unit));
+    const unitB=(song.measUnits&&song.measUnits[i])||song.beatUnit||1;  // 8分の6などは付点4分=1.5拍を1拍として鳴らす（小節ごと）
+    const lenB=(i+1<ms.length?ms[i+1]:total)-ms[i];
+    const beats=Math.max(1,Math.round(lenB/unitB));
     for(let k=0;k<beats;k++){
-      const tAbs=mStart+k*unit;
+      const tAbs=secOfBeat(ms[i]+k*unitB);   // 小節の途中でテンポが変わっても拍の位置は楽譜どおり
       if(tAbs<sessFrom-1e-3||tAbs>=sessTo-1e-3) continue;
       if(tAbs<schedFloor-1e-3) continue;
       const t0=when+(tAbs-sessFrom);
@@ -1080,7 +1252,7 @@ function scheduleCountIn(when,beats){
   for(let i=0;i<beats;i++){
     const o=ac.createOscillator(), g=ac.createGain();
     o.type="square"; o.frequency.value=i===0?1320:880;
-    const t0=when+i*((song.beatUnit||1)*beatSec());
+    const t0=when+i*countInSec(1);
     g.gain.setValueAtTime(cv2,t0);
     g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     o.connect(g); g.connect(masterGain||ac.destination);
@@ -1095,6 +1267,7 @@ function stopScheduled(){
 function stopAll(){
   cancelAnimationFrame(rafId);
   stopScheduled();
+  hamoriStopNodes(); // 🎶 かさねて再生中なら止める
   pausedAt=null; prevMode=null;
   if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; analyser=null; }
   if(recorder&&recStarted&&recorder.state==="recording"){ try{recorder.stop();}catch(e){} }
@@ -1107,6 +1280,7 @@ function stopAll(){
   $("breathBtn").disabled=false;
   $("freeBtn").disabled=false;
   if(song){ $("playBtn").disabled=false; $("singBtn").disabled=false; $("echoBtn").disabled=false; $("rewindBtn").disabled=false; }
+  hamoriAfterStop();
 }
 
 $("playBtn").addEventListener("click",()=>{
@@ -1144,16 +1318,21 @@ async function setupMic(aec){
   }catch(e){ recorder=null; }
   return true;
 }
+let recStartSongT=0;   // 録音を始めた瞬間の、曲の中での秒（ハモリで重ねるときの基準）
 function recStartIfNeeded(){
-  if(recorder&&!recStarted){ try{recorder.start();}catch(e){} recStarted=true; }
+  if(recorder&&!recStarted){ try{recorder.start();}catch(e){} recStarted=true; recStartSongT=sessFrom+(getAudio().currentTime-startAt); }
 }
 function recFinish(show){
   if(recorder&&recStarted&&recorder.state==="recording"){
     recorder.onstop=()=>{
-      if(show&&recChunks.length){
-        if(recUrl) URL.revokeObjectURL(recUrl);
-        recUrl=URL.createObjectURL(new Blob(recChunks,{type:recorder.mimeType||"audio/webm"}));
-        $("recWrap").style.display="block";
+      if(recChunks.length){
+        const blob=new Blob(recChunks,{type:recorder.mimeType||"audio/webm"});
+        if(show){
+          if(recUrl) URL.revokeObjectURL(recUrl);
+          recUrl=URL.createObjectURL(blob);
+          $("recWrap").style.display="block";
+        }
+        hamoriOnTake(blob); // 🎶 ハモリの録音待ちなら受け取る（待ちでなければ何もしない）
       }
     };
     try{recorder.stop();}catch(e){}
@@ -1176,6 +1355,7 @@ $("singBtn").addEventListener("click",async()=>{
   startSession(true);
 });
 $("stopBtn").addEventListener("click",()=>{
+  hamori.pending=null; cls.pending=null; // 途中で止めたので、ハモリ／クラスの記録としては受け取らない
   const t=Math.max(0,Math.min(song?songDur():0,currentT()));
   stopAll();
   if(!song){ $("emptyMsg").style.display="flex"; return; }
@@ -1186,6 +1366,7 @@ $("stopBtn").addEventListener("click",()=>{
 function startSession(withMic){
   lastResult=null; $("result").style.display="none"; $("recWrap").style.display="none";
   trace=[];
+  hamori.showTraces=false; $("hamoriBtn").disabled=true; $("classBtn").disabled=true;
   micGate=0.006; calibRms=0; calibArr=[];
   combo=0; comboBest=0; comboBurst=null; sparkles.length=0;
   liveStats=[]; liveDiff=null; recentM=[];
@@ -1197,7 +1378,7 @@ function startSession(withMic){
   let from=rf;
   if(viewOffset>rf+1e-3&&viewOffset<rt-0.3){
     for(const msb of song.measStarts){
-      const s=msb*beatSec();
+      const s=secOfBeat(msb);
       if(s<=viewOffset+1e-3&&s>=rf-1e-3) from=Math.max(from,s);
     }
   }
@@ -1206,7 +1387,7 @@ function startSession(withMic){
   const countBeats=4;
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,countBeats);
-  const melodyAt=begin+countBeats*((song.beatUnit||1)*beatSec());
+  const melodyAt=begin+countInSec(countBeats);
   if(!withMic||$("guideChk").checked) scheduleMelody(melodyAt);
   scheduleMetronome(melodyAt);
   startAt=melodyAt;
@@ -1274,7 +1455,7 @@ function loop(){
     if($("loopChk").checked){
       // くりかえし:1拍あけて同じ区間をもう一度
       const ac=getAudio();
-      startAt=ac.currentTime+beatSec();
+      startAt=ac.currentTime+beatSecAt(beatOfSec(sessFrom));
       schedFloor=sessFrom;
       scheduleMelody(startAt);
       scheduleMetronome(startAt);
@@ -1333,6 +1514,7 @@ function togglePause(){
     cancelAnimationFrame(rafId);
     stopScheduled();
     if(recorder&&recorder.state==="recording"){ try{recorder.pause();}catch(e){} }
+    if(hamori.pending!==null) hamori.pausedInTake=true; // 🎶 一時停止すると録音に切れ目ができ、かさねたときにずれる
     prevMode=mode; mode="paused";
     $("pauseBtn").textContent="▶ 再開";
     draw(pausedAt);
@@ -1423,7 +1605,7 @@ $("echoBtn").addEventListener("click",async()=>{
   const ac=getAudio();
   const begin=ac.currentTime+0.15;
   scheduleCountIn(begin,4);
-  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:4*((song.beatUnit||1)*beatSec())};
+  echo={phrases, i:0, phase:"count", phaseStart:begin, phaseLen:countInSec(4)};
   echoLoop();
 });
 function echoLoop(){
@@ -1810,6 +1992,7 @@ function finishSing(){
   recFinish(true);
   stopAll();
   showResult();
+  classOnResult(); // 🏆 クラスモードの順番なら、ランキングに入れる
 }
 function whenLabel(){
   const d=new Date();
@@ -1929,6 +2112,337 @@ function restoreSong(){
     banner("📂 前回の楽譜「"+escapeHtml(meta.title||"")+"」をこの端末の記憶から開きました。別の曲にするには「楽譜を読み込む」を押してください。");
   }catch(e){}
 }
+
+/* ====== 🎶 ハモリモード：パートを一人ずつ録音して、かさねて聴く ======
+   ① あそぶ：自分のパートをふつうに「歌ってみる」（マイク1本・同じ端末で交代）
+   ② きづく：2本以上そろったら「かさねて きく」。自分の声と友だちの声が同時に鳴り、
+             線がパートの色で重なって見える（＝ハモった、が耳と目でわかる）
+   ③ なまえ：パート名（ソプラノ/アルト等）は楽譜の名前をそのまま表示。用語は足さない
+   録音は Web Audio の AudioBuffer にして start(when, offset) で同時再生（サンプル精度で同期） */
+var hamori={open:false, takes:{}, range:null, pending:null, showTraces:false, nodes:[],
+            colors:["#7B61FF","#FF6FAE","#2BB6C9","#F5A623","#3FBF6B","#E2574C"]};
+function hamoriParts(){ return (songMeta&&songMeta.parts)?songMeta.parts:[]; }
+function hamoriUpdateBtn(){ $("hamoriBtn").disabled=!(hamoriParts().length>1); }
+function hamoriOpen(){
+  if(hamoriParts().length<2){ banner("🎶 ハモリは、パートが2つ以上ある楽譜で使えます。「📄 楽譜を読み込む」で合唱の楽譜（MusicXML）を開いてください"); return; }
+  if(cls.open) classClose();
+  hamori.open=true; $("hamoriPanel").style.display="block"; hamoriRender();
+  $("hamoriPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function hamoriClose(){
+  hamori.open=false; hamori.pending=null; hamori.showTraces=false;
+  if(mode==="hamori") stopAll();
+  $("hamoriPanel").style.display="none";
+  if(song&&mode==="idle") draw(currentT());
+}
+function hamoriReset(){
+  hamori.takes={}; hamori.range=null; hamori.pending=null; hamori.showTraces=false;
+  if(mode==="hamori") stopAll();
+  if(hamori.open) hamoriRender();
+}
+function hamoriRender(){
+  const list=$("hamoriParts"); if(!list) return;
+  list.innerHTML="";
+  hamoriParts().forEach((p,i)=>{
+    const t=hamori.takes[i];
+    const row=document.createElement("div"); row.className="hRow";
+    const name=document.createElement("span"); name.className="hName";
+    const chip=document.createElement("span"); chip.className="hChip"; chip.style.background=hamori.colors[i%hamori.colors.length];
+    name.append(chip, document.createTextNode(p.name));
+    const st=document.createElement("span");
+    if(t){ st.className="hOk"; st.textContent="✓ とれた（"+t.hits+"/"+t.total+"音 かさなった）"; }
+    else { st.className="hNo"; st.textContent="まだ"; }
+    const b=document.createElement("button"); b.className=t?"":"primary";
+    b.textContent=t?"🎤 うたいなおす":"🎤 このパートを うたう";
+    b.addEventListener("click",()=>hamoriSing(i));
+    row.append(name, st, b);
+    if(t){
+      const d=document.createElement("button"); d.textContent="🗑"; d.title="この録音を消す";
+      d.addEventListener("click",()=>{ delete hamori.takes[i]; if(!Object.keys(hamori.takes).length) hamori.range=null; hamori.showTraces=false; hamoriRender(); if(song&&mode==="idle") draw(currentT()); });
+      row.appendChild(d);
+    }
+    list.appendChild(row);
+  });
+  const n=Object.keys(hamori.takes).length;
+  $("hamoriPlayBtn").disabled=n<2||isActive();
+  const note=$("hamoriNote");
+  if(hamori.range) note.textContent="区間：小節 "+hamori.range[0]+"〜"+hamori.range[1]+"（さいしょに歌った区間に そろえています。区間を変えるときは「ぜんぶ やりなおす」）";
+  else note.textContent="① ひとりめが 自分のパートを歌う → ② ふたりめが べつのパートを歌う → ③「かさねて きく」。同じ端末で、こうたいで歌います。";
+}
+async function hamoriSing(i){
+  if(isActive()) return;
+  hamori.pausedInTake=false;
+  const sel=$("partSel");
+  if(Number(sel.value)!==i){ sel.value=String(i); applyPart(i); }
+  if(hamori.range){ $("rangeFrom").value=hamori.range[0]; $("rangeTo").value=hamori.range[1]; onRangeChange(); }
+  viewOffset=rangeSec()[0];
+  banner(null);
+  if(!await setupMic($("guideChk").checked)) return;
+  hamori.pending=i;
+  startSession(true);
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+async function hamoriOnTake(blob){
+  if(hamori.pending===null||hamori.pending===undefined) return;
+  const i=hamori.pending; hamori.pending=null;
+  if(!lastResult){ return; }
+  const take={trace:trace.slice(), score:lastResult.score, hits:lastResult.hits, total:lastResult.total,
+              from:sessFrom, to:sessTo, recAt:recStartSongT, ab:null};
+  try{
+    const buf=await blob.arrayBuffer();
+    take.ab=await getAudio().decodeAudioData(buf.slice(0));
+  }catch(e){ take.ab=null; }
+  if(!take.ab){ banner("⚠️ 録音を読み込めませんでした。もう一度「このパートを うたう」をためしてください"); return; }
+  hamori.takes[i]=take;
+  if(!hamori.range) hamori.range=rangeMeas();
+  if(hamori.pausedInTake){ hamori.pausedInTake=false; banner("⚠️ 途中で一時停止したので、かさねたときに少しずれることがあります。ずれていたら「うたいなおす」で止めずに歌ってみてください"); }
+  hamoriRender();
+  const n=Object.keys(hamori.takes).length;
+  if(n>=2){ $("hamoriPanel").scrollIntoView({behavior:"smooth",block:"nearest"}); }
+}
+function hamoriSyncOtherChecks(){
+  if(!song||!song.otherParts) return;
+  const cbs=$("partPlayList").querySelectorAll("input");
+  song.otherParts.forEach((q,k)=>{ if(cbs[k]) cbs[k].checked=!!q.on; });
+}
+function hamoriPlay(){
+  if(isActive()||!song) return;
+  const keys=Object.keys(hamori.takes).map(Number);
+  if(keys.length<2) return;
+  stopAll();
+  lastResult=null; trace=[]; $("result").style.display="none"; $("recWrap").style.display="none";
+  const [a,b]=hamori.range; $("rangeFrom").value=a; $("rangeTo").value=b; onRangeChange();
+  const [from,to]=rangeSec();
+  // 録音したパートのブロックも見えるようにする
+  if(song.otherParts){ song.otherParts.forEach(q=>{ if(hamori.takes[q.idx]) q.on=true; }); hamoriSyncOtherChecks(); }
+  const ac=getAudio();
+  mode="hamori"; hamori.showTraces=true;
+  sessFrom=from; sessTo=to; schedFloor=sessFrom;
+  const begin=ac.currentTime+0.15;
+  startAt=begin;
+  hamori.nodes=[];
+  for(const k of keys){
+    const t=hamori.takes[k];
+    const src=ac.createBufferSource(); src.buffer=t.ab;
+    const g=ac.createGain(); g.gain.value=1.0;
+    src.connect(g); g.connect(ac.destination);
+    const off=from-t.recAt;              // 再生開始点が、録音の何秒目か
+    if(off>=0) src.start(begin, Math.min(off, Math.max(0,t.ab.duration-0.01)));
+    else src.start(begin-off, 0);        // 録音のほうが後から始まっている
+    hamori.nodes.push(src,g);
+  }
+  if($("hamoriGuideChk").checked){
+    for(const k of keys) scheduleNotes(songMeta.parts[k].notes, begin, 0.28, "sine");
+  }
+  $("stopBtn").disabled=false; $("playBtn").disabled=true; $("singBtn").disabled=true; $("echoBtn").disabled=true;
+  $("hamoriPlayBtn").disabled=true; $("hamoriBtn").disabled=true;
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+  hamoriLoop();
+}
+function hamoriLoop(){
+  if(mode!=="hamori") return;
+  const t=getAudio().currentTime-startAt;
+  drawThrottled(Math.max(sessFrom+t, sessFrom));
+  if(t>sessTo-sessFrom+0.6){ stopAll(); viewOffset=sessFrom; draw(viewOffset); return; }
+  rafId=requestAnimationFrame(hamoriLoop);
+}
+function hamoriStopNodes(){
+  for(const n of hamori.nodes){ try{ n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} }
+  hamori.nodes=[];
+}
+function hamoriAfterStop(){
+  hamoriUpdateBtn(); classAfterStop();
+  if(hamori.open) hamoriRender();
+}
+$("hamoriBtn").addEventListener("click",()=>{ if(isActive()) return; hamori.open?hamoriClose():hamoriOpen(); });
+$("hamoriPlayBtn").addEventListener("click",hamoriPlay);
+$("hamoriResetBtn").addEventListener("click",()=>{ if(!Object.keys(hamori.takes).length||confirm("録音をぜんぶ消して、やりなおしますか?")){ hamoriReset(); if(song&&mode==="idle") draw(currentT()); } });
+$("hamoriCloseBtn").addEventListener("click",hamoriClose);
+
+/* ====== 🏆 クラスモード：みんなで順番に歌って、黒板にランキング ======
+   ① あそぶ：名前を登録して、順番に「うたう」（ふつうの歌ってみると同じ）
+   ② きづく：歌い終わるたびに順位が動く。既定の物差しは「のび」＝前回の自分より何点あがったか
+             （声の小さい子でも勝てる／大きい声は一切点数に入らない＝怒鳴りが有利にならない）
+   ③ なまえ：用語は出さない。先生が物差しを切り替えられる（かさなった音・％・⭐）
+   名前と「前回の点」はこの端末に残る（曲ごと）。サーバなし。 */
+var cls={open:false, members:[], pending:null, range:null, seq:1};
+var CLS_KEY="utamie_class_members", CLS_HIST="utamie_class_hist";
+function clsLoad(){ try{ const a=JSON.parse(store.get(CLS_KEY)||"[]"); if(Array.isArray(a)) cls.members=a.map(m=>({id:cls.seq++, name:String(m.name||""), team:m.team||null, prev:null, score:null, hits:0, total:0, combo:0})); }catch(e){} clsLoadPrev(); }
+function clsSaveMembers(){ store.set(CLS_KEY, JSON.stringify(cls.members.map(m=>({name:m.name, team:m.team})))); }
+function clsHist(){ try{ return JSON.parse(store.get(CLS_HIST)||"{}")||{}; }catch(e){ return {}; } }
+function clsTitle(){ return song?song.title:""; }
+function clsLoadPrev(){ const h=clsHist()[clsTitle()]||{}; cls.members.forEach(m=>{ m.prev=(typeof h[m.name]==="number")?h[m.name]:null; }); }
+function clsCommit(){ // 今回の点を「前回の点」として残す
+  const h=clsHist(); const t=clsTitle(); if(!t) return; h[t]=h[t]||{};
+  cls.members.forEach(m=>{ if(m.score!==null) h[t][m.name]=m.score; });
+  try{ store.set(CLS_HIST, JSON.stringify(h)); }catch(e){}
+}
+function classVal(m){
+  if(m.score===null) return null;
+  const k=$("classMetric").value;
+  if(k==="hits") return m.hits;
+  if(k==="score") return m.score;
+  if(k==="combo") return m.combo;
+  return (m.prev===null)?null:(m.score-m.prev);   // のび
+}
+function classValText(m){
+  const k=$("classMetric").value, v=classVal(m);
+  if(m.score===null) return {t:"", c:"none"};
+  if(k==="nobi"){
+    if(v===null) return {t:"はじめて", s:m.score+"%", c:"none"};
+    return {t:(v>0?"+"+v:(v<0?String(v):"±0")), s:m.score+"%（前回 "+m.prev+"%）", c:v>0?"up":(v<0?"down":"")};
+  }
+  if(k==="hits") return {t:m.hits+"音", s:"／"+m.total+"音", c:""};
+  if(k==="score") return {t:m.score+"%", s:"", c:""};
+  return {t:"⭐×"+m.combo, s:m.score+"%", c:""};
+}
+function classSorted(){
+  const k=$("classMetric").value;
+  return cls.members.slice().sort((a,b)=>{
+    const va=classVal(a), vb=classVal(b);
+    const ha=va!==null, hb=vb!==null;
+    if(ha!==hb) return ha?-1:1;
+    if(ha&&va!==vb) return vb-va;
+    const sa=a.score===null?-1:a.score, sb=b.score===null?-1:b.score;
+    if(sa!==sb) return sb-sa;
+    return a.id-b.id;
+  });
+}
+function classRankOf(){ // 同点は同順位
+  const arr=classSorted(); const ranks=new Map(); let r=0, prevKey=null;
+  arr.forEach((m,i)=>{ const key=(classVal(m)===null?"n":classVal(m))+"|"+(m.score===null?"n":m.score); if(key!==prevKey){ r=i+1; prevKey=key; } ranks.set(m.id, m.score===null?null:r); });
+  return {arr, ranks};
+}
+function classTeamTotals(){
+  const t={red:{sum:0,n:0}, white:{sum:0,n:0}};
+  cls.members.forEach(m=>{ if(!m.team||!t[m.team]) return; const v=classVal(m); if(v!==null){ t[m.team].sum+=v; t[m.team].n++; } });
+  return t;
+}
+function classTeamHtml(big){
+  const t=classTeamTotals(); const k=$("classMetric").value;
+  const unit=k==="hits"?"音":(k==="combo"?"⭐":(k==="score"?"%":"点"));
+  const win=t.red.sum===t.white.sum?null:(t.red.sum>t.white.sum?"red":"white");
+  const f=(team,label)=>'<div class="cTeamBox '+team+(win===team?" win":"")+'"><span>'+label+'</span><b>'+(k==="nobi"&&t[team].sum>0?"+":"")+t[team].sum+unit+'</b><small>'+t[team].n+'人</small></div>';
+  return f("red","🔴 赤")+f("white","⚪ 白");
+}
+function classRender(){
+  const list=$("classList"); if(!list) return;
+  const team=$("classTeamChk").checked;
+  const {arr,ranks}=classRankOf();
+  list.innerHTML="";
+  arr.forEach(m=>{
+    const row=document.createElement("div"); row.className="cRow"+(cls.pending===m.id?" now":"")+(m.flash?" flash":""); m.flash=false;
+    const rk=ranks.get(m.id);
+    const rank=document.createElement("span"); rank.className="cRank"+(rk&&rk<=3?" top":""); rank.textContent=rk?(rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk+"位"):"–";
+    row.appendChild(rank);
+    if(team){
+      const tc=document.createElement("span"); tc.className="cTeam "+(m.team||"none"); tc.title="タップで 赤／白 を切りかえ";
+      tc.addEventListener("click",()=>{ m.team=m.team==="red"?"white":(m.team==="white"?null:"red"); clsSaveMembers(); classRender(); });
+      row.appendChild(tc);
+    }
+    const nm=document.createElement("span"); nm.className="cName"; nm.textContent=m.name; row.appendChild(nm);
+    const vt=classValText(m);
+    const val=document.createElement("span"); val.className="cVal "+vt.c; val.textContent=vt.t; if(vt.s){ const s=document.createElement("small"); s.textContent=vt.s; val.appendChild(s); }
+    row.appendChild(val);
+    const b=document.createElement("button"); b.className=m.score===null?"primary":""; b.textContent=m.score===null?"🎤 うたう":"🎤 もういちど";
+    b.disabled=isActive(); b.addEventListener("click",()=>classSing(m.id)); row.appendChild(b);
+    const d=document.createElement("button"); d.textContent="🗑"; d.title="この なまえを消す";
+    d.addEventListener("click",()=>{ cls.members=cls.members.filter(x=>x.id!==m.id); clsSaveMembers(); classRender(); });
+    row.appendChild(d);
+    list.appendChild(row);
+  });
+  $("classTeams").style.display=team?"flex":"none";
+  if(team) $("classTeams").innerHTML=classTeamHtml(false);
+  const sung=cls.members.filter(m=>m.score!==null).length;
+  $("classShowBtn").disabled=sung<1||isActive();
+  const k=$("classMetric").value;
+  let note="大きな声は点数に入りません。見ているのは「高さ」だけです。";
+  if(k==="nobi") note+="　「のび」は前回の自分との比べっこ。1回目は「はじめて」になり、2回目から順位がつきます。";
+  if(cls.range) note+="　区間：小節 "+cls.range[0]+"〜"+cls.range[1]+"（このラウンドは全員同じ区間）";
+  if(!cls.members.length) note="なまえを入れて「＋ 追加」。なまえは この端末に残ります。";
+  $("classNote").textContent=note;
+}
+function classAdd(){
+  const inp=$("classNameIn"); const name=(inp.value||"").trim(); if(!name) return;
+  if(cls.members.some(m=>m.name===name)){ banner("同じ なまえが もうあります（"+escapeHtml(name)+"）。ちがう書き方にしてください（例：ゆい2）"); inp.focus(); return; }
+  const h=clsHist()[clsTitle()]||{};
+  const team=$("classTeamChk").checked?(cls.members.filter(m=>m.team==="red").length<=cls.members.filter(m=>m.team==="white").length?"red":"white"):null;
+  cls.members.push({id:cls.seq++, name, team, prev:(typeof h[name]==="number")?h[name]:null, score:null, hits:0, total:0, combo:0});
+  clsSaveMembers(); inp.value=""; inp.focus(); classRender();
+}
+async function classSing(id){
+  if(isActive()||!song) return;
+  const m=cls.members.find(x=>x.id===id); if(!m) return;
+  if(cls.range){ $("rangeFrom").value=cls.range[0]; $("rangeTo").value=cls.range[1]; onRangeChange(); }
+  viewOffset=rangeSec()[0];
+  banner(null);
+  if(!await setupMic($("guideChk").checked)) return;
+  cls.pending=id; classRender();
+  startSession(true);
+  $("stage").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classOnResult(){
+  if(cls.pending===null||!lastResult) return;
+  const m=cls.members.find(x=>x.id===cls.pending); cls.pending=null;
+  if(!m) return;
+  m.score=lastResult.score; m.hits=lastResult.hits; m.total=lastResult.total; m.combo=comboBest; m.flash=true;
+  if(!cls.range) cls.range=rangeMeas();
+  classRender();
+  $("classPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classShow(){
+  const team=$("classTeamChk").checked;
+  const {arr,ranks}=classRankOf();
+  $("classBigTeams").innerHTML=team?classTeamHtml(true):""; $("classBigTeams").style.display=team?"flex":"none";
+  const L=$("classBigList"); L.innerHTML="";
+  arr.filter(m=>m.score!==null).forEach(m=>{
+    const rk=ranks.get(m.id);
+    const row=document.createElement("div"); row.className="cBigRow"+(rk<=3?" r"+rk:"");
+    const vt=classValText(m);
+    row.innerHTML='<span class="cRank">'+(rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":rk+"位")+'</span>'
+      +(team?'<span class="cTeam '+(m.team||"none")+'"></span>':"")
+      +'<span class="cName"></span><span class="cVal '+vt.c+'"></span>';
+    row.querySelector(".cName").textContent=m.name;
+    const v=row.querySelector(".cVal"); v.textContent=vt.t; if(vt.s){ const s=document.createElement("small"); s.textContent=vt.s; v.appendChild(s); }
+    L.appendChild(row);
+  });
+  const cf=$("classConfetti"); cf.innerHTML="";
+  const em=["✨","🎵","⭐","🎶","💫"];
+  for(let i=0;i<36;i++){ const s=document.createElement("span"); s.textContent=em[i%em.length]; s.style.left=(Math.random()*100)+"%"; s.style.animationDuration=(2.2+Math.random()*2.2)+"s"; s.style.animationDelay=(Math.random()*1.2)+"s"; s.style.fontSize=(18+Math.random()*18)+"px"; cf.appendChild(s); }
+  $("classOverlay").classList.add("open");
+  clsCommit();
+}
+function classNextRound(){
+  clsCommit(); clsLoadPrev();
+  cls.members.forEach(m=>{ m.score=null; m.hits=0; m.total=0; m.combo=0; });
+  cls.range=null; cls.pending=null;
+  classRender();
+}
+function classOpen(){
+  if(!song){ banner("🏆 クラスモードは、曲をえらんでから使えます"); return; }
+  if(hamori.open) hamoriClose();
+  cls.open=true; $("classPanel").style.display="block"; classRender();
+  $("classPanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function classClose(){ cls.open=false; cls.pending=null; $("classPanel").style.display="none"; }
+function classOnSongChange(){ // 曲が変わったら、点はリセット。前回の点はその曲のものを読み直す
+  cls.members.forEach(m=>{ m.score=null; m.hits=0; m.total=0; m.combo=0; }); cls.range=null; cls.pending=null; clsLoadPrev();
+  $("classBtn").disabled=!song; if(cls.open) classRender();
+}
+function classAfterStop(){ $("classBtn").disabled=!song; if(cls.open) classRender(); }
+$("classBtn").addEventListener("click",()=>{ if(isActive()) return; cls.open?classClose():classOpen(); });
+$("classAddBtn").addEventListener("click",classAdd);
+$("classNameIn").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); classAdd(); } });
+$("classTeamChk").addEventListener("change",()=>{ if($("classTeamChk").checked){ cls.members.forEach((m,i)=>{ if(!m.team) m.team=i%2?"white":"red"; }); clsSaveMembers(); } classRender(); });
+$("classMetric").addEventListener("change",()=>{ store.set("utamie_class_metric",$("classMetric").value); classRender(); });
+$("classShowBtn").addEventListener("click",classShow);
+$("classNextBtn").addEventListener("click",()=>{ if(!cls.members.some(m=>m.score!==null)||confirm("いまの点を「前回の点」として残して、つぎのラウンドにしますか?")) classNextRound(); });
+$("classClearBtn").addEventListener("click",()=>{ if(!cls.members.length||confirm("なまえをぜんぶ消しますか?（前回の点の記録は残ります）")){ cls.members=[]; clsSaveMembers(); cls.range=null; classRender(); } });
+$("classCloseBtn").addEventListener("click",classClose);
+$("classBigClose").addEventListener("click",()=>{ $("classOverlay").classList.remove("open"); $("classConfetti").innerHTML=""; });
+$("classOverlay").addEventListener("click",e=>{ if(e.target===$("classOverlay")){ $("classOverlay").classList.remove("open"); $("classConfetti").innerHTML=""; } });
+(function(){ const mv=store.get("utamie_class_metric"); if(mv&&$("classMetric").querySelector('option[value="'+mv+'"]')) $("classMetric").value=mv; })();
+clsLoad();
 
 resize();
 restoreSettings();
@@ -2050,6 +2564,7 @@ restoreSong();
   function songPayload(meta){
     var o={title:meta.title, bpm:meta.bpm, parts:meta.parts};
     if(meta.beatUnit) o.beatUnit=meta.beatUnit;
+    if(meta.tempos&&meta.tempos.length) o.tempos=meta.tempos;
     return o;
   }
   function pickSong(meta, save){
