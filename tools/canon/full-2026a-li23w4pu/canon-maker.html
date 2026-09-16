@@ -92,6 +92,14 @@
   .note.lit3{background:#4a9d5a;transform:scale(1.08);}
   .btn.canon.on{background:#7a34a8;color:#fff;}
   .cell.m4{border-left:1px solid #d8d2c2;}
+  #grpBar{display:flex;align-items:center;gap:6px;padding:6px 12px 0;flex-wrap:wrap;font-size:12px;font-weight:800;color:var(--muted);}
+  .gchip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff;color:var(--ink);font-size:13px;font-weight:800;cursor:pointer;user-select:none;min-height:34px;}
+  .gchip .dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .gchip.off{opacity:.38;text-decoration:line-through;}
+  .gchip.dis{opacity:.25;pointer-events:none;text-decoration:none;}
+  #offWrap.dis{opacity:.35;pointer-events:none;}
+  #offSeg button{padding:6px 10px;min-height:32px;font-size:13px;}
+  #offInfo b{color:#2e8b57;} #offInfo b.bad{color:#c0392b;}
   .chordrow .ch .who{position:absolute;left:6px;top:3px;font-size:10px;background:rgba(255,255,255,.85);color:var(--ink);border-radius:999px;padding:0 6px;}
   .chordrow .ch .ok{position:absolute;right:6px;top:2px;font-size:15px;}
   .chordrow .ch{cursor:pointer;}
@@ -221,6 +229,7 @@
     <button class="tool" id="chordBtn" style="aspect-ratio:auto;padding:8px 4px"><span class="g" style="font-size:22px">🎹</span><span class="n">わおんも<br>ならす</span></button>
   </aside>
   <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div id="grpBar"><span>きく：</span><span class="gchip" data-g="0"><span class="dot" style="background:#ff7a59"></span>1グループ</span><span class="gchip" data-g="1"><span class="dot" style="background:#4a90e2"></span>2グループ</span><span class="gchip" data-g="2"><span class="dot" style="background:#4a9d5a"></span>3グループ</span><span class="gchip" data-g="acc"><span class="dot" style="background:#b7b0a0"></span>ばん奏</span><span id="grpHint" style="font-weight:700">（🎼 カノンできく にすると、2・3グループが入ります）</span><span id="offWrap" style="display:inline-flex;align-items:center;gap:6px;margin-left:10px"><span>間かく：</span><span class="seg" id="offSeg"><button data-off="0">0</button><button data-off="1">1</button><button data-off="2">2</button><button data-off="4" class="on">4</button><button data-off="8">8</button></span><span>小節</span><span id="offInfo" style="font-weight:700"></span></span></div>
     <div id="rcardBar"><span class="ttl">リズムカード</span><div id="rcards"></div><span class="hint">えらんで、小節の中をタップ</span></div>
     <section class="stage" id="stage"></section>
   </div>
@@ -228,7 +237,7 @@
 
 <footer>
   🔒 音はこの端末の中だけで鳴らしています ｜ 和音の進み方はパッヘルベル「カノン」と同じ（C G｜Am Em｜F C｜F G・4小節でひとまわり） ｜
-  © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.16-4
+  © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.16-6
 </footer>
 
 <div id="lyricPanel" style="display:none;position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:48;background:#fff;border:2px solid var(--note-d);border-radius:18px;box-shadow:0 14px 34px -14px rgba(0,0,0,.45);padding:10px 12px;width:min(640px,96vw)">
@@ -301,7 +310,7 @@
       <button class="btn" id="xmlSolo" style="justify-content:center">せんりつ ＋ ばん奏（3パート）</button>
       <button class="btn" id="xmlCanon" style="justify-content:center">🎼 カノンの形（グループ1・2・3 ＋ ばん奏）</button>
     </div>
-    <p class="help" id="xmlHelp" style="margin-top:10px">カノンの形は、3グループが4小節ずつずれて入る楽譜になります（8小節・12小節で重なりが出ます）。</p>
+    <p class="help" id="xmlHelp" style="margin-top:10px">カノンの形は、3グループが「間かく」で選んだ小節数ずつずれて入る楽譜になります（いまの設定で書き出します）。</p>
     <div style="text-align:right;margin-top:8px"><button class="btn ghost small" id="xmlClose">とじる</button></div>
   </div>
 </div>
@@ -364,7 +373,7 @@
       ・リズムカードをえらんで小節の中をタップすると、その高さで1小節ぶんのリズムが入ります。あとは音の上をタップして高さをかえるだけです。<br>
       ・和音は半小節ごとにかわります（C G｜Am Em｜F C｜F G の4小節でひとまわり。パッヘルベルのカノンと同じ）。<br>
       ・ルール：各小節の1拍めと3拍めの音は、そのときの和音の音のどれかから／最後の小節の最後の音は「ド」で終わる（そのあと「おわりの和音」が鳴ります）。守れていない小節には「？」が出ます（止めはしません）。<br>
-      ・「🎼 カノンできく」：作ったせんりつを、3グループが4小節ずつずれて追いかけるカノンにして鳴らします。8小節・12小節にすると重なりが生まれます（4小節だと、じゅんばんに吹くだけになります）。<br>
+      ・「🎼 カノンできく」：作ったせんりつを、3グループがずれて追いかけるカノンにして鳴らします。「きく」でグループごとに消せ、「間かく」を0・1・2・4・8小節に変えられます（教科書は4）。4以外にすると「ばん奏の和音とあっている音」の％が下がるので、「なぜ4小節？」が見えます。8小節・12小節にすると重なりが生まれます。<br>
       ・作ったせんりつは「🔗 リンク」で共有、「📷 かきのこす」で画像にできます。この端末には自動で記憶されます。
     </p>
     <div style="text-align:right;margin-top:8px"><button class="btn" id="closeSet">とじる</button></div>
@@ -403,8 +412,10 @@ function halfOf(s){ return HALF[Math.floor(s/4)%8]; }          // s: スロッ�
 function chordAtSlot(s){ return CHORD[halfOf(s).k]; }
 function chordOf2(m){ return chordAtSlot(m*8+4); }              // 小節の後半（3拍め）の和音
 function defAllow(){ const a={}; CH_KEYS.forEach(k=>a[k]=[1,1,1,1,1,1,1,1]); return a; }
-const CANON_GROUPS=3, CANON_OFF=32;                             // 3グループ・4小節（32スロット）ずれ
+const CANON_GROUPS=3; let canonOffBars=4;                       // 3グループ・間かく（小節）は 0/1/2/4/8 で変えられる（既定4＝教科書）
+function canonOff(){ return canonOffBars*8; }                  // スロット数
 let canonMode=false;
+let mute=[false,false,false];                                  // きく：グループごとに消す（鳴らしながら切りかえられる）
 /* 音符記号（フォントに無い環境が多いので自前SVG） */
 const SVG={
   half:'<svg viewBox="0 0 24 40" aria-label="2分音符"><path d="M20 4v26" stroke="currentColor" stroke-width="2.2" fill="none"/><ellipse cx="12" cy="31" rx="8.5" ry="5.6" transform="rotate(-20 12 31)" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>',
@@ -678,7 +689,7 @@ function placeAt(s,p){
   previewNote(p,len);
   afterEdit();
 }
-function afterEdit(){ renderNotes(); renderRhythm(); checkRules(false); renderForm(); save(); if(lyricMode){ if(!notes.length) lyricExit(); else lyricShow(); } }
+function afterEdit(){ renderNotes(); renderRhythm(); checkRules(false); renderForm(); save(); renderOffInfo(); if(lyricMode){ if(!notes.length) lyricExit(); else lyricShow(); } }
 
 const TOOLS=[{len:1,g:"♪",n:"はんぱく"},{len:2,g:"♩",n:"1ぱく"},{len:4,svg:"half",n:"2はく"},{len:6,svg:"dhalf",n:"3ぱく"},{len:8,svg:"whole",n:"4はく"},{len:"rest",svg:"rest",n:"やすみ",cls:" erase"}];
 function buildTools(){
@@ -691,8 +702,16 @@ function buildTools(){
     box.appendChild(b); });
   const cur=box.querySelector(`.tool[data-tool="${tool}"]`)||box.querySelector('.tool[data-tool="2"]')||box.querySelector(".tool"); if(cur){ cur.classList.add("on"); tool=cur.dataset.tool==="rest"?"rest":Number(cur.dataset.tool); }
 }
-$("chordBtn").addEventListener("click",()=>{ chordOn=!chordOn; $("chordBtn").classList.toggle("on",chordOn); toast(chordOn?"和音もいっしょに鳴らします":"せんりつだけ鳴らします"); });
-$("chordBtn").classList.add("on");
+function canonHarmony(){ let ok=0,all=0; for(let g=1;g<CANON_GROUPS;g++){ notes.forEach(n=>{ if(n.s%4!==0) return; all++; if(chordAtSlot(n.s+g*canonOff()).tones.includes(n.p)) ok++; }); } return {ok,all,pct:all?Math.round(ok/all*100):100}; }
+function renderOffInfo(){ const el=$("offInfo"); if(!el) return; if(!canonMode||!notes.length){ el.innerHTML=""; return; }
+  const h=canonHarmony(); const good=h.pct>=90;
+  el.innerHTML=`ばん奏の和音とあっている音：<b class="${good?"":"bad"}">${h.pct}%</b>（強い拍で数えています）`+(canonOffBars%4===0?"　ばん奏は4小節でひとまわりなので、あとから入るグループも同じ和音の上になります":"　あとから入るグループが、ちがう和音の上でせんりつを吹くことになります"); }
+function syncChips(){ const ow=$("offWrap"); if(ow) ow.classList.toggle("dis",!canonMode); renderOffInfo(); document.querySelectorAll(".gchip[data-g]").forEach(c=>{ const g=c.dataset.g; if(g==="acc"){ c.classList.toggle("off",!chordOn); return; } const gi=Number(g); c.classList.toggle("off",mute[gi]); c.classList.toggle("dis",!canonMode&&gi>0); }); const h=$("grpHint"); if(h) h.style.display=canonMode?"none":""; $("chordBtn").classList.toggle("on",chordOn); }
+function setChordOn(v){ chordOn=v; syncChips(); toast(chordOn?"和音（ばん奏）もいっしょに鳴らします":"せんりつだけ鳴らします"); }
+$("chordBtn").addEventListener("click",()=>setChordOn(!chordOn));
+document.querySelectorAll("#offSeg button").forEach(b=>b.addEventListener("click",()=>{ canonOffBars=Number(b.dataset.off); document.querySelectorAll("#offSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.off)===canonOffBars)); renderOffInfo(); toast("間かく "+canonOffBars+"小節：グループが"+canonOffBars+"小節ずつずれて入ります"+(canonOffBars===0?"（ぜんぶ同時＝ユニゾン）":"")); if(playing){ stop(); start(); } }));
+document.querySelectorAll(".gchip[data-g]").forEach(c=>c.addEventListener("click",()=>{ const g=c.dataset.g; if(g==="acc"){ setChordOn(!chordOn); return; } const gi=Number(g); mute[gi]=!mute[gi]; syncChips(); toast((gi+1)+"グループを"+(mute[gi]?"けしました":"もどしました")+"（鳴らしたままでも切りかえられます）"); }));
+$("chordBtn").classList.add("on"); syncChips();
 
 /* ---------- 音 ---------- */
 function ensureAudio(){
@@ -746,7 +765,7 @@ function click(t,accent){
 function previewNote(p,len,lyr){ const bs=60/cfg.tempo; playMel(MIDI[p],AC.currentTime+0.01,Math.min(0.6,bs*len/2),null,lyr||""); }
 
 /* ---------- 再生 ---------- */
-function playBars(){ return canonMode ? meas+(CANON_GROUPS-1)*CANON_OFF/8 : meas; }   // カノンは 3グループ×4小節ずれ → +8小節
+function playBars(){ return canonMode ? meas+(CANON_GROUPS-1)*canonOff()/8 : meas; }   // カノンは 3グループ×4小節ずれ → +8小節
 function buildEvents(noLead){
   const bs=60/cfg.tempo, half=bs/2, ev=[];
   const lead=(cfg.metro!=="off"&&!noLead)?4:0;      // 1小節カウント（くりかえし2回目からは無し）
@@ -765,7 +784,7 @@ function buildEvents(noLead){
     if(cfg.chordStyle==="canon"){ ev.push({t:tf,type:"acc",kind:"cello",midi:48,dur:bs*4}); [64,67,72].forEach(m=>ev.push({t:tf,type:"acc",kind:"harp",midi:m,dur:bs*4})); }
     else ev.push({t:tf,type:"chord",midi:[48,52,55,60],dur:bs*3.8}); }
   const groups=canonMode?CANON_GROUPS:1;
-  for(let g=0;g<groups;g++){ const g0=g*CANON_OFF; notes.forEach((n,i)=>ev.push({t:off+(g0+n.s)*half,type:"mel",midi:MIDI[n.p],dur:n.len*half*0.92,i,g})); }
+  for(let g=0;g<groups;g++){ const g0=g*canonOff(); notes.forEach((n,i)=>ev.push({t:off+(g0+n.s)*half,type:"mel",midi:MIDI[n.p],dur:n.len*half*0.92,i,g})); }
   ev.sort((a,b)=>a.t-b.t);
   return {ev, total: off+(bars+(fin?1:0))*4*bs, off};
 }
@@ -787,7 +806,7 @@ function schedule(){
   for(let guard=0; guard<8; guard++){
     while(schedIdx<events.length && startAt+passBase()+events[schedIdx].t<horizon){
       const e=events[schedIdx], t=startAt+passBase()+e.t;
-      if(e.type==="mel") playMel(e.midi,t,e.dur,e.i,e.g);
+      if(e.type==="mel"){ if(!mute[e.g||0]) playMel(e.midi,t,e.dur,e.i,e.g); }
       else if(e.type==="chord") playChord(e.midi,t,e.dur);
       else if(e.type==="acc") playAcc(e,t);
       else if(e.type==="click"){ if(!e.quiet || cfg.metro==="on") click(t,e.accent); }
@@ -807,18 +826,18 @@ function anim(){
   const slot=tt/half;                                          // 小数スロット（1グループめ）
   const groups=canonMode?CANON_GROUPS:1, total=meas*8;
   // 画面のスクロール：いちばん新しく入ったグループ（まだ吹いている）を追う
-  let curSys=Math.floor(Math.max(0,slot)/32); for(let g=groups-1;g>=0;g--){ const pos=slot-g*CANON_OFF; if(pos>=0&&pos<total){ curSys=Math.floor(pos/32); break; } }
+  let curSys=Math.floor(Math.max(0,slot)/32); for(let g=groups-1;g>=0;g--){ const pos=slot-g*canonOff(); if(pos>=0&&pos<total){ curSys=Math.floor(pos/32); break; } }
   curSys=Math.min(curSys, Math.ceil(total/32)-1);
   if(curSys!==window.__lastSys){ window.__lastSys=curSys; const el=document.querySelectorAll(".sys")[curSys]; if(el) el.scrollIntoView({behavior:"smooth",block:"nearest"}); }
   document.querySelectorAll(".sys").forEach((sys,sy)=>{
     for(let g=0;g<3;g++){ const h=sys.querySelector(".head.g"+(g+1)); if(!h) continue; if(g>=groups){ h.style.display="none"; continue; }
-      const gs=slot-g*CANON_OFF, local=gs-sy*32;
+      const gs=slot-g*canonOff(), local=gs-sy*32;
       if(local>=0&&local<32&&gs<total){ h.style.display="block"; h.style.left=(local/32*100)+"%"; h.style.opacity="1"; }
       else if(g===0&&sy===0&&local<0){ h.style.display="block"; h.style.left="0%"; h.style.opacity=(Math.floor(-local*2)%2)?"0.35":"1"; }
       else h.style.display="none"; }
   });
   document.querySelectorAll(".note").forEach(d=>{ const n=notes[Number(d.dataset.i)]; if(!n) return;
-    for(let g=0;g<3;g++){ const gs=slot-g*CANON_OFF; d.classList.toggle(g===0?"lit":"lit"+(g+1), g<groups && gs>=n.s && gs<n.s+n.len); } });
+    for(let g=0;g<3;g++){ const gs=slot-g*canonOff(); d.classList.toggle(g===0?"lit":"lit"+(g+1), g<groups && gs>=n.s && gs<n.s+n.len); } });
   rafId=requestAnimationFrame(anim);
 }
 function finish(){
@@ -837,8 +856,8 @@ $("playBtn").addEventListener("click",()=>{ if(playing) stop(); else start(); })
 function setTempo(v){ cfg.tempo=Math.max(60,Math.min(140,v)); $("tempoNow").textContent=cfg.tempo; const sl=$("tempo"); if(sl){ sl.value=cfg.tempo; $("tempoV").textContent=cfg.tempo; } save(); if(playing){ stop(); start(); } }
 $("tempoDn").addEventListener("click",()=>setTempo(cfg.tempo-4)); $("tempoUp").addEventListener("click",()=>setTempo(cfg.tempo+4));
 $("loopBtn").addEventListener("click",()=>{ loop=!loop; $("loopBtn").classList.toggle("on",loop); toast(loop?"🔁 くりかえします（おわりの和音は鳴りません）":"1回だけ鳴らします"); if(playing){ stop(); start(); } });
-$("canonBtn").addEventListener("click",()=>{ canonMode=!canonMode; $("canonBtn").classList.toggle("on",canonMode);
-  if(canonMode){ toast(meas===4?"🎼 カノンできく：3グループが4小節ずつずれて入ります。4小節だと じゅんばんに吹くだけになるので、8小節にしてみよう":"🎼 カノンできく：3グループが4小節ずつずれて入ります（まん中→左→右）"); }
+$("canonBtn").addEventListener("click",()=>{ canonMode=!canonMode; $("canonBtn").classList.toggle("on",canonMode); syncChips();
+  if(canonMode){ toast(meas===4&&canonOffBars>=4?"🎼 カノンできく：3グループが"+canonOffBars+"小節ずつずれて入ります。4小節だと じゅんばんに吹くだけになるので、8小節にしてみよう":"🎼 カノンできく：3グループが"+canonOffBars+"小節ずつずれて入ります（まん中→左→右）。間かくは 0〜8小節で変えられます"); }
   else toast("1グループで鳴らします");
   if(playing){ stop(); start(); } });
 
@@ -1088,7 +1107,7 @@ function xmlHarmony(c,off){ const root=c.name.replace("m",""); return `<harmony>
 function xmlAttr(clef,extra){ return `<attributes><divisions>2</divisions>${extra||""}<key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>${clef==="F"?"F":"G"}</sign><line>${clef==="F"?4:2}</line></clef></attributes>`; }
 function xmlTempoDir(){ return `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${cfg.tempo}</per-minute></metronome></direction-type><sound tempo="${cfg.tempo}"/></direction>`; }
 function buildMusicXML(canon){
-  const bars=canon?meas+(CANON_GROUPS-1)*CANON_OFF/8:meas, total=bars+1;   // +1 = おわりの和音
+  const bars=canon?meas+(CANON_GROUPS-1)*canonOff()/8:meas, total=bars+1;   // +1 = おわりの和音
   const groups=canon?CANON_GROUPS:1;
   const title=canon?"わたしのカノン（3グループ）":"わたしのカノン";
   const parts=[]; const partList=[];
@@ -1098,7 +1117,7 @@ function buildMusicXML(canon){
     for(let b=0;b<total;b++){ const first=b===0; const c1=CHORD[HALF[(b*2)%8].k], c2=CHORD[HALF[(b*2+1)%8].k];
       body+=`<measure number="${b+1}">${first?xmlAttr("G"):""}${first?xmlTempoDir():""}`;
       if(g===0) body+=(b<bars?xmlHarmony(c1)+xmlHarmony(c2,4):xmlHarmony(CHORD.C));
-      body+=(b<bars?xmlMelodyMeasure(b,g*CANON_OFF/8):`<note><rest measure="yes"/><duration>8</duration><voice>1</voice><type>whole</type></note>`);
+      body+=(b<bars?xmlMelodyMeasure(b,g*canonOff()/8):`<note><rest measure="yes"/><duration>8</duration><voice>1</voice><type>whole</type></note>`);
       if(b===total-1) body+=`<barline location="right"><bar-style>light-heavy</bar-style></barline>`;
       body+=`</measure>`; }
     parts.push(`<part id="${id}">${body}</part>`); }
