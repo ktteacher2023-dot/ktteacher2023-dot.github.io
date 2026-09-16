@@ -1100,7 +1100,7 @@ function buildMusicXML(canon){
       if(b===total-1) body+=`<barline location="right"><bar-style>light-heavy</bar-style></barline>`;
       body+=`</measure>`; }
     parts.push(`<part id="${id}">${body}</part>`); }
-  // ピアノ（和音：1拍目と3拍目に2分音符）／チェロ（根音：2分音符）
+  // ピアノ（和音：全音符で4拍のばす）／チェロ（根音：全音符）
   const pid="P"+(groups+1), cid="P"+(groups+2);
   partList.push(`<score-part id="${pid}"><part-name>ピアノ（和音）</part-name><part-abbreviation>Pf.</part-abbreviation><score-instrument id="${pid}-I1"><instrument-name>Piano</instrument-name></score-instrument><midi-instrument id="${pid}-I1"><midi-channel>${groups+1}</midi-channel><midi-program>1</midi-program></midi-instrument></score-part>`);
   partList.push(`<score-part id="${cid}"><part-name>チェロ</part-name><part-abbreviation>Vc.</part-abbreviation><score-instrument id="${cid}-I1"><instrument-name>Cello</instrument-name></score-instrument><midi-instrument id="${cid}-I1"><midi-channel>${groups+2}</midi-channel><midi-program>43</midi-program></midi-instrument></score-part>`);
@@ -1108,8 +1108,8 @@ function buildMusicXML(canon){
   for(let b=0;b<total;b++){ const first=b===0; const hc=HALF[b%8]; const fin=b===total-1;
     const tri=fin?[60,64,67]:CHORD[hc.k].midi.map(m=>m+12); const root=fin?48:hc.root-12;
     const chordNotes=len=>tri.map((m,i)=>xmlNote(m,len,{chord:i>0})).join("");
-    pb+=`<measure number="${b+1}">${first?xmlAttr("G"):""}`+(fin?chordNotes(8):chordNotes(4)+chordNotes(4))+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`;
-    cb+=`<measure number="${b+1}">${first?xmlAttr("F"):""}`+(fin?xmlNote(root,8):xmlNote(root,4)+xmlNote(root,4))+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`; }
+    pb+=`<measure number="${b+1}">${first?xmlAttr("G"):""}`+chordNotes(8)+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`;   // 和音は全音符（4拍のばす）
+    cb+=`<measure number="${b+1}">${first?xmlAttr("F"):""}`+xmlNote(root,8)+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`; }
   parts.push(`<part id="${pid}">${pb}</part>`); parts.push(`<part id="${cid}">${cb}</part>`);
   const f=FULL?formSummary():null;
   return `<?xml version="1.0" encoding="UTF-8"?>
