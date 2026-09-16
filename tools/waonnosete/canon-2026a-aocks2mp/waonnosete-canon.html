@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>わおんにのせて カノン｜けいてぃの音楽ツールズ</title>
-<meta name="description" content="パッヘルベルの「カノン」と同じ和音の進み方（C G｜Am Em｜F C｜F G）に合わせて、ド〜ドの音をはめて4・8・12小節のせんりつをつくるツール。作ったせんりつを3グループのカノンにして鳴らせます。リコーダーでカノンを吹いたあとの音楽づくりに。">
+<meta name="description" content="パッヘルベルの「カノン」の和音の進み方（C→G→Am→Em→F→C→F→G・1小節ずつ）に合わせて、ド〜ドの音をはめて8・12・16小節のせんりつをつくるツール。作ったせんりつを3グループのカノンにして鳴らせます。リコーダーでカノンを吹いたあとの音楽づくりに。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="わおんにのせて カノン｜カノンの和音にのせて、せんりつをつくろう">
 <meta property="og:description" content="パッヘルベルのカノンの和音にのせて、せんりつをつくり、3グループのカノンにして鳴らすツール。">
@@ -189,14 +189,14 @@
 
 <header>
   <span class="logo">わおんにのせて <span style="color:#7a34a8">カノン</span></span>
-  <span class="sub">カノンの和音（C G｜Am Em｜F C｜F G）にのせて、せんりつをつくろう</span>
+  <span class="sub">カノンの和音（C→G→Am→Em→F→C→F→G）にのせて、せんりつをつくろう</span>
   <span class="spacer"></span>
   <button class="btn play" id="playBtn">▶ きく</button>
-  <button class="btn canon" id="canonBtn" title="3グループが4小節ずつ追いかけるカノンにして聞く">🎼 カノンできく</button>
+  <button class="btn canon" id="canonBtn" title="3グループが8小節ずつ追いかけるカノンにして聞く">🎼 カノンできく</button>
   <button class="btn" id="loopBtn" title="くりかえし再生">🔁</button>
   <span id="tempoBar" style="display:inline-flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:999px;padding:2px 6px 2px 10px;font-weight:800;font-size:13px"><span style="color:var(--muted)">はやさ</span><button class="btn small" id="tempoDn" style="min-height:32px;padding:4px 10px">−</button><span id="tempoNow" style="min-width:34px;text-align:center">100</span><button class="btn small" id="tempoUp" style="min-height:32px;padding:4px 10px">＋</button></span>
-  <span class="seg" id="lenSeg"><button data-m="4" class="on">4小節</button><button data-m="8">8小節</button><button data-m="12">12小節</button></span>
-  <button class="btn" id="copyBtn" title="1〜4小節を、5〜8（・9〜12）小節にうつす" style="display:none">1〜4小節をコピー</button>
+  <span class="seg" id="lenSeg"><button data-m="8" class="on">8小節</button><button data-m="12">12小節</button><button data-m="16">16小節</button></span>
+  <button class="btn" id="copyBtn" title="1〜8小節を、9小節めからにうつす" style="display:none">1〜8小節をコピー</button>
   <button class="btn" id="exBtn">おてほん</button>
   <button class="btn ghost" id="clearBtn">ぜんぶけす</button>
   <button class="btn ghost small" id="lyricBtn">📝 かし</button>
@@ -204,6 +204,7 @@
   <button class="btn ghost small" id="linkBtn">🔗 リンク</button>
   <button class="btn ghost small" id="staffBtn"><svg viewBox="0 0 40 100" style="height:1.15em;width:auto;vertical-align:-0.2em" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="5" d="M24 0 C33 9 31 21 22 31 C10 43 3 53 8 64 C13 74 33 73 35 60 C36 49 25 42 18 47 C12 51 15 60 23 59"/><path stroke-width="8" d="M22 31 C10 43 3 53 8 64 C13 74 33 73 35 60"/><path stroke-width="5" d="M24 0 L16 88 C16 95 5 95 5 89 C5 84 12 84 12 89"/><circle cx="8.5" cy="89" r="5" fill="currentColor" stroke="none"/></svg> がくふ</button>
   <button class="btn ghost small" id="sendBtn">🎤 うたう・🎵 ふく</button>
+  <button class="btn ghost small" id="xmlBtn" title="MusicXMLで書き出す（Flatなどで開ける）">📄 MusicXML</button>
   <button class="btn ghost small" id="saveBtn" title="この端末に、なまえをつけてほぞん">💾 ほぞん</button>
   <button class="btn ghost small" id="openBtn" title="ほぞんしたせんりつをひらく">📂 ひらく</button>
   <button class="btn ghost small" id="cardBtn">📷 かきのこす</button>
@@ -226,8 +227,8 @@
 </main>
 
 <footer>
-  🔒 音はこの端末の中だけで鳴らしています ｜ 和音の進み方はパッヘルベル「カノン」と同じ（C G｜Am Em｜F C｜F G・4小節でひとまわり） ｜
-  © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.16-1
+  🔒 音はこの端末の中だけで鳴らしています ｜ 和音の進み方はパッヘルベル「カノン」（C→G→Am→Em→F→C→F→G・1小節ずつ・8小節でひとまわり） ｜
+  © けいてぃの音楽ツールズ（フル版・購入者用）｜ファイル・URLの再配布はご遠慮ください ｜ <a href="https://ktteacher.net/tools/" target="_blank" rel="noopener">ほかのツールを見る</a> ｜ v2026.09.16-3
 </footer>
 
 <div id="lyricPanel" style="display:none;position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:48;background:#fff;border:2px solid var(--note-d);border-radius:18px;box-shadow:0 14px 34px -14px rgba(0,0,0,.45);padding:10px 12px;width:min(640px,96vw)">
@@ -292,6 +293,18 @@
     <div style="text-align:right;margin-top:8px"><button class="btn ghost small" id="sendClose">とじる</button></div>
   </div>
 </div>
+<div id="xmlOv" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:55">
+  <div style="background:#fff;border-radius:22px;padding:20px 22px;width:min(560px,92vw)">
+    <h2 style="margin:0 0 6px;font-size:18px;color:#2f6fbf">📄 MusicXML で書き出す</h2>
+    <p style="font-size:13px;color:#7f8f96;line-height:1.7;margin:0 0 12px">楽譜のファイル（.musicxml）にして保存します。Flat for Education などの楽譜ソフトで「インポート」すると、そのまま楽譜として開けます。和音の記号（C・G・Am…）と、ピアノ・チェロのばん奏のパートも入ります。</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn" id="xmlSolo" style="justify-content:center">せんりつ ＋ ばん奏（3パート）</button>
+      <button class="btn" id="xmlCanon" style="justify-content:center">🎼 カノンの形（グループ1・2・3 ＋ ばん奏）</button>
+    </div>
+    <p class="help" id="xmlHelp" style="margin-top:10px">カノンの形は、3グループが8小節ずつずれて入る楽譜になります（12小節・16小節で重なりが出ます）。</p>
+    <div style="text-align:right;margin-top:8px"><button class="btn ghost small" id="xmlClose">とじる</button></div>
+  </div>
+</div>
 <div id="dlg" style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:70">
   <div style="background:#fff;border-radius:20px;padding:20px 22px;width:min(420px,90vw)">
     <div id="dlgMsg" style="font-size:15px;font-weight:700;line-height:1.7;margin-bottom:10px"></div>
@@ -306,7 +319,7 @@
     <div class="row2"><label>和音のならし方</label>
       <select id="chordStyle">
         <option value="canon" selected>カノンのばん奏（チェロ＋チェンバロの分散和音）</option>
-        <option value="half">和音がかわるたび（1拍目と3拍目にジャン）</option>
+        <option value="half">1拍目と3拍目にジャン</option>
         <option value="beat">毎拍（ジャン・ジャン・ジャン・ジャン）</option>
       </select></div>
     <div class="row2"><label>和音の音量</label><input type="range" id="chordVol" min="0" max="100" value="55"><span class="val" id="chordVolV">55</span></div>
@@ -322,7 +335,7 @@
           <button class="btn small" data-preset="pass">和音の音＋となりの音</button>
         </div>
         <table id="allowTbl" style="border-collapse:collapse;font-size:13px"></table>
-        <div class="help">チェックを外した音は、その和音のところ（半小節）で入れられなくなります（グレーのしま模様）。</div>
+        <div class="help">チェックを外した音は、その和音の小節で入れられなくなります（グレーのしま模様）。</div>
       </div></div>
     <div class="row2"><label>うたミエ フル版のURL</label><input type="text" id="utamieUrl" placeholder="購入者ページの「ブラウザで開く」のURL" style="flex:1;min-width:200px;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:2px solid var(--line)"></div>
     <div class="row2"><label>ゆびミエ フル版のURL</label><input type="text" id="yubimieUrl" placeholder="購入者ページの「ブラウザで開く」のURL" style="flex:1;min-width:200px;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:2px solid var(--line)"></div>
@@ -349,9 +362,9 @@
     <p class="help">
       ・「ながさ」をえらんでからマスをタップすると音が入ります。音の上でちがう高さをタップすると高さだけかわり、同じ高さをもう一度タップすると消えます。<br>
       ・リズムカードをえらんで小節の中をタップすると、その高さで1小節ぶんのリズムが入ります。あとは音の上をタップして高さをかえるだけです。<br>
-      ・和音は半小節ごとにかわります（C G｜Am Em｜F C｜F G の4小節でひとまわり。パッヘルベルのカノンと同じ）。<br>
-      ・ルール：各小節の1拍めと3拍めの音は、そのときの和音の音のどれかから／最後の小節の最後の音は「ド」で終わる（そのあと「おわりの和音」が鳴ります）。守れていない小節には「？」が出ます（止めはしません）。<br>
-      ・「🎼 カノンできく」：作ったせんりつを、3グループが4小節ずつずれて追いかけるカノンにして鳴らします。8小節・12小節にすると重なりが生まれます（4小節だと、じゅんばんに吹くだけになります）。<br>
+      ・和音は1小節ずつ C→G→Am→Em→F→C→F→G とかわり、8小節でひとまわりします（パッヘルベルのカノンの和音の順番）。<br>
+      ・ルール：各小節の始めの音は、その小節の和音の音のどれかから／最後の小節の最後の音は「ド」で終わる（そのあと「おわりの和音」が鳴ります）。守れていない小節には「？」が出ます（止めはしません）。<br>
+      ・「🎼 カノンできく」：作ったせんりつを、3グループが8小節ずつずれて追いかけるカノンにして鳴らします。12小節・16小節にすると重なりが生まれます（8小節だと、じゅんばんに吹くだけになります）。<br>
       ・作ったせんりつは「🔗 リンク」で共有、「📷 かきのこす」で画像にできます。この端末には自動で記憶されます。
     </p>
     <div style="text-align:right;margin-top:8px"><button class="btn" id="closeSet">とじる</button></div>
@@ -360,7 +373,7 @@
 
 <script>
 /* ============================================================
-   わおんにのせて カノン — パッヘルベルのカノンの和音にのせて、せんりつをつくろう
+   わおんにのせて カノン — パッヘルベルのカノンの和音の順番（1小節ずつ）にのせて、せんりつをつくろう
    （わおんにのせて フル版 v2026.09.10-1 をもとに、和音進行・カノン再生・ばん奏を差し替え）
    ① あそぶ：マスをタップすると音が入り、▶で和音といっしょに鳴る
    ② きづく：和音の音のマスに色（ヒント）／小節ごとの ✔・？／再生で光る
@@ -375,7 +388,7 @@ const $=id=>document.getElementById(id);
 const ROWS=["ド","レ","ミ","ファ","ソ","ラ","シ","ド"];   // 下→上（表示は上下反転）
 const MIDI=[60,62,64,65,67,69,71,72];
 const SPM=8;                                            // 1小節=8スロット（8分音符単位）
-/* 和音の進み方：パッヘルベル「カノン」（教育出版6年・東山正流編曲と同じ ハ長調・4/4）。半小節ごとに変わり、4小節でひとまわり
+/* 和音の進み方：パッヘルベル「カノン」の順番（ハ長調・4/4）。このツールでは1小節ずつ変わり、8小節でひとまわり
    root=チェロの音、arp=チェンバロの分散和音（カノンであそぼう と同じ音） */
 const HALF=[ {k:"C",root:60,arp:[67,72,76]}, {k:"G",root:55,arp:[67,71,74]}, {k:"Am",root:57,arp:[64,69,72]}, {k:"Em",root:52,arp:[64,67,71]},
              {k:"F",root:53,arp:[60,65,69]}, {k:"C",root:48,arp:[60,64,67]}, {k:"F",root:53,arp:[60,65,69]}, {k:"G",root:55,arp:[62,67,71]} ];
@@ -385,12 +398,11 @@ const CHORD={ C:{name:"C",tones:[0,2,4,7],label:"ド・ミ・ソ",midi:[48,52,55
               Em:{name:"Em",tones:[2,4,6],label:"ミ・ソ・シ",midi:[52,55,59],col:"#4a90e2"},
               F:{name:"F",tones:[3,5,0,7],label:"ファ・ラ・ド",midi:[53,57,60],col:"#f2b84b"} };
 const CH_KEYS=["C","G","Am","Em","F"];
-const PROG=HALF.map(h=>h.k);                                   // 半小節ごとの和音名（8つ）
-function halfOf(s){ return HALF[Math.floor(s/4)%8]; }          // s: スロット（8分音符単位）
+const PROG=HALF.map(h=>h.k);                                   // 小節ごとの和音名（8つ）
+function halfOf(s){ return HALF[Math.floor(s/8)%8]; }          // s: スロット（8分音符単位）→ その小節の和音
 function chordAtSlot(s){ return CHORD[halfOf(s).k]; }
-function chordOf2(m){ return chordAtSlot(m*8+4); }              // 小節の後半（3拍め）の和音
 function defAllow(){ const a={}; CH_KEYS.forEach(k=>a[k]=[1,1,1,1,1,1,1,1]); return a; }
-const CANON_GROUPS=3, CANON_OFF=32;                             // 3グループ・4小節（32スロット）ずれ
+const CANON_GROUPS=3, CANON_OFF=64;                             // 3グループ・8小節（64スロット）ずれ（和音がひとまわりする長さ）
 let canonMode=false;
 /* 音符記号（フォントに無い環境が多いので自前SVG） */
 const SVG={
@@ -405,7 +417,7 @@ const SVG={
 };
 const LENGLYPH={1:SVG.eighth,2:SVG.quarter,4:SVG.half,6:SVG.dhalf,8:SVG.whole};
 document.querySelectorAll("[data-svg]").forEach(el=>{ el.innerHTML=SVG[el.dataset.svg]; });
-let meas=4;                 // 4 / 8 / 12
+let meas=8;                 // 8 / 12 / 16
 let notes=[];               // {s:slot, len:1|2|4, p:row}
 let tool=2;                 // 1=♪ 2=♩ 4=𝅗𝅥 'rest'
 let showNames=true, chordOn=true, loop=false;
@@ -415,7 +427,7 @@ const cfg={tempo:100,chordStyle:"canon",chordVol:55,melVol:80,tone:"flute",chord
 /* ---------- 保存・復元 ---------- */
 const store={ get(k){try{return localStorage.getItem(k);}catch(e){return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch(e){}} };
 const STORE_KEY="waoncanon_v1";
-function okMeas(m){ return (m===8||m===12)?m:4; }
+function okMeas(m){ return (m===12||m===16)?m:8; }
 function save(){ store.set(STORE_KEY, JSON.stringify({meas,notes,cfg})); }
 function enc(){ return meas+"."+notes.map(n=>n.s.toString(36).padStart(2,"0")+n.len+n.p).join(""); }
 function lyricTok(){
@@ -440,7 +452,7 @@ function applyTeacherCfg(tok){
 }
 function dec(str){
   const m=str.match(/^(\d+)\.([0-9a-z]*)$/); if(!m) return false;
-  const mm=Number(m[1]); if(mm!==4&&mm!==8&&mm!==12) return false;
+  const mm=Number(m[1]); if(mm!==8&&mm!==12&&mm!==16) return false;
   const body=m[2]; if(body.length%4) return false;
   const out=[];
   for(let i=0;i<body.length;i+=4){
@@ -477,11 +489,12 @@ function build(){
     g.style.gridTemplateRows="auto auto 1fr auto auto";
     const cr=g.querySelector(".chordrow"); cr.style.gridTemplateColumns="repeat(4,1fr)";
     for(let k=0;k<4;k++){
-      const m=sy*4+k, c1=chordOf(m), c2=chordOf2(m);
-      const d=document.createElement("div"); d.className="ch two"; d.dataset.m=m;
-      d.innerHTML=`<span class="hh" style="background:${c1.col}">${showNames?`${c1.name}<small>${c1.label}</small>`:`<small>${m+1}小節め</small>`}</span><span class="hh" style="background:${c2.col}">${showNames?`${c2.name}<small>${c2.label}</small>`:`<small>&nbsp;</small>`}</span><span class="ok"></span>`;
+      const m=sy*4+k, c=chordOf(m);
+      const d=document.createElement("div"); d.className="ch"; d.dataset.m=m;
+      d.style.background=c.col;
+      d.innerHTML=(showNames?`${c.name}の和音<small>${c.label}</small>`:`<small>${m+1}小節め</small>`)+`<span class="ok"></span>`;
       d.title="タップして、この小節をほかの小節にうつす（はんぷく）";
-      d.addEventListener("click",()=>{ if(addCardMode){ addCardFromMeasure(m); return; } if(rcard!==null){ applyCard(m, c1.tones[0]); return; } measTap(m); });
+      d.addEventListener("click",()=>{ if(addCardMode){ addCardFromMeasure(m); return; } if(rcard!==null){ applyCard(m, c.tones[0]); return; } measTap(m); });
       cr.appendChild(d);
     }
     const rr=g.querySelector(".rhyrow"); rr.style.gridTemplateColumns="repeat(16,1fr)";
@@ -494,7 +507,7 @@ function build(){
       for(let s=0;s<32;s++){
         const gs=sy*32+s, c=chordAtSlot(gs);
         const allowed=(cfg.allow[halfOf(gs).k]||[])[r]!==0;
-        const d=document.createElement("div"); d.className="cell"+(s%8===0?" m0":"")+(s%8===4?" m4":"")+(s%2===0?" half":"")+((cfg.toneHint==="on"&&c.tones.includes(r))?" tone":"")+(allowed?"":" lock");
+        const d=document.createElement("div"); d.className="cell"+(s%8===0?" m0":"")+(s%2===0?" half":"")+((cfg.toneHint==="on"&&c.tones.includes(r))?" tone":"")+(allowed?"":" lock");
         d.dataset.s=sy*32+s; d.dataset.p=r; row.appendChild(d);
       }
       cells.insertBefore(row, cells.querySelector(".notes"));
@@ -505,7 +518,7 @@ function build(){
     for(let k=0;k<4;k++){ const d=document.createElement("div"); d.dataset.m=sy*4+k; mh.appendChild(d); }
     sys.appendChild(g); st.appendChild(sys);
   }
-  $("copyBtn").style.display=meas>=8?"":"none";
+  $("copyBtn").style.display=meas>8?"":"none";
   renderNotes(); renderRhythm(); checkRules(false); renderForm(); if(typeof updatePick==="function") updatePick(); if(typeof buildTools==="function"&&$("toolBox")&&!$("toolBox").children.length) buildTools();
 }
 function renderNotes(){
@@ -612,10 +625,9 @@ function checkRules(showToast){
     hint.className=""; hint.textContent="";
     if(!inM.length){ badge.textContent=""; allOk=false; continue; }
     if(!show && false){}
-    const c=chordOf(m), c2=chordOf2(m); let ok=true, msg="";
+    const c=chordOf(m); let ok=true, msg="";
     if(inM[0].s!==m*8){ ok=false; msg="小節のはじめから音を入れてみよう"; }
-    else if(!c.tones.includes(inM[0].p)){ ok=false; msg=`1拍めの音を ${c.label}（${c.name}）のどれかにしてみよう`; }
-    else { const n3=inM.find(n=>n.s===m*8+4); if(n3 && !c2.tones.includes(n3.p) && !(m===meas-1 && n3===inM[inM.length-1])){ ok=false; msg=`3拍めは和音が ${c2.name} にかわります。${c2.label} のどれかにしてみよう`; } }
+    else if(!c.tones.includes(inM[0].p)){ ok=false; msg=`はじめの音を ${c.label}（${c.name}）のどれかにしてみよう`; }
     if(m===meas-1){
       const last=inM[inM.length-1];
       if(!(last.p===0||last.p===7)){ ok=false; msg="最後の音は「ド」で終わろう（そのあと、おわりの和音が鳴ります）"; }
@@ -733,18 +745,17 @@ function click(t,accent){
 function previewNote(p,len,lyr){ const bs=60/cfg.tempo; playMel(MIDI[p],AC.currentTime+0.01,Math.min(0.6,bs*len/2),null,lyr||""); }
 
 /* ---------- 再生 ---------- */
-function playBars(){ return canonMode ? meas+(CANON_GROUPS-1)*CANON_OFF/8 : meas; }   // カノンは 3グループ×4小節ずれ → +8小節
+function playBars(){ return canonMode ? meas+(CANON_GROUPS-1)*CANON_OFF/8 : meas; }   // カノンは 3グループ×8小節ずれ → +16小節
 function buildEvents(noLead){
   const bs=60/cfg.tempo, half=bs/2, ev=[];
   const lead=(cfg.metro!=="off"&&!noLead)?4:0;      // 1小節カウント（くりかえし2回目からは無し）
   for(let i=0;i<lead;i++) ev.push({t:i*bs,type:"click",accent:i===0});
   const off=lead*bs, bars=playBars();
   for(let m=0;m<bars;m++){
-    for(let h=0;h<2;h++){ const hc=HALF[(m*2+h)%8], c=CHORD[hc.k], t0=off+(m*4+h*2)*bs;
-      if(cfg.chordStyle==="canon"){ ev.push({t:t0,type:"acc",kind:"cello",midi:hc.root,dur:bs*2}); [0.5,1,1.5].forEach((d,i)=>ev.push({t:t0+d*bs,type:"acc",kind:"harp",midi:hc.arp[i],dur:bs*0.5})); }
-      else if(cfg.chordStyle==="beat"){ [0,1].forEach(b=>ev.push({t:t0+b*bs,type:"chord",midi:c.midi,dur:bs*0.9})); }
-      else ev.push({t:t0,type:"chord",midi:c.midi,dur:bs*1.9});
-    }
+    const hc=HALF[m%8], c=CHORD[hc.k], t0=off+m*4*bs;         // 1小節に和音1つ
+    if(cfg.chordStyle==="canon"){ [0,2].forEach(b=>{ ev.push({t:t0+b*bs,type:"acc",kind:"cello",midi:hc.root,dur:bs*2}); [0.5,1,1.5].forEach((d,i)=>ev.push({t:t0+(b+d)*bs,type:"acc",kind:"harp",midi:hc.arp[i],dur:bs*0.5})); }); }
+    else if(cfg.chordStyle==="beat"){ [0,1,2,3].forEach(b=>ev.push({t:t0+b*bs,type:"chord",midi:c.midi,dur:bs*0.9})); }
+    else [0,2].forEach(b=>ev.push({t:t0+b*bs,type:"chord",midi:c.midi,dur:bs*1.9}));
     if(cfg.metro==="on") for(let b=0;b<4;b++) ev.push({t:off+(m*4+b)*bs,type:"click",accent:b===0,quiet:true});
   }
   const fin=!loop;                                    // おわりの和音（C・全音符）：くりかえし中は鳴らさない
@@ -825,40 +836,40 @@ function setTempo(v){ cfg.tempo=Math.max(60,Math.min(140,v)); $("tempoNow").text
 $("tempoDn").addEventListener("click",()=>setTempo(cfg.tempo-4)); $("tempoUp").addEventListener("click",()=>setTempo(cfg.tempo+4));
 $("loopBtn").addEventListener("click",()=>{ loop=!loop; $("loopBtn").classList.toggle("on",loop); toast(loop?"🔁 くりかえします（おわりの和音は鳴りません）":"1回だけ鳴らします"); if(playing){ stop(); start(); } });
 $("canonBtn").addEventListener("click",()=>{ canonMode=!canonMode; $("canonBtn").classList.toggle("on",canonMode);
-  if(canonMode){ toast(meas===4?"🎼 カノンできく：3グループが4小節ずつずれて入ります。4小節だと じゅんばんに吹くだけになるので、8小節にしてみよう":"🎼 カノンできく：3グループが4小節ずつずれて入ります（まん中→左→右）"); }
+  if(canonMode){ toast(meas===8?"🎼 カノンできく：3グループが8小節ずつずれて入ります。8小節だと じゅんばんに吹くだけになるので、16小節にしてみよう":"🎼 カノンできく：3グループが8小節ずつずれて入ります（まん中→左→右）"); }
   else toast("1グループで鳴らします");
   if(playing){ stop(); start(); } });
 
 /* ---------- 小節数・コピー・おてほん・けす ---------- */
 document.querySelectorAll("#lenSeg button").forEach(b=>b.addEventListener("click",async()=>{
   const m=Number(b.dataset.m); if(m===meas) return;
-  if(m>4 && !FULL){ openCta(); return; }
+  if(m>8 && !FULL){ openCta(); return; }
   if(m<meas && notes.some(n=>n.s>=m*8) && !(await ask((m+1)+"〜"+meas+"小節の音は消えます。"+m+"小節にしますか？",{ok:"する"}))) return;
   if(playing) stop();
   meas=m; notes=notes.filter(n=>n.s<meas*8);
   document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===meas));
   build(); save();
-  if(m>4) toast(m+"小節になりました。「1〜4小節をコピー」で同じ和音の進み方にうつせます。カノンにすると重なりが生まれます");
+  if(m>8) toast(m+"小節になりました。「1〜8小節をコピー」で同じ和音の進み方にうつせます。カノンにすると重なりが生まれます");
 }));
 $("copyBtn").addEventListener("click",async()=>{
-  const first=notes.filter(n=>n.s<32);
-  if(!first.length){ toast("まず1〜4小節をつくってね"); return; }
-  const blocks=meas/4-1;
-  if(notes.some(n=>n.s>=32) && !(await ask("5〜"+meas+"小節を、1〜4小節と同じにおきかえます。いいですか？",{ok:"おきかえる"}))) return;
-  let out=notes.filter(n=>n.s<32);
-  for(let b=1;b<=blocks;b++) out=out.concat(first.map(n=>({s:n.s+32*b,len:n.len,p:n.p,l:n.l||""})));
-  notes=out; afterEdit(); toast("うつしました。5小節めからを少し変えてみよう（さいごは「ド」で）");
+  const first=notes.filter(n=>n.s<64);
+  if(!first.length){ toast("まず1〜8小節をつくってね"); return; }
+  if(notes.some(n=>n.s>=64) && !(await ask("9〜"+meas+"小節を、1小節めからと同じにおきかえます。いいですか？",{ok:"おきかえる"}))) return;
+  notes=notes.filter(n=>n.s<64).concat(first.map(n=>({s:n.s+64,len:n.len,p:n.p,l:n.l||""})).filter(n=>n.s<meas*8));
+  afterEdit(); toast("うつしました。9小節めからを少し変えてみよう（さいごは「ド」で）");
 });
 $("exBtn").addEventListener("click",async()=>{
   if(notes.length && !(await ask("いまのせんりつを消して、おてほんを入れます。いいですか？",{ok:"入れる"}))) return;
-  // おてほん（8小節・オリジナル）：C G|Am Em|F C|F G を2回。かたちは A B C D A B′ C′ D′
-  //  1 ド♩ミ♩|ソ♩レ♩  2 ラ♩ド♩|シ♩ソ♩  3 ラ♩ファ♩|ミ♩ド♩  4 ファ♩ラ♩|ソ𝅗𝅥
-  //  5 ＝1      6 ラ♩ド♩|シ♩ミ♩  7 ラ♩ファ♩|ド♩ミ♩  8 ファ♩ラ♩|ド𝅗𝅥（→おわりの和音）
-  const ex=[[0,2,0],[2,2,2],[4,2,4],[6,2,1],  [8,2,5],[10,2,7],[12,2,6],[14,2,4],  [16,2,5],[18,2,3],[20,2,2],[22,2,0],  [24,2,3],[26,2,5],[28,4,4],
-            [32,2,0],[34,2,2],[36,2,4],[38,2,1], [40,2,5],[42,2,7],[44,2,6],[46,2,2], [48,2,5],[50,2,3],[52,2,0],[54,2,2], [56,2,3],[58,2,5],[60,4,0]];
+  // おてほん（16小節・オリジナル）：C G Am Em F C F G を2回。かたちは A B C D E F G H A B′ C D′ E F′ G H
+  //  1 C ド♩ミ♩ソ♩ミ♩  2 G レ♩ソ♩シ𝅗𝅥  3 Am ラ♪ド♪ラ♩ミ♩ラ♩  4 Em ミ𝅗𝅥シ♩ソ♩  5 F ファ♩ラ♩ド♩ラ♩  6 C ソ♩ミ♩ド𝅗𝅥  7 F ファ♪ラ♪ファ♩ラ♩ド♩  8 G シ♪レ♪シ♩ド𝅗𝅥
+  //  9〜16：同じ。10 の最後が ソ𝅗𝅥、12 が ミ𝅗𝅥ソ♩ミ♩、14 が ソ♩ミ♩ミ𝅗𝅥（へんか）。16 の最後は ド（→おわりの和音）
+  const A=[[0,2,0],[2,2,2],[4,2,4],[6,2,2], [8,2,1],[10,2,4],[12,4,6], [16,1,5],[17,1,7],[18,2,5],[20,2,2],[22,2,5], [24,4,2],[28,2,6],[30,2,4],
+           [32,2,3],[34,2,5],[36,2,7],[38,2,5], [40,2,4],[42,2,2],[44,4,0], [48,1,3],[49,1,5],[50,2,3],[52,2,5],[54,2,7], [56,1,6],[57,1,1],[58,2,6],[60,4,0]];
+  const B=A.map(a=>[a[0]+64,a[1],a[2]]); B[6][2]=4; B[13][2]=4; B[14][2]=2; B[21][2]=2;
+  const ex=A.concat(B);
   if(playing) stop();
-  meas=8; document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===8));
-  notes=ex.map(a=>({s:a[0],len:a[1],p:a[2]})).map(n=>{ const al=cfg.allow[halfOf(n.s).k]||[]; if(al[n.p]===0){ for(let d=1;d<8;d++){ if(n.p-d>=0&&al[n.p-d]!==0){ n.p=n.p-d; break; } if(n.p+d<=7&&al[n.p+d]!==0){ n.p=n.p+d; break; } } } return n; }); build(); save(); toast("おてほん（8小節）を入れました。▶で聴いて、🎼 カノンできく も試してみよう");
+  meas=16; document.querySelectorAll("#lenSeg button").forEach(x=>x.classList.toggle("on",Number(x.dataset.m)===16));
+  notes=ex.map(a=>({s:a[0],len:a[1],p:a[2]})).map(n=>{ const al=cfg.allow[halfOf(n.s).k]||[]; if(al[n.p]===0){ for(let d=1;d<8;d++){ if(n.p-d>=0&&al[n.p-d]!==0){ n.p=n.p-d; break; } if(n.p+d<=7&&al[n.p+d]!==0){ n.p=n.p+d; break; } } } return n; }); build(); save(); toast("おてほん（16小節）を入れました。▶で聴いて、🎼 カノンできく も試してみよう");
 });
 $("clearBtn").addEventListener("click",async()=>{ if(!notes.length){ toast("もう空です"); return; } if(await ask("ぜんぶ消しますか？",{ok:"消す"})){ notes=[]; srcM=null; rcard=null; addCardMode=false; markSrc(); updatePick(); afterEdit(); toast("ぜんぶ消しました"); } });
 
@@ -980,7 +991,7 @@ function staffSvg(opts){
     push(`<text x="${L+2}" y="${y0-14}" font-size="20" font-weight="800" fill="#333">4</text><text x="${L+2}" y="${y0+4}" font-size="20" font-weight="800" fill="#333">4</text>`);
     for(let k=0;k<4;k++){ const m=sy*4+k, x0=L+22+k*mW, c=chordOf(m);
       push(`<line x1="${x0+mW-2}" y1="${y0-48}" x2="${x0+mW-2}" y2="${y0}" stroke="#333" stroke-width="${k===3&&sy===systems-1?3:1.2}"/>`);
-      [[c,x0+4],[chordOf2(m),x0+4+(mW-8)/2]].forEach(([cc,lx])=>{ const lbl=`${cc.name}（${cc.label}）`; push(`<rect x="${lx}" y="${y0-92}" width="${(mW-12)/2}" height="22" rx="8" fill="${cc.col}"/><text x="${lx+(mW-12)/4}" y="${y0-76}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">${lbl}</text>`); });
+      const lbl=`${c.name}の和音（${c.label}）`; push(`<rect x="${x0+4}" y="${y0-92}" width="${Math.min(mW-12,12+lbl.length*13)}" height="22" rx="8" fill="${c.col}"/><text x="${x0+10}" y="${y0-76}" font-size="13" font-weight="800" fill="#fff">${lbl}</text>`);
       // 音符・休符（8分スロットで走査）
       const inM=notes.filter(n=>Math.floor(n.s/8)===m).sort((a,b)=>a.s-b.s);
       let slot=0; const slotX=sl=>x0+14+sl*((mW-30)/8);
@@ -1009,7 +1020,7 @@ function staffSvg(opts){
     }
   }
   const f=FULL?formSummary():null; if(f&&f.seq) push(`<text x="${W-R}" y="${H-2}" text-anchor="end" font-size="12" fill="#7f8f96">かたち：${f.seq}</text>`);
-  push(`<text x="${L-30}" y="${H-2}" font-size="12" fill="#7f8f96">わおんにのせて カノン｜和音の進み方はパッヘルベル「カノン」と同じ</text>`);
+  push(`<text x="${L-30}" y="${H-2}" font-size="12" fill="#7f8f96">わおんにのせて カノン｜和音の進み方はパッヘルベル「カノン」の順番（1小節ずつ）</text>`);
   push("</svg>"); return st.join("");
 }
 $("staffBtn").addEventListener("click",()=>{ if(!FULL){ openCta(); return; } if(!notes.length){ toast("まず音を入れてね"); return; } $("staffBox").innerHTML=staffSvg(); $("staffOv").style.display="flex"; });
@@ -1049,6 +1060,73 @@ $("sendBtn").addEventListener("click",()=>{ if(!FULL){ openCta(); return; } $("s
 $("sendClose").addEventListener("click",()=>$("sendOv").style.display="none");
 $("sendOv").addEventListener("click",e=>{ if(e.target===$("sendOv")) $("sendOv").style.display="none"; });
 $("toUtamie").addEventListener("click",()=>sendTo("utamie")); $("toYubimie").addEventListener("click",()=>sendTo("yubimie"));
+
+
+/* ---------- ⑤ MusicXML 書き出し（Flat などで開ける。和音記号＋ピアノ・チェロのばん奏つき） ---------- */
+const XML_STEP=["C","C","D","D","E","F","F","G","G","A","A","B"], XML_ALTER=[0,1,0,1,0,0,1,0,1,0,1,0];
+function xmlEsc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function xmlPitch(midi){ const pc=midi%12, oct=Math.floor(midi/12)-1; return `<pitch><step>${XML_STEP[pc]}</step>${XML_ALTER[pc]?`<alter>1</alter>`:""}<octave>${oct}</octave></pitch>`; }
+const XML_TYPE={1:"eighth",2:"quarter",4:"half",6:"half",8:"whole"};
+function xmlNote(midi,len,opt){ opt=opt||{}; // len: スロット数（8分音符=1）、divisions=2 なので duration=len
+  const dot=len===6?"<dot/>":"";
+  return `<note>${opt.chord?"<chord/>":""}${midi==null?"<rest/>":xmlPitch(midi)}<duration>${len}</duration><voice>1</voice><type>${XML_TYPE[len]}</type>${dot}${opt.staff?`<staff>${opt.staff}</staff>`:""}${opt.lyric?`<lyric number="1"><syllabic>single</syllabic><text>${xmlEsc(opt.lyric)}</text></lyric>`:""}</note>`; }
+function xmlRestFill(gap,atSlot){ // gap スロットぶんの休符（拍の頭では4分、それ以外は8分）
+  const out=[]; let s=atSlot, g=gap;
+  while(g>0){ if(s%2===0 && g>=2){ out.push(xmlNote(null,2)); s+=2; g-=2; } else { out.push(xmlNote(null,1)); s+=1; g-=1; } }
+  return out.join(""); }
+function xmlMelodyMeasure(mIdx, shift){ // shift: このパートで、せんりつの何小節めがここに来るか（負や範囲外なら全休符）
+  const m=mIdx-shift; if(m<0||m>=meas) return `<note><rest measure="yes"/><duration>8</duration><voice>1</voice><type>whole</type></note>`;
+  const inM=notes.filter(n=>Math.floor(n.s/8)===m).sort((a,b)=>a.s-b.s);
+  if(!inM.length) return `<note><rest measure="yes"/><duration>8</duration><voice>1</voice><type>whole</type></note>`;
+  let out="", slot=0;
+  for(const n of inM){ const s0=n.s-m*8; if(s0>slot) out+=xmlRestFill(s0-slot,slot); out+=xmlNote(MIDI[n.p],n.len,{lyric:n.l||""}); slot=s0+n.len; }
+  if(slot<8) out+=xmlRestFill(8-slot,slot);
+  return out; }
+function xmlHarmony(c){ const root=c.name.replace("m",""); return `<harmony><root><root-step>${root}</root-step></root><kind>${c.name.endsWith("m")?"minor":"major"}</kind></harmony>`; }
+function xmlAttr(clef,extra){ return `<attributes><divisions>2</divisions>${extra||""}<key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>${clef==="F"?"F":"G"}</sign><line>${clef==="F"?4:2}</line></clef></attributes>`; }
+function xmlTempoDir(){ return `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${cfg.tempo}</per-minute></metronome></direction-type><sound tempo="${cfg.tempo}"/></direction>`; }
+function buildMusicXML(canon){
+  const bars=canon?meas+(CANON_GROUPS-1)*CANON_OFF/8:meas, total=bars+1;   // +1 = おわりの和音
+  const groups=canon?CANON_GROUPS:1;
+  const title=canon?"わたしのカノン（3グループ）":"わたしのカノン";
+  const parts=[]; const partList=[];
+  for(let g=0;g<groups;g++){ const id="P"+(g+1), nm=canon?`グループ${g+1}（リコーダー）`:"せんりつ（リコーダー）";
+    partList.push(`<score-part id="${id}"><part-name>${nm}</part-name><part-abbreviation>${canon?"G"+(g+1):"Rec."}</part-abbreviation><score-instrument id="${id}-I1"><instrument-name>Recorder</instrument-name></score-instrument><midi-instrument id="${id}-I1"><midi-channel>${g+1}</midi-channel><midi-program>75</midi-program></midi-instrument></score-part>`);
+    let body="";
+    for(let b=0;b<total;b++){ const first=b===0; const c=CHORD[HALF[b%8].k];
+      body+=`<measure number="${b+1}">${first?xmlAttr("G"):""}${first?xmlTempoDir():""}`;
+      if(g===0) body+=(b<bars?xmlHarmony(c):xmlHarmony(CHORD.C));
+      body+=(b<bars?xmlMelodyMeasure(b,g*CANON_OFF/8):`<note><rest measure="yes"/><duration>8</duration><voice>1</voice><type>whole</type></note>`);
+      if(b===total-1) body+=`<barline location="right"><bar-style>light-heavy</bar-style></barline>`;
+      body+=`</measure>`; }
+    parts.push(`<part id="${id}">${body}</part>`); }
+  // ピアノ（和音：1拍目と3拍目に2分音符）／チェロ（根音：2分音符）
+  const pid="P"+(groups+1), cid="P"+(groups+2);
+  partList.push(`<score-part id="${pid}"><part-name>ピアノ（和音）</part-name><part-abbreviation>Pf.</part-abbreviation><score-instrument id="${pid}-I1"><instrument-name>Piano</instrument-name></score-instrument><midi-instrument id="${pid}-I1"><midi-channel>${groups+1}</midi-channel><midi-program>1</midi-program></midi-instrument></score-part>`);
+  partList.push(`<score-part id="${cid}"><part-name>チェロ</part-name><part-abbreviation>Vc.</part-abbreviation><score-instrument id="${cid}-I1"><instrument-name>Cello</instrument-name></score-instrument><midi-instrument id="${cid}-I1"><midi-channel>${groups+2}</midi-channel><midi-program>43</midi-program></midi-instrument></score-part>`);
+  let pb="", cb="";
+  for(let b=0;b<total;b++){ const first=b===0; const hc=HALF[b%8]; const fin=b===total-1;
+    const tri=fin?[60,64,67]:CHORD[hc.k].midi.map(m=>m+12); const root=fin?48:hc.root-12;
+    const chordNotes=len=>tri.map((m,i)=>xmlNote(m,len,{chord:i>0})).join("");
+    pb+=`<measure number="${b+1}">${first?xmlAttr("G"):""}`+(fin?chordNotes(8):chordNotes(4)+chordNotes(4))+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`;
+    cb+=`<measure number="${b+1}">${first?xmlAttr("F"):""}`+(fin?xmlNote(root,8):xmlNote(root,4)+xmlNote(root,4))+(fin?`<barline location="right"><bar-style>light-heavy</bar-style></barline>`:"")+`</measure>`; }
+  parts.push(`<part id="${pid}">${pb}</part>`); parts.push(`<part id="${cid}">${cb}</part>`);
+  const f=FULL?formSummary():null;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0"><work><work-title>${xmlEsc(title)}</work-title></work><identification><creator type="composer">わおんにのせて カノン</creator><encoding><software>わおんにのせて カノン（けいてぃの音楽ツールズ）</software><encoding-date>${new Date().toISOString().slice(0,10)}</encoding-date></encoding>${f&&f.seq?`<miscellaneous><miscellaneous-field name="form">${xmlEsc(f.seq)}</miscellaneous-field></miscellaneous>`:""}</identification><part-list>${partList.join("")}</part-list>${parts.join("")}</score-partwise>`;
+}
+function downloadMusicXML(canon){
+  if(!notes.length){ toast("まず音を入れてね"); return; }
+  const xml=buildMusicXML(canon); const blob=new Blob([xml],{type:"application/vnd.recordare.musicxml+xml"}); const url=URL.createObjectURL(blob);
+  const d=new Date(); const a=document.createElement("a"); a.download="waoncanon_"+(canon?"canon_":"")+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+".musicxml"; a.href=url; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("xmlHelp").textContent="📄 保存しました。Flat などで「インポート」して開いてください（ファイル名："+a.download+"）"; toast("MusicXMLを保存しました");
+}
+$("xmlBtn").addEventListener("click",()=>{ if(!FULL){ openCta(); return; } if(!notes.length){ toast("まず音を入れてね"); return; } $("xmlOv").style.display="flex"; });
+$("xmlClose").addEventListener("click",()=>$("xmlOv").style.display="none");
+$("xmlOv").addEventListener("click",e=>{ if(e.target===$("xmlOv")) $("xmlOv").style.display="none"; });
+$("xmlSolo").addEventListener("click",()=>downloadMusicXML(false)); $("xmlCanon").addEventListener("click",()=>downloadMusicXML(true));
 
 /* ---------- 画面内ダイアログ（confirm/promptの代わり。全画面やiPadでも確実に出る） ---------- */
 function ask(msg,opt){ opt=opt||{}; return new Promise(res=>{
@@ -1125,14 +1203,14 @@ $("cardBtn").addEventListener("click",async()=>{
   const F='"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic",sans-serif';
   g.fillStyle="#2f6fbf"; g.font="bold 34px "+F; g.fillText("わおんにのせて カノン — わたしのカノン", 40, 56);
   const d=new Date(); g.fillStyle="#7f8f96"; g.font="20px "+F;
-  g.fillText((name?name+"　":"")+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"　和音の進み方：C G｜Am Em｜F C｜F G（パッヘルベルのカノンと同じ）", 40, 92);
+  g.fillText((name?name+"　":"")+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"　和音の進み方：C→G→Am→Em→F→C→F→G（パッヘルベルのカノンの順番・1小節ずつ）", 40, 92);
   const left=110, gw=W-left-40;
   for(let sy=0;sy<systems;sy++){
     const top=130+sy*sysH, rowH=30, gridH=rowH*8, cw=gw/32;
     // 和音ラベル
-    for(let h=0;h<8;h++){ const ch=chordAtSlot(sy*32+h*4);
-      g.fillStyle=ch.col; g.fillRect(left+h*gw/8+2,top,gw/8-4,34);
-      g.fillStyle="#fff"; g.font="bold 18px "+F; g.textAlign="center"; g.fillText(ch.name+" "+ch.label, left+h*gw/8+gw/16, top+24); g.textAlign="left"; }
+    for(let k=0;k<4;k++){ const m=sy*4+k, ch=chordOf(m);
+      g.fillStyle=ch.col; g.fillRect(left+k*gw/4+2,top,gw/4-4,34);
+      g.fillStyle="#fff"; g.font="bold 20px "+F; g.textAlign="center"; g.fillText(ch.name+"の和音 "+ch.label, left+k*gw/4+gw/8, top+24); g.textAlign="left"; }
     const gy=top+44;
     // グリッド
     for(let r=0;r<8;r++){ const y=gy+(7-r)*rowH; g.fillStyle=r%2?"#fff":"#fbf8ef"; g.fillRect(left,y,gw,rowH);
@@ -1229,7 +1307,7 @@ if(!FULL){
   ["tone","chordInst"].forEach(id=>{ const el=$(id); el.value="piano"; el.disabled=true; cfg[id]="piano"; el.parentNode.insertAdjacentHTML("beforeend",'<span class="val" style="min-width:0;color:#8a5a00">🔒 フル版</span>'); });
   const allowRow=$("allowTbl").closest(".row2"); allowRow.innerHTML='<label>和音ごとに使える音</label><span style="font-size:13px;color:#8a5a00">🔒 フル版で、和音ごとに使える音を先生が決められます</span>';
   cfg.allow=defAllow();
-  if(meas>4){ meas=4; notes=notes.filter(n=>n.s<32); }
+  if(meas>8){ meas=8; notes=notes.filter(n=>n.s<64); }
 }
 $("closeSet").addEventListener("click",()=>$("ov").classList.remove("open"));
 $("ov").addEventListener("click",e=>{ if(e.target===$("ov")) $("ov").classList.remove("open"); });
